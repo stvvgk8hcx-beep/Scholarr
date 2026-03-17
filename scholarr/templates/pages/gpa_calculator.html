@@ -1,579 +1,424 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}GPA Calculator - Scholarr{% endblock %}
-
+{% block title %}GPA Calculator{% endblock %}
 {% block page_title %}GPA Calculator{% endblock %}
 
 {% block extra_css %}
 <style>
-    .gpa-container {
-        max-width: 900px;
-        margin: 0 auto;
-    }
+.gpa-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.gpa-card {
+    background: linear-gradient(135deg, rgba(46,207,161,0.15), var(--bg-secondary));
+    border: 1px solid rgba(46,207,161,0.2);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+}
+.gpa-card .val { font-size: 2.2em; font-weight: 700; color: var(--text-primary); }
+.gpa-card .lbl { font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-top: 6px; }
 
-    .gpa-display {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-        margin-bottom: 30px;
-    }
+.sem-select { display: flex; gap: 12px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+.sem-select select { max-width: 260px; }
 
-    .gpa-card {
-        background: linear-gradient(135deg, #1d8c6e, #13132b);
-        border-radius: 4px;
-        padding: 30px 20px;
-        text-align: center;
-        box-shadow: 0 4px 20px rgba(46, 207, 161, 0.2);
-        border: 1px solid rgba(46,207,161,0.3);
-    }
+.course-section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    margin-bottom: 14px;
+    overflow: hidden;
+}
+.course-hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+}
+.course-hdr:hover { background: var(--bg-hover); }
+.course-hdr .code { font-weight: 600; color: var(--accent); font-family: monospace; }
+.course-hdr .name { color: var(--text-secondary); font-size: 0.88em; margin-left: 10px; }
+.course-hdr .gpa-badge {
+    font-weight: 700;
+    font-size: 1.1em;
+    min-width: 50px;
+    text-align: right;
+}
 
-    .gpa-label {
-        color: rgba(255, 255, 255, 0.8);
-        font-size: 0.9em;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 10px;
-    }
+.course-items { display: none; }
+.course-items.open { display: block; }
 
-    .gpa-value {
-        font-size: 2.5em;
-        font-weight: 700;
-        color: white;
-    }
+.item-row {
+    display: grid;
+    grid-template-columns: 1fr 80px 90px 70px 70px 60px;
+    gap: 8px;
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    align-items: center;
+    font-size: 0.85em;
+}
+.item-row:hover { background: var(--bg-hover); }
+.item-row .item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-row .item-type { color: var(--text-muted); font-size: 0.85em; text-transform: capitalize; }
+.item-row input, .item-row select {
+    padding: 4px 6px;
+    font-size: 0.9em;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    color: var(--text-primary);
+}
+.item-row .pts { font-weight: 600; color: var(--accent); text-align: right; }
 
-    .gpa-value-subtext {
-        font-size: 0.8em;
-        color: rgba(255, 255, 255, 0.7);
-        margin-top: 5px;
-    }
+.whatif-row {
+    display: grid;
+    grid-template-columns: 1fr 80px 90px 70px 70px 60px;
+    gap: 8px;
+    padding: 8px 16px;
+    border-top: 1px dashed var(--border-color);
+    align-items: center;
+    font-size: 0.85em;
+    background: rgba(46,207,161,0.03);
+}
+.whatif-tag { font-size: 0.7em; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; }
 
-    .grade-scale-info {
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        padding: 20px;
-        margin-bottom: 30px;
-    }
+.grade-scale { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.gs-item {
+    padding: 4px 10px;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+    font-size: 0.78em;
+    display: flex; gap: 6px;
+}
+.gs-item .letter { font-weight: 700; color: var(--text-primary); }
+.gs-item .pts { color: var(--text-muted); }
 
-    .grade-scale-info h4 {
-        margin-bottom: 15px;
-        color: var(--accent-blue);
-    }
-
-    .grade-scale {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-        gap: 10px;
-    }
-
-    .grade-scale-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px;
-        background-color: var(--bg-tertiary);
-        border-radius: 3px;
-        font-size: 0.9em;
-    }
-
-    .grade-scale-item-letter {
-        font-weight: 600;
-        color: var(--accent-blue);
-        min-width: 30px;
-    }
-
-    .grade-scale-item-points {
-        color: var(--text-secondary);
-    }
-
-    /* Courses Table */
-    .courses-table-container {
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        overflow: hidden;
-    }
-
-    .courses-table {
-        width: 100%;
-    }
-
-    .courses-table th {
-        background-color: var(--bg-tertiary);
-        padding: 15px;
-        text-align: left;
-        font-weight: 600;
-        border-bottom: 2px solid var(--border-color);
-    }
-
-    .courses-table td {
-        padding: 12px 15px;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .courses-table tbody tr:hover {
-        background-color: var(--bg-tertiary);
-    }
-
-    .grade-input {
-        width: 100%;
-        padding: 8px;
-        background-color: var(--bg-tertiary);
-        border: 1px solid var(--border-color);
-        color: var(--text-primary);
-        border-radius: 3px;
-    }
-
-    .grade-input:focus {
-        outline: none;
-        border-color: var(--accent-blue);
-    }
-
-    .credits-input {
-        width: 100%;
-        padding: 8px;
-        background-color: var(--bg-tertiary);
-        border: 1px solid var(--border-color);
-        color: var(--text-primary);
-        border-radius: 3px;
-    }
-
-    .credits-input:focus {
-        outline: none;
-        border-color: var(--accent-blue);
-    }
-
-    .semester-section {
-        margin-bottom: 30px;
-    }
-
-    .semester-header {
-        background-color: var(--bg-secondary);
-        padding: 20px;
-        border-radius: 4px;
-        margin-bottom: 15px;
-        border-left: 4px solid var(--accent-blue);
-    }
-
-    .semester-title {
-        font-size: 1.3em;
-        font-weight: 600;
-        color: var(--accent-blue);
-        margin-bottom: 10px;
-    }
-
-    .semester-gpa {
-        font-size: 1.2em;
-        font-weight: 600;
-    }
-
-    .semester-gpa-value {
-        color: var(--accent-blue);
-    }
-
-    .add-course-btn {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 20px;
-    }
-
-    .action-buttons {
-        display: flex;
-        gap: 10px;
-        padding: 20px 0;
-    }
+.actions-bar { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="gpa-container">
-    <!-- GPA Display -->
-    <div class="gpa-display">
-        <div class="gpa-card">
-            <div class="gpa-label">Semester GPA</div>
-            <div class="gpa-value" id="semesterGpa">0.00</div>
-            <div class="gpa-value-subtext" id="semesterCredits">0 credits this semester</div>
-        </div>
+<div style="max-width:940px;margin:0 auto;">
 
-        <div class="gpa-card" id="weighted-gpa-card" style="display:none;">
-            <div class="gpa-label">Weighted GPA</div>
-            <div class="gpa-value" id="weightedGpa">0.00</div>
-            <div class="gpa-value-subtext" id="weightedGpaNote">With test/quiz requirement</div>
-        </div>
-
+    <!-- GPA Summary Cards -->
+    <div class="gpa-top">
         <div class="gpa-card">
-            <div class="gpa-label">Test/Quiz Combined</div>
-            <div class="gpa-value" id="testQuizAvg">—</div>
-            <div class="gpa-value-subtext" id="testQuizStatus">No test/quiz grades yet</div>
+            <div class="val" id="semGpa">—</div>
+            <div class="lbl">Semester GPA</div>
+        </div>
+        <div class="gpa-card">
+            <div class="val" id="cumGpa">—</div>
+            <div class="lbl">Cumulative GPA</div>
+        </div>
+        <div class="gpa-card">
+            <div class="val" id="totalCredits">—</div>
+            <div class="lbl">Credits</div>
+        </div>
+        <div class="gpa-card">
+            <div class="val" id="gradedCount">—</div>
+            <div class="lbl">Graded Items</div>
         </div>
     </div>
 
-    <!-- Weighted Average Settings -->
-    <div class="grade-scale-info" id="weighted-settings-panel">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-            <h4 style="margin:0;color:var(--accent);">Program Weighted Rule</h4>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;">
-                <input type="checkbox" id="weighted-enabled" onchange="toggleWeightedMode()" style="width:auto;">
-                <span style="font-size:0.9em;color:var(--text-secondary);">Enable weighted rule</span>
-            </label>
-        </div>
-        <div id="weighted-config" style="display:none;">
-            <p style="font-size:0.85em;color:var(--text-secondary);margin-bottom:12px;">
-                Set a minimum combined grade for tests &amp; quizzes to pass, regardless of overall GPA. If the combined grade is below the minimum, the course is flagged as at risk even if the GPA grade is passing.
-            </p>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
-                <div class="form-group" style="margin-bottom:0;">
-                    <label>Min. Test+Quiz Combined (%)</label>
-                    <input type="number" id="weighted-min-pct" value="50" min="0" max="100" step="1" onchange="calculateGPA()">
-                    <div style="font-size:0.78em;color:var(--text-muted);margin-top:4px;">e.g., 50 means tests+quizzes must average ≥50% to pass</div>
-                </div>
-                <div class="form-group" style="margin-bottom:0;">
-                    <label>Max Grade Cap (%)</label>
-                    <input type="number" id="weighted-max-cap" value="100" min="50" max="200" step="1" onchange="calculateGPA()">
-                    <div style="font-size:0.78em;color:var(--text-muted);margin-top:4px;">Grades above this are capped when computing weighted GPA</div>
-                </div>
-            </div>
-        </div>
+    <!-- Semester Selector -->
+    <div class="sem-select">
+        <label style="margin:0;font-weight:600;">Semester:</label>
+        <select id="semSelect" onchange="loadSemesterGPA()">
+            <option value="">All Semesters (Cumulative)</option>
+        </select>
+        <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" id="whatifMode" style="width:auto;" onchange="toggleWhatIf()">
+            <span style="font-size:0.85em;">What-If Mode</span>
+        </label>
+    </div>
+
+    <!-- Course Sections (populated by JS) -->
+    <div id="courseList">
+        <div class="loading">Loading courses and grades...</div>
+    </div>
+
+    <!-- What-If Add Row -->
+    <div id="whatifAdd" style="display:none;margin-top:12px;">
+        <button class="btn btn-secondary btn-small" onclick="addWhatIfRow()">+ Add What-If Course</button>
     </div>
 
     <!-- Grade Scale Reference -->
-    <div class="grade-scale-info">
-        <h4>Grade Scale Reference</h4>
+    <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius);padding:14px 16px;margin-top:20px;">
+        <div style="font-weight:600;font-size:0.88em;margin-bottom:8px;">Grade Scale</div>
         <div class="grade-scale">
-            <div class="grade-scale-item">
-                <span class="grade-scale-item-letter">A</span>
-                <span class="grade-scale-item-points">4.0</span>
-            </div>
-            <div class="grade-scale-item">
-                <span class="grade-scale-item-letter">A-</span>
-                <span class="grade-scale-item-points">3.7</span>
-            </div>
-            <div class="grade-scale-item">
-                <span class="grade-scale-item-letter">B+</span>
-                <span class="grade-scale-item-points">3.3</span>
-            </div>
-            <div class="grade-scale-item">
-                <span class="grade-scale-item-letter">B</span>
-                <span class="grade-scale-item-points">3.0</span>
-            </div>
-            <div class="grade-scale-item">
-                <span class="grade-scale-item-letter">B-</span>
-                <span class="grade-scale-item-points">2.7</span>
-            </div>
-            <div class="grade-scale-item">
-                <span class="grade-scale-item-letter">C+</span>
-                <span class="grade-scale-item-points">2.3</span>
-            </div>
-            <div class="grade-scale-item">
-                <span class="grade-scale-item-letter">C</span>
-                <span class="grade-scale-item-points">2.0</span>
-            </div>
-            <div class="grade-scale-item">
-                <span class="grade-scale-item-letter">C-</span>
-                <span class="grade-scale-item-points">1.7</span>
-            </div>
-            <div class="grade-scale-item">
-                <span class="grade-scale-item-letter">D+</span>
-                <span class="grade-scale-item-points">1.3</span>
-            </div>
-            <div class="grade-scale-item">
-                <span class="grade-scale-item-letter">D</span>
-                <span class="grade-scale-item-points">1.0</span>
-            </div>
-            <div class="grade-scale-item">
-                <span class="grade-scale-item-letter">F</span>
-                <span class="grade-scale-item-points">0.0</span>
-            </div>
+            <div class="gs-item"><span class="letter">A</span><span class="pts">4.0</span></div>
+            <div class="gs-item"><span class="letter">A-</span><span class="pts">3.7</span></div>
+            <div class="gs-item"><span class="letter">B+</span><span class="pts">3.3</span></div>
+            <div class="gs-item"><span class="letter">B</span><span class="pts">3.0</span></div>
+            <div class="gs-item"><span class="letter">B-</span><span class="pts">2.7</span></div>
+            <div class="gs-item"><span class="letter">C+</span><span class="pts">2.3</span></div>
+            <div class="gs-item"><span class="letter">C</span><span class="pts">2.0</span></div>
+            <div class="gs-item"><span class="letter">C-</span><span class="pts">1.7</span></div>
+            <div class="gs-item"><span class="letter">D+</span><span class="pts">1.3</span></div>
+            <div class="gs-item"><span class="letter">D</span><span class="pts">1.0</span></div>
+            <div class="gs-item"><span class="letter">F</span><span class="pts">0.0</span></div>
         </div>
     </div>
 
-    <!-- Current Semester Courses -->
-    <div class="semester-section">
-        <div class="semester-header">
-            <div class="semester-title">Current Semester Courses</div>
-            <div class="semester-gpa">
-                GPA: <span class="semester-gpa-value" id="currentSemesterGpa">0.00</span>
-                <span id="weighted-pass-warn" style="margin-left:12px;font-size:0.82em;color:#f0ad4e;display:none;">Warning: Test/quiz below minimum</span>
-            </div>
-        </div>
-
-        <div class="add-course-btn">
-            <button class="btn btn-small" onclick="addCourseRow()">+ Add Course</button>
-        </div>
-
-        <div class="courses-table-container">
-            <table class="courses-table">
-                <thead>
-                    <tr>
-                        <th>Course / Item</th>
-                        <th>Type</th>
-                        <th>Letter Grade</th>
-                        <th>% Grade</th>
-                        <th>Credits</th>
-                        <th>Points</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody id="currentSemesterCourses">
-                    <!-- Courses will be loaded here -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="action-buttons">
-        <button class="btn" onclick="saveCourses()">Save to Browser</button>
-        <button class="btn btn-secondary" onclick="clearCourses()">✕ Clear All</button>
+    <div class="actions-bar">
+        <a href="/courses" class="btn btn-secondary">Manage Courses</a>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_scripts %}
 <script>
-    // Grade to GPA mapping
-    const gradeScale = {
-        'A': 4.0, 'A-': 3.7,
-        'B+': 3.3, 'B': 3.0, 'B-': 2.7,
-        'C+': 2.3, 'C': 2.0, 'C-': 1.7,
-        'D+': 1.3, 'D': 1.0, 'D-': 0.7,
-        'F': 0.0
-    };
+const GS = { 'A':4.0,'A-':3.7,'B+':3.3,'B':3.0,'B-':2.7,'C+':2.3,'C':2.0,'C-':1.7,'D+':1.3,'D':1.0,'D-':0.7,'F':0.0 };
+const GRADE_OPTS = Object.keys(GS).map(g => `<option value="${g}">${g}</option>`).join('');
 
-    let courseCounter = 0;
+let allSemesters = [];
+let allCourses = [];
+let allItems = [];
+let whatIfRows = [];
+let whatIfCounter = 0;
 
-    // Types considered "tests/quizzes" for the weighted rule
-    const TEST_QUIZ_TYPES = ['exam', 'quiz', 'test'];
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadData();
+    loadSemesterGPA();
+});
 
-    function addCourseRow() {
-        const tbody = document.getElementById('currentSemesterCourses');
-        const rowId = 'course-' + (courseCounter++);
+async function loadData() {
+    try {
+        const [sems, courses, itemData] = await Promise.all([
+            API.get('/api/v1/semesters'),
+            API.get('/api/v1/courses'),
+            API.get('/api/v1/academic-items?page=1&page_size=1000'),
+        ]);
+        allSemesters = Array.isArray(sems) ? sems : [];
+        allCourses = Array.isArray(courses) ? courses : [];
+        allItems = Array.isArray(itemData) ? itemData : (itemData.items || []);
 
-        const row = document.createElement('tr');
-        row.id = rowId;
-        row.innerHTML = `
-            <td>
-                <input type="text" class="grade-input" placeholder="Course name" name="course_name">
-            </td>
-            <td>
-                <select class="grade-input" name="type" onchange="calculateRow('${rowId}')">
-                    <option value="other">Other</option>
-                    <option value="exam">Exam/Test</option>
-                    <option value="quiz">Quiz</option>
-                    <option value="assignment">Assignment</option>
-                    <option value="project">Project</option>
-                    <option value="lab">Lab</option>
-                </select>
-            </td>
-            <td>
-                <select class="grade-input" name="grade" onchange="calculateRow('${rowId}')">
-                    <option value="">Grade</option>
-                    <option value="A">A</option>
-                    <option value="A-">A-</option>
-                    <option value="B+">B+</option>
-                    <option value="B">B</option>
-                    <option value="B-">B-</option>
-                    <option value="C+">C+</option>
-                    <option value="C">C</option>
-                    <option value="C-">C-</option>
-                    <option value="D+">D+</option>
-                    <option value="D">D</option>
-                    <option value="D-">D-</option>
-                    <option value="F">F</option>
-                </select>
-            </td>
-            <td>
-                <input type="number" class="credits-input" placeholder="%" min="0" max="150" step="0.1" name="pct_grade" oninput="calculateRow('${rowId}')" title="Percentage grade (can exceed 100)">
-            </td>
-            <td>
-                <input type="number" class="credits-input" placeholder="Cr" min="0" max="6" name="credits" onchange="calculateRow('${rowId}')">
-            </td>
-            <td style="font-weight: 600; color: var(--accent);" class="points-value">0.0</td>
-            <td>
-                <button class="btn btn-small btn-danger" onclick="removeCourseRow('${rowId}')">✕</button>
-            </td>
-        `;
+        const sel = document.getElementById('semSelect');
+        sel.innerHTML = '<option value="">All Semesters (Cumulative)</option>' +
+            allSemesters.map(s => `<option value="${s.id}"${s.active ? ' selected' : ''}>${esc(s.name)}</option>`).join('');
 
-        tbody.appendChild(row);
+        // Auto-select active semester
+        const active = allSemesters.find(s => s.active);
+        if (active) sel.value = active.id;
+    } catch(e) {
+        document.getElementById('courseList').innerHTML = `<div style="color:var(--danger);padding:20px;">Error loading data: ${e.message}</div>`;
+    }
+}
+
+function loadSemesterGPA() {
+    const semId = document.getElementById('semSelect').value;
+    const courses = semId ? allCourses.filter(c => c.semester_id === parseInt(semId)) : allCourses;
+    const courseIds = new Set(courses.map(c => c.id));
+    const items = allItems.filter(i => courseIds.has(i.course_id));
+    const gradedItems = items.filter(i => i.grade !== null && i.grade !== undefined);
+
+    renderCourses(courses, items);
+    recalcGPA();
+}
+
+function renderCourses(courses, items) {
+    const el = document.getElementById('courseList');
+    if (!courses.length) {
+        el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">No courses found for this semester. <a href="/courses/add" style="color:var(--accent);">Add a course</a></div>';
+        return;
     }
 
-    function removeCourseRow(rowId) {
-        document.getElementById(rowId).remove();
-        calculateGPA();
-    }
+    el.innerHTML = courses.map(c => {
+        const courseItems = items.filter(i => i.course_id === c.id);
+        const graded = courseItems.filter(i => i.grade !== null && i.grade !== undefined);
+        const avg = graded.length > 0 ? graded.reduce((s, i) => s + i.grade, 0) / graded.length : null;
+        const letter = avg !== null ? pctToLetter(avg) : '—';
+        const gpa = avg !== null ? GS[letter] || 0 : null;
+        const gpaColor = gpa !== null ? (gpa >= 3.0 ? 'var(--accent)' : gpa >= 2.0 ? 'var(--warning)' : 'var(--danger)') : 'var(--text-muted)';
 
-    function calculateRow(rowId) {
-        const row = document.getElementById(rowId);
-        const gradeSelect = row.querySelector('select[name="grade"]');
-        const creditsInput = row.querySelector('input[name="credits"]');
-        const pointsCell = row.querySelector('.points-value');
+        const itemsHtml = courseItems.map(i => {
+            const hasGrade = i.grade !== null && i.grade !== undefined;
+            const iLetter = hasGrade ? pctToLetter(i.grade) : '';
+            const iPts = hasGrade ? (GS[iLetter] || 0).toFixed(1) : '—';
+            return `
+            <div class="item-row" data-course="${c.id}" data-item="${i.id}">
+                <div class="item-name" title="${esc(i.name)}">${esc(i.name)}</div>
+                <div class="item-type">${esc(i.type || '')}</div>
+                <div>${hasGrade ? iLetter : '<span style="color:var(--text-muted);">—</span>'}</div>
+                <div>
+                    <input type="number" value="${hasGrade ? i.grade : ''}" min="0" max="150" step="0.1"
+                        placeholder="%" class="whatif-grade" data-original="${hasGrade ? i.grade : ''}"
+                        oninput="recalcGPA()" ${document.getElementById('whatifMode')?.checked ? '' : 'disabled'}>
+                </div>
+                <div style="color:var(--text-secondary);">${i.weight ? i.weight + '%' : '—'}</div>
+                <div class="pts">${iPts}</div>
+            </div>`;
+        }).join('');
 
-        const grade = gradeSelect.value;
-        const credits = parseFloat(creditsInput.value) || 0;
-        const gradePoints = gradeScale[grade] || 0;
-        const points = gradePoints * credits;
+        return `
+        <div class="course-section" data-course-id="${c.id}">
+            <div class="course-hdr" onclick="toggleCourse(${c.id})">
+                <div>
+                    <span class="code">${esc(c.code)}</span>
+                    <span class="name">${esc(c.name)}</span>
+                    <span style="color:var(--text-muted);font-size:0.78em;margin-left:8px;">${c.credits || 3} cr</span>
+                </div>
+                <div class="gpa-badge" style="color:${gpaColor};">${gpa !== null ? gpa.toFixed(1) : '—'}</div>
+            </div>
+            <div class="course-items" id="items-${c.id}">
+                <div style="display:grid;grid-template-columns:1fr 80px 90px 70px 70px 60px;gap:8px;padding:6px 16px;font-size:0.72em;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">
+                    <div>Item</div><div>Type</div><div>Letter</div><div>Grade %</div><div>Weight</div><div>GPA Pts</div>
+                </div>
+                ${itemsHtml || '<div style="padding:12px 16px;color:var(--text-muted);font-size:0.85em;">No items for this course.</div>'}
+                ${!courseItems.length ? '' : `
+                <div style="padding:8px 16px;border-top:1px solid var(--border-color);display:flex;justify-content:space-between;font-size:0.82em;">
+                    <span style="color:var(--text-secondary);">${graded.length}/${courseItems.length} graded</span>
+                    <span style="font-weight:600;color:${gpaColor};">Avg: ${avg !== null ? avg.toFixed(1) + '%' : '—'} (${letter})</span>
+                </div>`}
+                <div style="padding:6px 16px;border-top:1px solid var(--border-color);">
+                    <a href="/courses/${c.id}" style="font-size:0.78em;color:var(--accent);">Course Settings</a>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
 
-        pointsCell.textContent = points.toFixed(2);
-        calculateGPA();
-    }
+function toggleCourse(id) {
+    const el = document.getElementById('items-' + id);
+    el.classList.toggle('open');
+}
 
-    function toggleWeightedMode() {
-        const enabled = document.getElementById('weighted-enabled').checked;
-        document.getElementById('weighted-config').style.display = enabled ? 'block' : 'none';
-        document.getElementById('weighted-gpa-card').style.display = enabled ? 'block' : 'none';
-        localStorage.setItem('scholarr_weighted_enabled', enabled ? '1' : '0');
-        calculateGPA();
-    }
+function pctToLetter(pct) {
+    if (pct >= 93) return 'A';
+    if (pct >= 90) return 'A-';
+    if (pct >= 87) return 'B+';
+    if (pct >= 83) return 'B';
+    if (pct >= 80) return 'B-';
+    if (pct >= 77) return 'C+';
+    if (pct >= 73) return 'C';
+    if (pct >= 70) return 'C-';
+    if (pct >= 67) return 'D+';
+    if (pct >= 60) return 'D';
+    return 'F';
+}
 
-    function calculateGPA() {
-        const rows = document.querySelectorAll('#currentSemesterCourses tr');
-        let totalPoints = 0;
-        let totalCredits = 0;
-        let testQuizTotalPct = 0;
-        let testQuizCount = 0;
-        let weightedPoints = 0;
-        let weightedCredits = 0;
-        const weightedEnabled = document.getElementById('weighted-enabled').checked;
-        const minPct = parseFloat(document.getElementById('weighted-min-pct')?.value) || 50;
-        const maxCap = parseFloat(document.getElementById('weighted-max-cap')?.value) || 100;
+function recalcGPA() {
+    const semId = document.getElementById('semSelect').value;
+    const courses = semId ? allCourses.filter(c => c.semester_id === parseInt(semId)) : allCourses;
+    const courseIds = new Set(courses.map(c => c.id));
 
-        rows.forEach(row => {
-            const gradeSelect = row.querySelector('select[name="grade"]');
-            const creditsInput = row.querySelector('input[name="credits"]');
-            const typeSelect = row.querySelector('select[name="type"]');
-            const pctInput = row.querySelector('input[name="pct_grade"]');
+    let totalPts = 0, totalCr = 0, gradedCount = 0;
 
-            if (!gradeSelect || !creditsInput || !gradeSelect.value) return;
+    courses.forEach(c => {
+        const cr = c.credits || 3;
+        const inputs = document.querySelectorAll(`[data-course="${c.id}"] .whatif-grade`);
+        let courseGrades = [];
 
-            const credits = parseFloat(creditsInput.value) || 0;
-            const grade = gradeSelect.value;
-            const gradePoints = gradeScale[grade] || 0;
-            const itemType = typeSelect ? typeSelect.value : 'other';
-            const pctGrade = pctInput ? parseFloat(pctInput.value) : null;
-
-            totalPoints += gradePoints * credits;
-            totalCredits += credits;
-
-            // Track test/quiz grades
-            if (TEST_QUIZ_TYPES.includes(itemType)) {
-                if (pctGrade !== null && !isNaN(pctGrade)) {
-                    testQuizTotalPct += pctGrade;
-                    testQuizCount++;
-                } else if (gradePoints >= 0) {
-                    // Estimate % from letter grade (rough: A=95,B=85,C=75,D=65,F=50)
-                    const est = { 'A':95,'A-':92,'B+':88,'B':85,'B-':82,'C+':78,'C':75,'C-':72,'D+':68,'D':65,'D-':62,'F':50 };
-                    testQuizTotalPct += est[grade] || 0;
-                    testQuizCount++;
-                }
-            }
-
-            // Weighted GPA: cap percentage at maxCap
-            if (weightedEnabled) {
-                const effectivePct = pctGrade !== null && !isNaN(pctGrade) ? Math.min(pctGrade, maxCap) : null;
-                let effectivePoints = gradePoints;
-                if (effectivePct !== null && maxCap !== 100) {
-                    // Scale the grade points based on capped %
-                    effectivePoints = (effectivePct / 100) * 4.0;
-                }
-                weightedPoints += effectivePoints * credits;
-                weightedCredits += credits;
+        inputs.forEach(inp => {
+            const val = parseFloat(inp.value);
+            if (!isNaN(val)) {
+                courseGrades.push(val);
+                gradedCount++;
             }
         });
 
-        const gpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : '0.00';
-        document.getElementById('currentSemesterGpa').textContent = gpa;
-        document.getElementById('semesterGpa').textContent = gpa;
-        document.getElementById('semesterCredits').textContent = totalCredits + ' credit' + (totalCredits !== 1 ? 's' : '') + ' this semester';
-
-        // Test/quiz combined
-        if (testQuizCount > 0) {
-            const tqAvg = testQuizTotalPct / testQuizCount;
-            document.getElementById('testQuizAvg').textContent = tqAvg.toFixed(1) + '%';
-            const passing = tqAvg >= (weightedEnabled ? minPct : 50);
-            document.getElementById('testQuizStatus').textContent = passing ? 'Meets minimum' : 'Below minimum (' + (weightedEnabled ? minPct : 50) + '%)';
-            document.getElementById('testQuizStatus').style.color = passing ? 'rgba(255,255,255,0.85)' : '#f0ad4e';
-        } else {
-            document.getElementById('testQuizAvg').textContent = '—';
-            document.getElementById('testQuizStatus').textContent = 'No test/quiz grades yet';
-            document.getElementById('testQuizStatus').style.color = '';
-        }
-
-        // Weighted GPA
-        if (weightedEnabled) {
-            const wgpa = weightedCredits > 0 ? (weightedPoints / weightedCredits).toFixed(2) : '0.00';
-            document.getElementById('weightedGpa').textContent = wgpa;
-            const testQuizOk = testQuizCount === 0 || (testQuizTotalPct / testQuizCount) >= minPct;
-            document.getElementById('weightedGpaNote').textContent = testQuizOk ? 'On track to pass' : 'Warning: Test/quiz below ' + minPct + '%';
-        }
-    }
-
-    function saveCourses() {
-        const rows = document.querySelectorAll('#currentSemesterCourses tr');
-        const data = [];
-        rows.forEach(row => {
-            const name = row.querySelector('input[name="course_name"]')?.value || '';
-            const grade = row.querySelector('select[name="grade"]')?.value || '';
-            const type = row.querySelector('select[name="type"]')?.value || 'other';
-            const pct = row.querySelector('input[name="pct_grade"]')?.value || '';
-            const credits = row.querySelector('input[name="credits"]')?.value || '';
-            if (name || grade) data.push({ name, grade, type, pct, credits });
-        });
-        localStorage.setItem('scholarr_gpa_courses', JSON.stringify(data));
-        // Save weighted settings too
-        const wEnabled = document.getElementById('weighted-enabled').checked;
-        localStorage.setItem('scholarr_weighted_enabled', wEnabled ? '1' : '0');
-        localStorage.setItem('scholarr_weighted_min', document.getElementById('weighted-min-pct').value);
-        localStorage.setItem('scholarr_weighted_cap', document.getElementById('weighted-max-cap').value);
-        showToast('Saved to browser!', 'success');
-    }
-
-    function clearCourses() {
-        if (!confirm('Clear all courses?')) return;
-        document.getElementById('currentSemesterCourses').innerHTML = '';
-        localStorage.removeItem('scholarr_gpa_courses');
-        calculateGPA();
-    }
-
-    // Load from localStorage on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        // Restore weighted settings
-        const wEnabled = localStorage.getItem('scholarr_weighted_enabled') === '1';
-        document.getElementById('weighted-enabled').checked = wEnabled;
-        if (wEnabled) {
-            document.getElementById('weighted-config').style.display = 'block';
-            document.getElementById('weighted-gpa-card').style.display = 'block';
-        }
-        const wMin = localStorage.getItem('scholarr_weighted_min');
-        if (wMin) document.getElementById('weighted-min-pct').value = wMin;
-        const wCap = localStorage.getItem('scholarr_weighted_cap');
-        if (wCap) document.getElementById('weighted-max-cap').value = wCap;
-
-        // Restore courses
-        try {
-            const saved = JSON.parse(localStorage.getItem('scholarr_gpa_courses') || '[]');
-            saved.forEach(c => {
-                addCourseRow();
-                const rows = document.querySelectorAll('#currentSemesterCourses tr');
-                const row = rows[rows.length - 1];
-                if (row) {
-                    row.querySelector('input[name="course_name"]').value = c.name || '';
-                    const typeEl = row.querySelector('select[name="type"]');
-                    if (typeEl && c.type) typeEl.value = c.type;
-                    row.querySelector('select[name="grade"]').value = c.grade || '';
-                    const pctEl = row.querySelector('input[name="pct_grade"]');
-                    if (pctEl && c.pct) pctEl.value = c.pct;
-                    row.querySelector('input[name="credits"]').value = c.credits || '';
-                    calculateRow(row.id);
+        // Also count what-if rows for this course
+        whatIfRows.forEach(w => {
+            if (w.courseId === c.id) {
+                const val = parseFloat(document.getElementById(w.id + '-grade')?.value);
+                if (!isNaN(val)) {
+                    courseGrades.push(val);
+                    gradedCount++;
                 }
-            });
-        } catch(e) {}
-        calculateGPA();
+            }
+        });
+
+        if (courseGrades.length > 0) {
+            const avg = courseGrades.reduce((a, b) => a + b, 0) / courseGrades.length;
+            const letter = pctToLetter(avg);
+            const gpa = GS[letter] || 0;
+            totalPts += gpa * cr;
+            totalCr += cr;
+        }
     });
 
-    // Expose functions globally
-    window.addCourseRow = addCourseRow;
-    window.removeCourseRow = removeCourseRow;
-    window.calculateRow = calculateRow;
-    window.calculateGPA = calculateGPA;
-    window.saveCourses = saveCourses;
-    window.clearCourses = clearCourses;
+    // What-if rows without a course
+    whatIfRows.filter(w => !w.courseId).forEach(w => {
+        const val = parseFloat(document.getElementById(w.id + '-grade')?.value);
+        const cr = parseFloat(document.getElementById(w.id + '-cr')?.value) || 3;
+        if (!isNaN(val)) {
+            const letter = pctToLetter(val);
+            totalPts += (GS[letter] || 0) * cr;
+            totalCr += cr;
+            gradedCount++;
+        }
+    });
+
+    const semGpa = totalCr > 0 ? (totalPts / totalCr).toFixed(2) : '—';
+    document.getElementById('semGpa').textContent = semGpa;
+    document.getElementById('totalCredits').textContent = totalCr;
+    document.getElementById('gradedCount').textContent = gradedCount;
+
+    // Cumulative: all semesters
+    if (semId) {
+        let cumPts = 0, cumCr = 0;
+        allCourses.forEach(c => {
+            const cr = c.credits || 3;
+            const courseItems = allItems.filter(i => i.course_id === c.id && i.grade !== null && i.grade !== undefined);
+            if (courseItems.length > 0) {
+                const avg = courseItems.reduce((s, i) => s + i.grade, 0) / courseItems.length;
+                cumPts += (GS[pctToLetter(avg)] || 0) * cr;
+                cumCr += cr;
+            }
+        });
+        document.getElementById('cumGpa').textContent = cumCr > 0 ? (cumPts / cumCr).toFixed(2) : '—';
+    } else {
+        document.getElementById('cumGpa').textContent = semGpa;
+    }
+}
+
+function toggleWhatIf() {
+    const on = document.getElementById('whatifMode').checked;
+    document.querySelectorAll('.whatif-grade').forEach(inp => {
+        inp.disabled = !on;
+        if (!on) inp.value = inp.dataset.original || '';
+    });
+    document.getElementById('whatifAdd').style.display = on ? 'block' : 'none';
+    recalcGPA();
+}
+
+function addWhatIfRow() {
+    const id = 'whatif-' + (whatIfCounter++);
+    const semId = document.getElementById('semSelect').value;
+    const courses = semId ? allCourses.filter(c => c.semester_id === parseInt(semId)) : allCourses;
+
+    whatIfRows.push({ id, courseId: null });
+
+    const el = document.getElementById('courseList');
+    const div = document.createElement('div');
+    div.id = id;
+    div.className = 'whatif-row';
+    div.innerHTML = `
+        <div>
+            <span class="whatif-tag">What-If</span>
+            <input type="text" placeholder="Course name" style="width:120px;margin-left:6px;">
+        </div>
+        <div>
+            <select id="${id}-course" style="max-width:80px;" onchange="whatIfRows.find(w=>w.id==='${id}').courseId=parseInt(this.value)||null;recalcGPA()">
+                <option value="">New</option>
+                ${courses.map(c => `<option value="${c.id}">${esc(c.code)}</option>`).join('')}
+            </select>
+        </div>
+        <div>
+            <select onchange="recalcGPA()" style="max-width:60px;">
+                <option value="">—</option>${GRADE_OPTS}
+            </select>
+        </div>
+        <div><input type="number" id="${id}-grade" min="0" max="150" step="0.1" placeholder="%" oninput="recalcGPA()" style="width:60px;"></div>
+        <div><input type="number" id="${id}-cr" min="0" max="6" value="3" step="0.5" oninput="recalcGPA()" style="width:50px;"></div>
+        <div><button class="btn btn-small" style="background:var(--danger);border:none;padding:2px 8px;" onclick="removeWhatIf('${id}')">x</button></div>
+    `;
+    el.appendChild(div);
+}
+
+function removeWhatIf(id) {
+    document.getElementById(id)?.remove();
+    whatIfRows = whatIfRows.filter(w => w.id !== id);
+    recalcGPA();
+}
 </script>
 {% endblock %}
