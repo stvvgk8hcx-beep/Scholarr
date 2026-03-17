@@ -630,6 +630,9 @@ body.dark-mode .code-output.ok { color: #c3e88d; }
 const API_KEY = "{{ api_key }}";
 const NOTE_ID = parseInt("{{ note_id }}");
 
+// HTML escape (prevent XSS in innerHTML)
+function esc(s) { if (s == null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
 // ── State ─────────────────────────────────────────────────
 let saveTimer = null;
 let hideTimer = null;
@@ -1233,7 +1236,7 @@ async function loadBackups() {
         el.innerHTML = backups.slice(0, 10).map(b => {
             const d = new Date(b.created_at);
             const when = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            return `<button class="opt-pill" style="justify-content:flex-start;text-align:left;padding:4px 8px;" onclick="restoreBackup(${b.id})" title="${(b.preview||'').slice(0,80)}">${when} (${b.word_count}w)</button>`;
+            return `<button class="opt-pill" style="justify-content:flex-start;text-align:left;padding:4px 8px;" onclick="restoreBackup(${b.id})" title="${esc((b.preview||'').slice(0,80))}">${when} (${b.word_count}w)</button>`;
         }).join('');
     } catch(e) {
         el.innerHTML = '<div style="font-size:0.65em;color:var(--ed-muted);padding:4px;">Error loading backups</div>';

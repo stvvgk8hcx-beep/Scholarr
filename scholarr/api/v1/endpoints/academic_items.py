@@ -1,7 +1,7 @@
 """Academic Items endpoint."""
 
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Annotated, Optional
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.security import verify_api_key
@@ -79,7 +79,7 @@ async def get_upcoming_deadlines(
 
 @router.get("/{id}", response_model=AcademicItemResponse)
 async def get_academic_item(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):
@@ -105,14 +105,17 @@ async def create_academic_item(
 
 @router.put("/{id}", response_model=AcademicItemResponse)
 async def update_academic_item(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     item_update: AcademicItemUpdate,
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):
     """Update an academic item."""
     service = AcademicItemService(db)
-    updated = await service.update_academic_item(id, item_update)
+    try:
+        updated = await service.update_academic_item(id, item_update)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     if not updated:
         raise HTTPException(status_code=404, detail="Academic item not found")
     return updated
@@ -120,7 +123,7 @@ async def update_academic_item(
 
 @router.delete("/{id}", status_code=204)
 async def delete_academic_item(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     delete_files: bool = Query(False),
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),

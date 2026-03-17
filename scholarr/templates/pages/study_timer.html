@@ -613,7 +613,7 @@ function renderCourseLog() {
     const sorted = Object.values(courseMap).sort((a, b) => b.totalMins - a.totalMins);
     el.innerHTML = sorted.map(c => {
         const hrs   = c.totalMins >= 60 ? (c.totalMins / 60).toFixed(1) + 'h' : c.totalMins + 'm';
-        const label = c.code ? `${c.code} — ${c.name}` : c.name;
+        const label = c.code ? `${esc(c.code)} — ${esc(c.name)}` : esc(c.name);
         const link  = c.id ? `href="/study-timer?course=${c.id}"` : '';
         return `<div class="course-log-row" onclick="${c.id ? `selectCourse(${c.id})` : ''}">
             <div class="course-dot" style="background:${c.color};"></div>
@@ -653,8 +653,8 @@ function renderSessionHistory() {
         const timeStr = t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         return `<div class="session-row">
             <div style="flex:1;min-width:0;">
-                <div class="task-name">${s.task}</div>
-                ${s.courseCode ? `<div style="margin-top:3px;"><span class="course-tag" style="border-left:3px solid ${s.courseColor||'#888'};padding-left:5px;">${s.courseCode}</span></div>` : ''}
+                <div class="task-name">${esc(s.task)}</div>
+                ${s.courseCode ? `<div style="margin-top:3px;"><span class="course-tag" style="border-left:3px solid ${s.courseColor||'#888'};padding-left:5px;">${esc(s.courseCode)}</span></div>` : ''}
             </div>
             <div style="text-align:right;flex-shrink:0;padding-left:10px;">
                 <div class="session-time">${s.duration} min</div>

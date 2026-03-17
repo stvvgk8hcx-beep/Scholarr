@@ -159,6 +159,12 @@
             }, 600);
         };
 
+        // ── HTML escape (prevent XSS in innerHTML) ────────────────
+        window.esc = function(s) {
+            if (s == null) return '';
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        };
+
         // ── Global date formatter ─────────────────────────────────
         window.formatDate = function(dateString) {
             if (!dateString) return 'N/A';

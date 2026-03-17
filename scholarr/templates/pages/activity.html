@@ -135,12 +135,12 @@ async function fetchActivity(reset) {
             const icon = getEventIcon(ev.event_type || '');
             const iconClass = (ev.event_type || '').toLowerCase();
             const detail = ev.destination_path
-                ? `${(ev.source_path||'').split('/').pop()} → ${ev.destination_path.split('/').pop()}`
-                : ev.source_path ? ev.source_path.split('/').pop() : '';
+                ? `${esc((ev.source_path||'').split('/').pop())} → ${esc(ev.destination_path.split('/').pop())}`
+                : ev.source_path ? esc(ev.source_path.split('/').pop()) : '';
             entry.innerHTML = `
                 <div class="activity-icon ${iconClass}">${icon}</div>
                 <div class="activity-header">
-                    <div class="activity-title">${ev.event_type || 'Event'}</div>
+                    <div class="activity-title">${esc(ev.event_type || 'Event')}</div>
                     <div class="activity-time">${formatRelativeTime(ev.date || new Date())}</div>
                 </div>
                 <div class="activity-entity">${detail}</div>

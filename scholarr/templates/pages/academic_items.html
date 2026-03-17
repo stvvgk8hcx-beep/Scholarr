@@ -304,9 +304,9 @@ async function loadItems() {
 
         tbody.innerHTML = items.map(item => `
             <tr>
-                <td style="font-weight:500;">${item.name}</td>
-                <td><span class="badge badge-notstarted" style="text-transform:capitalize;">${item.type || '—'}</span></td>
-                <td style="color:var(--text-secondary);">${item.course_code || '—'}</td>
+                <td style="font-weight:500;">${esc(item.name)}</td>
+                <td><span class="badge badge-notstarted" style="text-transform:capitalize;">${esc(item.type || '—')}</span></td>
+                <td style="color:var(--text-secondary);">${esc(item.course_code || '—')}</td>
                 <td class="date-cell">${formatDate(item.due_date)}</td>
                 <td><span class="badge ${statusBadge(item.status)}">${item.status || 'NotStarted'}</span></td>
                 <td class="grade-cell">${item.grade !== null && item.grade !== undefined ? item.grade + '%' : '—'}</td>

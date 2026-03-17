@@ -266,7 +266,7 @@ async function loadRootFolders() {
         }
         el.innerHTML = list.map(f => `
             <div class="folder-item">
-                <span class="folder-path">${f.path}</span>
+                <span class="folder-path">${esc(f.path)}</span>
                 <button class="btn btn-small" style="background:var(--danger);border-color:var(--danger);" onclick="deleteRootFolder(${f.id})">Remove</button>
             </div>
         `).join('');

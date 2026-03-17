@@ -1,7 +1,7 @@
 """Notes endpoint."""
 
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from typing import Annotated, Optional
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.security import verify_api_key
@@ -28,7 +28,7 @@ async def list_notes(
 
 @router.get("/{id}", response_model=NoteResponse)
 async def get_note(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):
@@ -53,7 +53,7 @@ async def create_note(
 
 @router.put("/{id}", response_model=NoteResponse)
 async def update_note(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     data: NoteUpdate,
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
@@ -68,7 +68,7 @@ async def update_note(
 
 @router.delete("/{id}", status_code=204)
 async def delete_note(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):
@@ -81,7 +81,7 @@ async def delete_note(
 
 @router.post("/{id}/beacon", status_code=204)
 async def beacon_save(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     request: Request,
     db: AsyncSession = Depends(get_db_session),
 ):
@@ -98,7 +98,7 @@ async def beacon_save(
 
 @router.get("/{id}/backups")
 async def list_note_backups(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):
@@ -109,8 +109,8 @@ async def list_note_backups(
 
 @router.post("/{id}/backups/{backup_id}/restore", response_model=NoteResponse)
 async def restore_note_backup(
-    id: int,
-    backup_id: int,
+    id: Annotated[int, Path(ge=1)],
+    backup_id: Annotated[int, Path(ge=1)],
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):

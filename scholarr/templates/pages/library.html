@@ -231,7 +231,7 @@ async function loadItems() {
         allItems = Array.isArray(data) ? data : (data.items || []);
         // Populate move/upload selects
         const opts = allItems.map(i =>
-            `<option value="${i.id}">[${i.course_code || 'No course'}] ${i.name}</option>`
+            `<option value="${i.id}">[${esc(i.course_code || 'No course')}] ${esc(i.name)}</option>`
         ).join('');
         document.getElementById('upload-item-select').innerHTML = opts;
         document.getElementById('move-item-select').innerHTML = opts;
@@ -249,7 +249,7 @@ async function loadFiles() {
         const courses = [...new Set(allFiles.map(f => f.course_code).filter(Boolean))].sort();
         const sel = document.getElementById('lib-course');
         sel.innerHTML = '<option value="">All Courses</option>' +
-            courses.map(c => `<option value="${c}">${c}</option>`).join('');
+            courses.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
 
         // Populate format filter
         const formats = [...new Set(allFiles.map(f => f.format).filter(Boolean))].sort();
@@ -302,11 +302,11 @@ function renderFiles() {
         return `
             <tr class="file-row${selected}" onclick="selectFile(${f.id})" data-id="${f.id}">
                 <td style="font-weight:500;">
-                    <span class="file-ext">${ext}</span>
-                    <span style="margin-left:6px;word-break:break-word;">${name}</span>
+                    <span class="file-ext">${esc(ext)}</span>
+                    <span style="margin-left:6px;word-break:break-word;">${esc(name)}</span>
                 </td>
-                <td style="color:var(--text-secondary);font-size:0.85em;">${f.course_code || '—'}</td>
-                <td style="color:var(--text-secondary);font-size:0.85em;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.item_name || '—'}</td>
+                <td style="color:var(--text-secondary);font-size:0.85em;">${esc(f.course_code || '—')}</td>
+                <td style="color:var(--text-secondary);font-size:0.85em;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(f.item_name || '—')}</td>
                 <td style="color:var(--text-secondary);font-size:0.85em;">${formatBytes(f.size || 0)}</td>
                 <td style="color:var(--text-secondary);font-size:0.85em;">${formatDate(f.date_imported || f.created_at)}</td>
             </tr>
@@ -333,19 +333,19 @@ function showFileMeta(id) {
     document.getElementById('metaContent').innerHTML = `
         <div class="meta-field">
             <div class="meta-label">Filename</div>
-            <div class="meta-value" style="font-weight:600;">${name}</div>
+            <div class="meta-value" style="font-weight:600;">${esc(name)}</div>
         </div>
         <div class="meta-field">
             <div class="meta-label">Format</div>
-            <div class="meta-value"><span class="file-ext">${ext}</span></div>
+            <div class="meta-value"><span class="file-ext">${esc(ext)}</span></div>
         </div>
         <div class="meta-field">
             <div class="meta-label">Course</div>
-            <div class="meta-value">${f.course_code || '—'}</div>
+            <div class="meta-value">${esc(f.course_code || '—')}</div>
         </div>
         <div class="meta-field">
             <div class="meta-label">Academic Item</div>
-            <div class="meta-value">${f.item_name || '—'}</div>
+            <div class="meta-value">${esc(f.item_name || '—')}</div>
         </div>
         <div class="meta-field">
             <div class="meta-label">Size</div>
@@ -361,14 +361,14 @@ function showFileMeta(id) {
         </div>
         <div class="meta-field">
             <div class="meta-label">File Location</div>
-            <div class="meta-value" style="font-family:monospace;font-size:0.78em;color:var(--text-muted);">${f.path || '—'}</div>
+            <div class="meta-value" style="font-family:monospace;font-size:0.78em;color:var(--text-muted);">${esc(f.path || '—')}</div>
         </div>
         ${f.hash ? `<div class="meta-field">
             <div class="meta-label">Hash (SHA-256)</div>
             <div class="meta-value" style="font-family:monospace;font-size:0.72em;color:var(--text-muted);">${f.hash}</div>
         </div>` : ''}
         <div class="meta-actions">
-            <button class="btn" style="width:100%;" onclick="openRenameModal(${f.id}, '${name.replace(/'/g,"\\'")}')">Rename</button>
+            <button class="btn" style="width:100%;" onclick="openRenameModal(${f.id}, '${esc(name).replace(/'/g,"\\'")}')">Rename</button>
             <button class="btn btn-secondary" style="width:100%;" onclick="openMoveModal(${f.id})">Move to Item</button>
             <button class="btn btn-secondary" style="width:100%;background:transparent;border-color:var(--danger);color:var(--danger);" onclick="deleteFile(${f.id})">Delete Record</button>
         </div>

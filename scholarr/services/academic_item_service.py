@@ -179,6 +179,11 @@ class AcademicItemService:
             return None
         # Exclude front-end alias fields that don't map to DB columns
         update_data = item_update.model_dump(exclude_unset=True, exclude={"title", "item_type"})
+        # Validate that course_id exists if it's being changed
+        if "course_id" in update_data and update_data["course_id"] is not None:
+            course = await self.db.get(Course, update_data["course_id"])
+            if not course:
+                raise ValueError(f"Course with id {update_data['course_id']} does not exist")
         old_grade = obj.grade
         old_status = obj.status
         for key, value in update_data.items():

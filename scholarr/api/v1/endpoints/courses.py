@@ -1,7 +1,7 @@
 """Courses endpoint."""
 
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Annotated, Optional
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.security import verify_api_key
@@ -54,7 +54,7 @@ async def list_courses_paginated(
 
 @router.get("/{id}", response_model=CourseResponse)
 async def get_course(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):
@@ -82,7 +82,7 @@ async def create_course(
 
 @router.put("/{id}", response_model=CourseResponse)
 async def update_course(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     course_update: CourseUpdate,
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
@@ -97,7 +97,7 @@ async def update_course(
 
 @router.delete("/{id}", status_code=204)
 async def delete_course(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     delete_files: bool = Query(False),
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),

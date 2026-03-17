@@ -159,14 +159,14 @@ async function loadHealth() {
             components.map(c => {
                 const cls = c.status === 'healthy' ? 'badge-ok' : c.status === 'warning' ? 'badge-warn' : 'badge-err';
                 const details = c.details ? Object.entries(c.details).map(([k,v]) =>
-                    `<div style="font-size:0.78em;color:var(--text-secondary);margin-top:3px;">${k}: ${typeof v === 'number' ? v.toFixed(2) : v}</div>`
+                    `<div style="font-size:0.78em;color:var(--text-secondary);margin-top:3px;">${esc(k)}: ${typeof v === 'number' ? v.toFixed(2) : esc(String(v))}</div>`
                 ).join('') : '';
                 return `<div style="background:var(--bg-tertiary);border-radius:4px;padding:14px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <span style="font-weight:600;text-transform:capitalize;">${c.name.replace(/_/g,' ')}</span>
-                        <span class="${cls}">${c.status}</span>
+                        <span style="font-weight:600;text-transform:capitalize;">${esc(c.name.replace(/_/g,' '))}</span>
+                        <span class="${cls}">${esc(c.status)}</span>
                     </div>
-                    ${c.message ? `<div style="font-size:0.82em;color:var(--text-secondary);margin-top:4px;">${c.message}</div>` : ''}
+                    ${c.message ? `<div style="font-size:0.82em;color:var(--text-secondary);margin-top:4px;">${esc(c.message)}</div>` : ''}
                     ${details}
                 </div>`;
             }).join('') + '</div>';
@@ -188,7 +188,7 @@ async function loadLogs() {
             const lvl = (log.level || '').toUpperCase();
             const cls = lvl === 'ERROR' ? 'log-error' : lvl === 'WARNING' || lvl === 'WARN' ? 'log-warn' : '';
             const ts = log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : '';
-            return `<div class="log-line ${cls}">[${ts}] [${lvl}] ${log.message || log.msg || ''}</div>`;
+            return `<div class="log-line ${cls}">[${ts}] [${lvl}] ${esc(log.message || log.msg || '')}</div>`;
         }).join('');
         el.scrollTop = el.scrollHeight;
     } catch(e) {

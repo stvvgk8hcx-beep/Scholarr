@@ -110,7 +110,7 @@ async function loadCourseFilters() {
     try {
         const courses = await API.get('/api/v1/courses');
         const opts = (Array.isArray(courses) ? courses : []).map(c =>
-            `<option value="${c.id}">${c.code} - ${c.name}</option>`
+            `<option value="${c.id}">${esc(c.code)} - ${esc(c.name)}</option>`
         ).join('');
         document.getElementById('note-course-filter').innerHTML = '<option value="">All Courses</option>' + opts;
         document.getElementById('new-note-course').innerHTML = '<option value="">No course</option>' + opts;
@@ -150,9 +150,9 @@ async function loadNotes() {
                         <button style="background:transparent;border:none;cursor:pointer;color:${n.pinned ? 'var(--accent)' : 'var(--text-muted)'};font-size:0.85em;padding:2px 4px;" onclick="togglePin(${n.id},${!n.pinned})" title="${n.pinned ? 'Unpin' : 'Pin'}">${n.pinned ? 'Pinned' : 'Pin'}</button>
                         <button style="background:transparent;border:none;cursor:pointer;color:var(--text-muted);font-size:0.85em;padding:2px 4px;" onclick="deleteNote(${n.id})" title="Delete">Del</button>
                     </div>
-                    <div class="note-title">${n.title}</div>
-                    ${n.course_code ? `<span class="note-course-badge">${n.course_code}</span>` : ''}
-                    <div class="note-preview">${preview || 'Empty note'}</div>
+                    <div class="note-title">${esc(n.title)}</div>
+                    ${n.course_code ? `<span class="note-course-badge">${esc(n.course_code)}</span>` : ''}
+                    <div class="note-preview">${esc(preview || 'Empty note')}</div>
                     <div class="note-meta">
                         <span>${words} words${mins > 0 ? ' · ' + mins + 'm' : ''}</span>
                         <span>${formatRelativeTime(n.updated_at)}</span>

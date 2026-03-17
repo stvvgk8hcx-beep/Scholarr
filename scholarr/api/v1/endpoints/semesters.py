@@ -1,6 +1,7 @@
 """Semesters endpoint."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Annotated
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.security import verify_api_key
@@ -24,7 +25,7 @@ async def list_semesters(
 
 @router.get("/{id}", response_model=SemesterResponse)
 async def get_semester(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):
@@ -44,13 +45,16 @@ async def create_semester(
 ):
     """Create a new semester."""
     service = SemesterService(db)
-    new_semester = await service.create_semester(semester)
+    try:
+        new_semester = await service.create_semester(semester)
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     return new_semester
 
 
 @router.put("/{id}", response_model=SemesterResponse)
 async def update_semester(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     semester_update: SemesterUpdate,
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
@@ -65,7 +69,7 @@ async def update_semester(
 
 @router.put("/{id}/activate", response_model=SemesterResponse)
 async def activate_semester(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):
@@ -79,7 +83,7 @@ async def activate_semester(
 
 @router.delete("/{id}", status_code=204)
 async def delete_semester(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):

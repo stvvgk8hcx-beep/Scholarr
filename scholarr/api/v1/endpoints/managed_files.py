@@ -1,7 +1,7 @@
 """Managed Files endpoint."""
 
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Annotated, Optional
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -39,7 +39,7 @@ async def list_managed_files(
 
 @router.get("/{id}", response_model=ManagedFileResponse)
 async def get_managed_file(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):
@@ -65,7 +65,7 @@ async def create_managed_file(
 
 @router.put("/{id}", response_model=ManagedFileResponse)
 async def update_managed_file(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     file_update: ManagedFileUpdate,
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
@@ -80,7 +80,7 @@ async def update_managed_file(
 
 @router.delete("/{id}", status_code=204)
 async def delete_managed_file(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     delete_from_disk: bool = Query(False),
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
@@ -95,7 +95,7 @@ async def delete_managed_file(
 
 @router.post("/{id}/rename", response_model=ManagedFileResponse)
 async def rename_managed_file(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     body: RenameRequest,
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
@@ -110,7 +110,7 @@ async def rename_managed_file(
 
 @router.post("/{id}/move", response_model=ManagedFileResponse)
 async def move_managed_file(
-    id: int,
+    id: Annotated[int, Path(ge=1)],
     body: MoveRequest,
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),

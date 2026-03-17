@@ -127,10 +127,10 @@ async function loadCourses() {
 
         tbody.innerHTML = items.map(c => `
             <tr onclick="window.location='/courses/${c.id}'" style="cursor:pointer;">
-                <td><span style="font-family:monospace;font-weight:600;color:var(--accent-blue);">${c.code}</span></td>
-                <td>${c.name}</td>
-                <td style="color:var(--text-secondary);">${c.professor || '—'}</td>
-                <td style="color:var(--text-secondary);">${c.semester_name || '—'}</td>
+                <td><span style="font-family:monospace;font-weight:600;color:var(--accent-blue);">${esc(c.code)}</span></td>
+                <td>${esc(c.name)}</td>
+                <td style="color:var(--text-secondary);">${esc(c.professor || '—')}</td>
+                <td style="color:var(--text-secondary);">${esc(c.semester_name || '—')}</td>
                 <td>${c.item_count ?? 0}</td>
                 <td>
                     <span class="badge ${c.monitored ? 'badge-complete' : 'badge-notstarted'}">
