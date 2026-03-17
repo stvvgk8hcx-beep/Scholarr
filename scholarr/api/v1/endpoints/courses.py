@@ -22,25 +22,34 @@ async def list_courses(
 ):
     """List all courses with optional filtering."""
     service = CourseService(db)
-    courses = await service.list_courses(semester_id=semester_id, monitored=monitored, search=search)
-    return courses
+    return await service.list_courses(
+        semester_id=semester_id, monitored=monitored, search=search
+    )
 
 
 @router.get("/paged", response_model=CourseListResponse)
 async def list_courses_paginated(
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=200),
     sort_key: str = Query("name"),
     sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
+    semester_id: Optional[int] = Query(None),
+    monitored: Optional[bool] = Query(None),
+    search: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):
-    """List courses with pagination."""
+    """List courses with pagination and full filtering support."""
     service = CourseService(db)
-    result = await service.list_courses_paginated(
-        page=page, page_size=page_size, sort_key=sort_key, sort_dir=sort_dir
+    return await service.list_courses_paginated(
+        page=page,
+        page_size=page_size,
+        sort_key=sort_key,
+        sort_dir=sort_dir,
+        semester_id=semester_id,
+        monitored=monitored,
+        search=search,
     )
-    return result
 
 
 @router.get("/{id}", response_model=CourseResponse)
@@ -64,13 +73,11 @@ async def create_course(
     api_key: str = Depends(verify_api_key),
 ):
     """Create a new course."""
-    from fastapi import HTTPException
     service = CourseService(db)
     try:
-        new_course = await service.create_course(course)
+        return await service.create_course(course)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
-    return new_course
 
 
 @router.put("/{id}", response_model=CourseResponse)

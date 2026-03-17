@@ -106,7 +106,7 @@ async function loadCourses() {
     const semId = document.getElementById('semester-filter').value;
     const monitored = document.getElementById('monitored-only').checked;
 
-    let url = `/api/v1/courses?page=${coursePage}&page_size=${PAGE_SIZE}&sort_key=${courseSortKey}&sort_dir=${courseSortDir}`;
+    let url = `/api/v1/courses/paged?page=${coursePage}&page_size=${PAGE_SIZE}&sort_key=${courseSortKey}&sort_dir=${courseSortDir}`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
     if (semId) url += `&semester_id=${semId}`;
     if (monitored) url += `&monitored=true`;

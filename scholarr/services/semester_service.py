@@ -5,8 +5,13 @@ from sqlalchemy import select, func, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from scholarr.db.models import Semester
-from scholarr.schemas.semester import SemesterCreate, SemesterUpdate, SemesterResponse, SemesterListResponse
+from scholarr.db.models import Course, Semester
+from scholarr.schemas.semester import (
+    SemesterCreate,
+    SemesterUpdate,
+    SemesterResponse,
+    SemesterListResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -15,22 +20,53 @@ class SemesterService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
+    # ------------------------------------------------------------------
+    # Internal: batch-load course counts for a list of semester rows
+    # ------------------------------------------------------------------
+
+    async def _course_counts(self, semester_ids: list[int]) -> dict[int, int]:
+        if not semester_ids:
+            return {}
+        result = await self.db.execute(
+            select(Course.semester_id, func.count().label("cnt"))
+            .where(Course.semester_id.in_(semester_ids))
+            .group_by(Course.semester_id)
+        )
+        return {row.semester_id: row.cnt for row in result}
+
+    def _to_response(self, obj: Semester, count: int = 0) -> SemesterResponse:
+        r = SemesterResponse.model_validate(obj)
+        r.course_count = count
+        return r
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
     async def list_semesters(self, year: int | None = None) -> list[SemesterResponse]:
         query = select(Semester)
         if year is not None:
             query = query.where(Semester.year == year)
         query = query.order_by(Semester.year.desc(), Semester.term)
         result = await self.db.execute(query)
-        return [SemesterResponse.model_validate(row) for row in result.scalars().all()]
+        rows = result.scalars().all()
+        counts = await self._course_counts([s.id for s in rows])
+        return [self._to_response(s, counts.get(s.id, 0)) for s in rows]
 
-    async def list_semesters_paginated(self, page: int, page_size: int) -> SemesterListResponse:
+    async def list_semesters_paginated(
+        self, page: int, page_size: int
+    ) -> SemesterListResponse:
         offset = (page - 1) * page_size
-        total_result = await self.db.execute(select(func.count()).select_from(Semester))
+        total_result = await self.db.execute(
+            select(func.count()).select_from(Semester)
+        )
         total = total_result.scalar_one()
         result = await self.db.execute(
             select(Semester).order_by(Semester.year.desc()).offset(offset).limit(page_size)
         )
-        items = [SemesterResponse.model_validate(row) for row in result.scalars().all()]
+        rows = result.scalars().all()
+        counts = await self._course_counts([s.id for s in rows])
+        items = [self._to_response(s, counts.get(s.id, 0)) for s in rows]
         return SemesterListResponse(
             items=items,
             total=total,
@@ -40,24 +76,28 @@ class SemesterService:
         )
 
     async def get_semester(self, id: int) -> SemesterResponse | None:
-        # Use SELECT instead of session.get() to always get fresh data from DB,
-        # avoiding MissingGreenlet on expired objects after bulk UPDATEs.
         result = await self.db.execute(select(Semester).where(Semester.id == id))
         obj = result.scalar_one_or_none()
-        return SemesterResponse.model_validate(obj) if obj else None
+        if not obj:
+            return None
+        counts = await self._course_counts([obj.id])
+        return self._to_response(obj, counts.get(obj.id, 0))
 
     async def get_active_semester(self) -> SemesterResponse | None:
-        result = await self.db.execute(select(Semester).where(Semester.active == True))  # noqa: E712
+        result = await self.db.execute(
+            select(Semester).where(Semester.active == True)  # noqa: E712
+        )
         obj = result.scalar_one_or_none()
-        return SemesterResponse.model_validate(obj) if obj else None
+        if not obj:
+            return None
+        counts = await self._course_counts([obj.id])
+        return self._to_response(obj, counts.get(obj.id, 0))
 
     async def set_active_semester(self, id: int) -> SemesterResponse | None:
         """Mark the given semester as active and deactivate all others."""
         obj = await self.db.get(Semester, id)
         if not obj:
             return None
-        # Use synchronize_session="evaluate" (default) so SQLAlchemy updates the
-        # in-memory identity-map objects to reflect the bulk SQL changes.
         await self.db.execute(
             update(Semester).where(Semester.id != id).values(active=False)
         )
@@ -65,10 +105,10 @@ class SemesterService:
             update(Semester).where(Semester.id == id).values(active=True)
         )
         await self.db.commit()
-        # Refresh target object from DB to get authoritative state
         await self.db.refresh(obj)
         logger.info(f"Set active semester id={id}")
-        return SemesterResponse.model_validate(obj)
+        counts = await self._course_counts([obj.id])
+        return self._to_response(obj, counts.get(obj.id, 0))
 
     async def create_semester(self, semester: SemesterCreate) -> SemesterResponse:
         obj = Semester(**semester.model_dump())
@@ -82,9 +122,11 @@ class SemesterService:
             )
         await self.db.refresh(obj)
         logger.info(f"Created semester id={obj.id} name={obj.name!r}")
-        return SemesterResponse.model_validate(obj)
+        return self._to_response(obj, 0)
 
-    async def update_semester(self, id: int, semester_update: SemesterUpdate) -> SemesterResponse | None:
+    async def update_semester(
+        self, id: int, semester_update: SemesterUpdate
+    ) -> SemesterResponse | None:
         obj = await self.db.get(Semester, id)
         if not obj:
             return None
@@ -92,7 +134,8 @@ class SemesterService:
             setattr(obj, key, value)
         await self.db.commit()
         await self.db.refresh(obj)
-        return SemesterResponse.model_validate(obj)
+        counts = await self._course_counts([obj.id])
+        return self._to_response(obj, counts.get(obj.id, 0))
 
     async def delete_semester(self, id: int, cascade: bool = False) -> bool:
         obj = await self.db.get(Semester, id)

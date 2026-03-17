@@ -172,8 +172,8 @@ async function openEditModal(id) {
         const s = await API.get(`/api/v1/semesters/${id}`);
         document.getElementById('edit-id').value = s.id;
         document.getElementById('edit-name').value = s.name;
-        document.getElementById('edit-start').value = s.start_date;
-        document.getElementById('edit-end').value = s.end_date;
+        document.getElementById('edit-start').value = s.start_date ? s.start_date.slice(0,10) : '';
+        document.getElementById('edit-end').value = s.end_date ? s.end_date.slice(0,10) : '';
         document.getElementById('edit-active').checked = s.active;
         document.getElementById('editSemesterModal').classList.add('show');
     } catch(e) { showToast('Could not load semester', 'error'); }
