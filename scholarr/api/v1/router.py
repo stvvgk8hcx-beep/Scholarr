@@ -28,6 +28,7 @@ from scholarr.api.v1.endpoints import (
     integrations,
     mass_editor,
     notes,
+    code_runner,
 )
 
 router = APIRouter()
@@ -58,3 +59,4 @@ router.include_router(config.router, prefix="/config", tags=["Configuration"])
 router.include_router(integrations.router, prefix="/integrations", tags=["Integrations"])
 router.include_router(mass_editor.router, prefix="/editor", tags=["Mass Editor"])
 router.include_router(notes.router, prefix="/notes", tags=["Notes"])
+router.include_router(code_runner.router, prefix="/code", tags=["Code Runner"])

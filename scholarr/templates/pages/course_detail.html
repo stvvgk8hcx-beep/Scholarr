@@ -151,6 +151,15 @@
                 <input type="color" id="edit-color" value="#2ecfa1" style="height:38px;padding:4px;">
             </div>
             <div class="form-group">
+                <label>Location / Room</label>
+                <input type="text" id="edit-location" placeholder="e.g., Room 204B, Online">
+            </div>
+            <div class="form-group">
+                <label>Schedule</label>
+                <div id="schedule-rows" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+                <button class="btn btn-secondary btn-small" type="button" onclick="addScheduleRow()">Add Time Slot</button>
+            </div>
+            <div class="form-group">
                 <label>Notes</label>
                 <textarea id="edit-notes" rows="4" placeholder="Any notes about this course..."></textarea>
             </div>
@@ -229,6 +238,8 @@ async function loadCourse() {
         document.getElementById('edit-color').value = courseData.color || '#2ecfa1';
         document.getElementById('edit-notes').value = courseData.notes || '';
         document.getElementById('edit-monitored').checked = courseData.monitored || false;
+        document.getElementById('edit-location').value = courseData.location || '';
+        renderScheduleRows(courseData.schedule || []);
         renderGradeWeightsGrid(courseData.grade_weights || {});
 
         const semesters = await API.get('/api/v1/semesters');
@@ -258,6 +269,8 @@ async function saveCourse() {
         credits: parseInt(document.getElementById('edit-credits').value) || null,
         semester_id: semVal ? parseInt(semVal) : null,
         color: document.getElementById('edit-color').value,
+        location: document.getElementById('edit-location').value.trim() || null,
+        schedule: getScheduleData(),
         notes: document.getElementById('edit-notes').value.trim() || null,
         monitored: document.getElementById('edit-monitored').checked,
     };
@@ -438,6 +451,44 @@ function loadStudyTime() {
     } catch(e) {
         console.warn('Study time load error:', e);
     }
+}
+
+// ── Schedule editor ──────────────────────────────────────
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+function renderScheduleRows(schedule) {
+    const container = document.getElementById('schedule-rows');
+    container.innerHTML = '';
+    if (!schedule || !schedule.length) return;
+    schedule.forEach((s, i) => addScheduleRowWith(s.day, s.start, s.end));
+}
+
+function addScheduleRow() { addScheduleRowWith('Monday', '09:00', '10:00'); }
+
+function addScheduleRowWith(day, start, end) {
+    const container = document.getElementById('schedule-rows');
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:8px;align-items:center;';
+    row.innerHTML = `
+        <select class="sched-day" style="flex:1;">${DAYS.map(d => `<option value="${d}"${d===day?' selected':''}>${d.slice(0,3)}</option>`).join('')}</select>
+        <input type="time" class="sched-start" value="${start}" style="width:110px;">
+        <span style="color:var(--text-muted);">to</span>
+        <input type="time" class="sched-end" value="${end}" style="width:110px;">
+        <button type="button" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:1.1em;" onclick="this.parentElement.remove()">x</button>
+    `;
+    container.appendChild(row);
+}
+
+function getScheduleData() {
+    const rows = document.querySelectorAll('#schedule-rows > div');
+    const schedule = [];
+    rows.forEach(r => {
+        const day = r.querySelector('.sched-day')?.value;
+        const start = r.querySelector('.sched-start')?.value;
+        const end = r.querySelector('.sched-end')?.value;
+        if (day && start && end) schedule.push({ day, start, end });
+    });
+    return schedule.length ? schedule : null;
 }
 
 const ITEM_TYPES = ['Assignment','Exam','Quiz','Lab','Project','Paper','Notes','Syllabus','Textbook','Slides','Tutorial','Other'];

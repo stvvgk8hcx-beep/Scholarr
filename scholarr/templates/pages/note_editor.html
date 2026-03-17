@@ -321,6 +321,133 @@ body.dark-mode { --ed-text-current: #d8dae8; }
     background: var(--ed-accent);
     cursor: pointer;
 }
+
+/* ── Code Panel ──────────────────────────────────────────── */
+.code-panel {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    max-height: 50vh;
+    background: #0d0d1e;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.35s ease;
+}
+.code-panel.open { transform: translateY(0); }
+
+.code-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75em;
+}
+.code-header select {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #c0c4d8;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 1em;
+    font-family: 'Inter', sans-serif;
+}
+.code-header select option { background: #1a1a38; }
+.code-header .run-btn {
+    background: var(--ed-accent);
+    color: #0a0a18;
+    border: none;
+    padding: 4px 14px;
+    border-radius: 4px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+}
+.code-header .run-btn:hover { opacity: 0.9; }
+.code-header .run-btn:disabled { opacity: 0.5; cursor: default; }
+.code-header .close-code {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: var(--ed-muted);
+    cursor: pointer;
+    font-size: 1.2em;
+    padding: 2px 6px;
+}
+
+.code-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+.code-input-wrap {
+    flex: 1;
+    position: relative;
+    overflow: auto;
+}
+.code-input {
+    width: 100%;
+    min-height: 120px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #c8cce0;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.85em;
+    line-height: 1.7;
+    padding: 12px 16px;
+    resize: none;
+    tab-size: 4;
+    white-space: pre;
+    overflow-wrap: normal;
+}
+.code-input::placeholder { color: rgba(255,255,255,0.2); }
+
+/* Syntax highlight overlay */
+.code-highlight {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    padding: 12px 16px;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.85em;
+    line-height: 1.7;
+    white-space: pre;
+    pointer-events: none;
+    overflow: auto;
+    color: transparent;
+    tab-size: 4;
+}
+.code-highlight .kw { color: #c792ea; }  /* keywords: purple */
+.code-highlight .fn { color: #82aaff; }  /* functions: blue */
+.code-highlight .st { color: #c3e88d; }  /* strings: green */
+.code-highlight .cm { color: #546e7a; font-style: italic; }  /* comments: grey */
+.code-highlight .nu { color: #f78c6c; }  /* numbers: orange */
+.code-highlight .op { color: #89ddff; }  /* operators: cyan */
+.code-highlight .bi { color: #ffcb6b; }  /* builtins: yellow */
+
+.code-output-wrap {
+    flex: 1;
+    border-left: 1px solid rgba(255,255,255,0.06);
+    overflow: auto;
+    background: #080816;
+}
+.code-output {
+    padding: 12px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82em;
+    line-height: 1.6;
+    color: #a0a4b8;
+    white-space: pre-wrap;
+    word-break: break-word;
+    min-height: 120px;
+}
+.code-output.error { color: #f07178; }
+.code-output.success { color: #c3e88d; }
+.code-output .placeholder { color: rgba(255,255,255,0.15); font-style: italic; }
 </style>
 </head>
 <body class="dark-mode">
@@ -435,7 +562,11 @@ body.dark-mode { --ed-text-current: #d8dae8; }
         </div>
         <button class="tool-btn" title="Backup History" onclick="loadBackups()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 2"/></svg></button>
     </div>
-    <!-- Row 9: Save/Export -->
+    <!-- Row 9: Code Block -->
+    <div class="tool-row">
+        <button class="tool-btn" title="Insert Code Block" onclick="toggleCodePanel()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 4L1 8l4 4M11 4l4 4-4 4M9 2l-2 12"/></svg></button>
+    </div>
+    <!-- Row 10: Save/Export -->
     <div class="tool-row">
         <div class="tool-opts">
             <button class="opt-pill" onclick="exportAs('txt')">TXT</button>
@@ -455,6 +586,31 @@ body.dark-mode { --ed-text-current: #d8dae8; }
     <span id="sWords">0 words</span>
     <span id="sSave">Saved</span>
     <span id="sChars">0 characters</span>
+</div>
+
+<!-- Code execution panel -->
+<div class="code-panel" id="codePanel">
+    <div class="code-header">
+        <span style="color:var(--ed-muted);">Code</span>
+        <select id="codeLang">
+            <option value="python">Python</option>
+            <option value="javascript">JavaScript</option>
+            <option value="bash">Bash</option>
+        </select>
+        <button class="run-btn" id="runBtn" onclick="runCode()">Run</button>
+        <span id="codeStatus" style="color:var(--ed-muted);font-size:0.9em;"></span>
+        <button class="close-code" onclick="toggleCodePanel()" title="Close">&times;</button>
+    </div>
+    <div class="code-body">
+        <div class="code-input-wrap">
+            <div class="code-highlight" id="codeHighlight"></div>
+            <textarea class="code-input" id="codeInput" placeholder="Write code here..." spellcheck="false"
+                oninput="highlightCode()" onscroll="syncScroll()" onkeydown="handleTab(event)"></textarea>
+        </div>
+        <div class="code-output-wrap">
+            <div class="code-output" id="codeOutput"><span class="placeholder">Output will appear here after running...</span></div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -1016,6 +1172,154 @@ async function restoreBackup(backupId) {
         alert('Restore failed: ' + e.message);
     }
 }
+
+// ══════════════════════════════════════════════════════════
+// CODE BLOCK — syntax highlighting + execution
+// ══════════════════════════════════════════════════════════
+let codePanelOpen = false;
+
+function toggleCodePanel() {
+    codePanelOpen = !codePanelOpen;
+    document.getElementById('codePanel').classList.toggle('open', codePanelOpen);
+    if (codePanelOpen) {
+        // Shrink writing area to make room
+        document.getElementById('writeWrap').style.paddingBottom = '52vh';
+        setTimeout(() => document.getElementById('codeInput').focus(), 100);
+    } else {
+        document.getElementById('writeWrap').style.paddingBottom = '80px';
+    }
+}
+
+// Tab key inserts spaces instead of switching focus
+function handleTab(e) {
+    if (e.key === 'Tab') {
+        e.preventDefault();
+        const ta = e.target;
+        const start = ta.selectionStart;
+        const end = ta.selectionEnd;
+        ta.value = ta.value.substring(0, start) + '    ' + ta.value.substring(end);
+        ta.selectionStart = ta.selectionEnd = start + 4;
+        highlightCode();
+    }
+    // Ctrl/Cmd+Enter runs code
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        runCode();
+    }
+}
+
+function syncScroll() {
+    const input = document.getElementById('codeInput');
+    const highlight = document.getElementById('codeHighlight');
+    highlight.scrollTop = input.scrollTop;
+    highlight.scrollLeft = input.scrollLeft;
+}
+
+// ── Syntax Highlighting ──────────────────────────────────
+const HIGHLIGHT_RULES = {
+    python: {
+        keywords: /\b(def|class|if|elif|else|for|while|try|except|finally|with|as|import|from|return|yield|raise|break|continue|pass|and|or|not|in|is|lambda|global|nonlocal|assert|del|True|False|None|async|await)\b/g,
+        builtins: /\b(print|len|range|int|str|float|list|dict|set|tuple|type|isinstance|enumerate|zip|map|filter|sorted|reversed|open|input|format|abs|max|min|sum|any|all|round|pow|super|property|staticmethod|classmethod)\b/g,
+        strings: /("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/g,
+        comments: /(#.*$)/gm,
+        numbers: /\b(\d+\.?\d*(?:e[+-]?\d+)?)\b/g,
+        functions: /\b([a-zA-Z_]\w*)\s*(?=\()/g,
+        operators: /([+\-*\/%=<>!&|^~]+|:(?!=))/g,
+    },
+    javascript: {
+        keywords: /\b(const|let|var|function|class|if|else|for|while|do|switch|case|break|continue|return|try|catch|finally|throw|new|typeof|instanceof|this|super|import|export|default|from|async|await|yield|true|false|null|undefined|void|delete|in|of)\b/g,
+        builtins: /\b(console|document|window|Math|JSON|Array|Object|String|Number|Boolean|Promise|Date|RegExp|Map|Set|Error|setTimeout|setInterval|fetch|parseInt|parseFloat|isNaN)\b/g,
+        strings: /("""[\s\S]*?"""|`(?:\\.|[^`\\])*`|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/g,
+        comments: /(\/\/.*$|\/\*[\s\S]*?\*\/)/gm,
+        numbers: /\b(\d+\.?\d*(?:e[+-]?\d+)?)\b/g,
+        functions: /\b([a-zA-Z_$]\w*)\s*(?=\()/g,
+        operators: /([+\-*\/%=<>!&|^~?]+|=>|\.\.\.)/g,
+    },
+    bash: {
+        keywords: /\b(if|then|else|elif|fi|for|while|do|done|case|esac|in|function|return|exit|local|export|source|alias|unalias|set|unset|readonly|declare|typeset|shift|eval|exec|trap|wait)\b/g,
+        builtins: /\b(echo|printf|cd|ls|cat|grep|sed|awk|find|mkdir|rm|cp|mv|chmod|chown|curl|wget|tar|git|pip|npm|python|node|bash|sh)\b/g,
+        strings: /("(?:\\.|[^"\\])*"|'[^']*')/g,
+        comments: /(#.*$)/gm,
+        numbers: /\b(\d+\.?\d*)\b/g,
+        functions: /\b([a-zA-Z_]\w*)\s*(?=\()/g,
+        operators: /(&&|\|\||[|<>&;]+|[=!]+)/g,
+    },
+};
+
+function highlightCode() {
+    const code = document.getElementById('codeInput').value;
+    const lang = document.getElementById('codeLang').value;
+    const rules = HIGHLIGHT_RULES[lang] || HIGHLIGHT_RULES.python;
+
+    // Escape HTML
+    let html = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // Apply highlighting in order (strings and comments first to prevent inner matches)
+    // Store replacements to avoid double-matching
+    const tokens = [];
+    let tokenId = 0;
+
+    function tokenize(regex, cls) {
+        html = html.replace(regex, (match) => {
+            const id = `__TOK${tokenId++}__`;
+            tokens.push({ id, html: `<span class="${cls}">${match}</span>` });
+            return id;
+        });
+    }
+
+    tokenize(rules.strings, 'st');
+    tokenize(rules.comments, 'cm');
+    tokenize(rules.keywords, 'kw');
+    tokenize(rules.builtins, 'bi');
+    tokenize(rules.numbers, 'nu');
+    tokenize(rules.functions, 'fn');
+
+    // Restore tokens
+    for (const t of tokens) {
+        html = html.replace(t.id, t.html);
+    }
+
+    // Add trailing newline so the highlight div matches textarea height
+    document.getElementById('codeHighlight').innerHTML = html + '\n';
+}
+
+// ── Run Code ─────────────────────────────────────────────
+async function runCode() {
+    const code = document.getElementById('codeInput').value.trim();
+    const lang = document.getElementById('codeLang').value;
+    const outEl = document.getElementById('codeOutput');
+    const btn = document.getElementById('runBtn');
+    const status = document.getElementById('codeStatus');
+
+    if (!code) {
+        outEl.className = 'code-output';
+        outEl.innerHTML = '<span class="placeholder">Write some code first...</span>';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Running...';
+    status.textContent = '';
+    outEl.className = 'code-output';
+    outEl.textContent = 'Executing...';
+
+    try {
+        const result = await api('POST', '/api/v1/code/run', { language: lang, code });
+        outEl.className = 'code-output ' + (result.error ? 'error' : 'success');
+        outEl.textContent = result.output || '(no output)';
+        status.textContent = result.error ? 'Exit: ' + (result.exit_code ?? '?') : 'OK';
+        status.style.color = result.error ? '#f07178' : '#c3e88d';
+    } catch(e) {
+        outEl.className = 'code-output error';
+        outEl.textContent = 'Error: ' + e.message;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Run';
+    }
+}
+
+// Update highlighting when language changes
+document.getElementById('codeLang').addEventListener('change', highlightCode);
 </script>
 </body>
 </html>

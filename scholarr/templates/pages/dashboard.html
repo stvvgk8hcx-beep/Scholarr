@@ -93,6 +93,17 @@
                 <div class="stat-value" id="dash-files-count">—</div>
                 <div style="font-size:0.8em;color:var(--text-secondary);margin-top:6px;"><a href="/library" style="color:var(--accent);">Browse Library →</a></div>
             </div>
+
+            <!-- Recent Notes -->
+            <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:6px;overflow:hidden;">
+                <div style="padding:14px 18px;border-bottom:1px solid var(--border-color);font-weight:600;font-size:0.95em;display:flex;justify-content:space-between;align-items:center;">
+                    <span>Recent Notes</span>
+                    <a href="/notes" style="font-size:0.8em;color:var(--accent);">All Notes →</a>
+                </div>
+                <div id="dash-notes" style="max-height:200px;overflow-y:auto;">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -130,6 +141,7 @@ async function loadDashboard() {
 
     // Load all graded items for grade summary
     loadGradeSummary();
+    loadRecentNotes();
 
     // Activity
     try {
@@ -247,6 +259,30 @@ async function loadGradeSummary() {
     } catch(e) {
         document.getElementById('dash-grades').innerHTML = '<div class="loading">Could not load grades.</div>';
         document.getElementById('dash-avg-grade').textContent = '—';
+    }
+}
+
+// Recent Notes
+async function loadRecentNotes() {
+    const el = document.getElementById('dash-notes');
+    try {
+        const data = await API.get('/api/v1/notes?page=1&page_size=4');
+        const notes = data.items || [];
+        if (!notes.length) {
+            el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-secondary);font-size:0.88em;"><a href="/notes" style="color:var(--accent);">Create your first note →</a></div>';
+            return;
+        }
+        el.innerHTML = notes.map(n => `
+            <a href="/notes/${n.id}" style="display:block;padding:10px 18px;border-bottom:1px solid var(--border-color);text-decoration:none;">
+                <div style="font-weight:500;font-size:0.88em;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${n.title}</div>
+                <div style="font-size:0.76em;color:var(--text-muted);margin-top:2px;display:flex;justify-content:space-between;">
+                    <span>${n.course_code || 'No course'}</span>
+                    <span>${n.word_count} words · ${formatRelativeTime(n.updated_at)}</span>
+                </div>
+            </a>
+        `).join('');
+    } catch(e) {
+        el.innerHTML = '<div class="loading">Could not load notes.</div>';
     }
 }
 
