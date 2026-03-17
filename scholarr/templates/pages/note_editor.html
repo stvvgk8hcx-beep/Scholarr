@@ -360,147 +360,98 @@ body.dark-mode { --ed-text-current: #d8dae8; }
     cursor: pointer;
 }
 
-/* ── Inline Code Block (embedded in writing flow) ──────── */
+/* ── Inline Code Block ────────────────────────────────────── */
 .code-block {
-    max-width: 700px;
     width: 100%;
-    margin: 20px auto;
-    background: rgba(8,8,22,0.85);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 8px;
+    margin: 16px 0 0;
+    border-radius: 6px;
     overflow: hidden;
     display: none;
+    border: 1px solid rgba(128,128,140,0.15);
+    flex-shrink: 0;
 }
 .code-block.open { display: block; }
+body.light-mode .code-block { background: rgba(0,0,0,0.06); }
+body.dark-mode .code-block { background: rgba(0,0,0,0.3); }
 
 .code-bar {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 12px;
-    background: rgba(255,255,255,0.03);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding: 5px 10px;
+    border-bottom: 1px solid rgba(128,128,140,0.1);
     font-family: 'Inter', sans-serif;
-    font-size: 0.7em;
+    font-size: 0.68em;
 }
 .code-bar select {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.08);
-    color: #a0a4b8;
-    padding: 3px 6px;
+    background: rgba(128,128,140,0.12);
+    border: 1px solid rgba(128,128,140,0.15);
+    color: inherit;
+    padding: 2px 6px;
     border-radius: 3px;
     font-size: 1em;
-    font-family: 'Inter', sans-serif;
+    font-family: inherit;
 }
-.code-bar select option { background: #12122a; }
 .code-bar .run-btn {
     background: var(--ed-accent);
     color: #0a0a18;
     border: none;
-    padding: 3px 12px;
+    padding: 2px 10px;
     border-radius: 3px;
-    font-size: 1em;
     font-weight: 600;
     cursor: pointer;
-    font-family: 'Inter', sans-serif;
 }
-.code-bar .run-btn:hover { opacity: 0.85; }
 .code-bar .run-btn:disabled { opacity: 0.4; }
 .code-bar .close-code {
     margin-left: auto;
     background: transparent;
     border: none;
-    color: var(--ed-muted);
+    color: inherit;
+    opacity: 0.5;
     cursor: pointer;
     font-size: 1.1em;
-    padding: 0 4px;
 }
 
-.code-split {
-    display: flex;
-    min-height: 100px;
-}
-.code-edit {
-    flex: 1;
-    min-width: 0;
-    position: relative;
-    overflow: hidden;
-}
-/* Backdrop: colored, behind textarea */
-.code-backdrop {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    padding: 10px 14px;
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    font-size: 0.82em;
-    line-height: 1.7;
-    white-space: pre-wrap;
-    word-break: break-word;
-    overflow: auto;
-    pointer-events: none;
-    color: #c8cce0;
-}
-.code-backdrop .kw { color: #c792ea; }
-.code-backdrop .bi { color: #ffcb6b; }
-.code-backdrop .fn { color: #82aaff; }
-.code-backdrop .st { color: #c3e88d; }
-.code-backdrop .cm { color: #546e7a; font-style: italic; }
-.code-backdrop .nu { color: #f78c6c; }
-.code-backdrop .op { color: #89ddff; }
-/* Textarea: on top, transparent text, visible caret */
-.code-ta {
-    position: relative;
-    z-index: 1;
+/* Code input: simple visible textarea */
+.code-input {
     width: 100%;
-    min-height: 100px;
-    height: 100%;
-    background: transparent;
+    min-height: 80px;
+    max-height: 300px;
     border: none;
     outline: none;
-    color: transparent;
-    caret-color: var(--ed-accent);
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    font-size: 0.82em;
+    font-size: 0.8em;
     line-height: 1.7;
-    padding: 10px 14px;
-    resize: none;
+    padding: 10px 12px;
+    resize: vertical;
     tab-size: 4;
-    white-space: pre-wrap;
-    word-break: break-word;
+    white-space: pre;
     overflow: auto;
 }
-.code-ta::placeholder { color: rgba(255,255,255,0.15); }
-.code-ta::selection { background: rgba(46,207,161,0.25); color: transparent; }
+body.light-mode .code-input { background: rgba(0,0,0,0.04); color: #2a2a3a; caret-color: #2a2a3a; }
+body.dark-mode .code-input { background: rgba(0,0,0,0.25); color: #c8cce0; caret-color: var(--ed-accent); }
+.code-input::placeholder { opacity: 0.3; }
 
-/* Resizable divider */
-.code-divider {
-    width: 4px;
-    background: rgba(255,255,255,0.04);
-    cursor: col-resize;
-    flex-shrink: 0;
-    transition: background 0.2s;
-}
-.code-divider:hover, .code-divider.dragging { background: var(--ed-accent); }
-
-.code-out {
-    flex: 1;
-    min-width: 80px;
-    overflow: auto;
-    background: rgba(0,0,0,0.2);
-}
-.code-out-content {
-    padding: 10px 14px;
+/* Output below code input */
+.code-output {
+    border-top: 1px solid rgba(128,128,140,0.1);
+    padding: 8px 12px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.78em;
-    line-height: 1.6;
-    color: #8a8ea0;
+    font-size: 0.75em;
+    line-height: 1.5;
     white-space: pre-wrap;
     word-break: break-word;
-    min-height: 100px;
+    max-height: 200px;
+    overflow: auto;
+    display: none;
 }
-.code-out-content.err { color: #f07178; }
-.code-out-content.ok { color: #c3e88d; }
-.code-out-content .ph { color: rgba(255,255,255,0.12); font-style: italic; }
+body.light-mode .code-output { color: #333; background: rgba(0,0,0,0.03); }
+body.dark-mode .code-output { color: #a0a4b8; background: rgba(0,0,0,0.2); }
+.code-output.visible { display: block; }
+.code-output.err { color: #d44; }
+.code-output.ok { color: #4a4; }
+body.dark-mode .code-output.err { color: #f07178; }
+body.dark-mode .code-output.ok { color: #c3e88d; }
 </style>
 </head>
 <body class="dark-mode">
@@ -530,20 +481,12 @@ body.dark-mode { --ed-text-current: #d8dae8; }
                     <option value="zsh">Zsh</option>
                 </select>
                 <button class="run-btn" id="runBtn" onclick="runCode()">Run</button>
-                <span id="codeStatus" style="color:var(--ed-muted);"></span>
-                <button class="close-code" onclick="toggleCodePanel()" title="Close code block">&times;</button>
+                <span id="codeStatus" style="opacity:0.5;"></span>
+                <button class="close-code" onclick="toggleCodePanel()" title="Close">&times;</button>
             </div>
-            <div class="code-split">
-                <div class="code-edit">
-                    <div class="code-backdrop" id="codeBackdrop"></div>
-                    <textarea class="code-ta" id="codeInput" placeholder="Write code here..." spellcheck="false"
-                        onkeydown="handleTab(event)" oninput="syncHighlight()" onscroll="syncScroll()"></textarea>
-                </div>
-                <div class="code-divider" id="codeDivider"></div>
-                <div class="code-out" id="codeOutWrap">
-                    <div class="code-out-content" id="codeOutput"><span class="ph">Output appears here</span></div>
-                </div>
-            </div>
+            <textarea class="code-input" id="codeInput" placeholder="Write code here..." spellcheck="false"
+                onkeydown="handleTab(event)"></textarea>
+            <div class="code-output" id="codeOutput"></div>
         </div>
         <div class="word-counter" id="wordCounter">0</div>
     </div>
@@ -1327,46 +1270,7 @@ function toggleCodePanel() {
     }
 }
 
-// ── Resizable divider ────────────────────────────────────
-(function() {
-    const divider = document.getElementById('codeDivider');
-    if (!divider) return;
-    let dragging = false;
-    let startX = 0;
-    let startLeftW = 0;
-
-    divider.addEventListener('mousedown', e => {
-        dragging = true;
-        startX = e.clientX;
-        const editEl = divider.previousElementSibling;
-        startLeftW = editEl.getBoundingClientRect().width;
-        divider.classList.add('dragging');
-        document.body.style.cursor = 'col-resize';
-        document.body.style.userSelect = 'none';
-        e.preventDefault();
-    });
-
-    document.addEventListener('mousemove', e => {
-        if (!dragging) return;
-        const diff = e.clientX - startX;
-        const editEl = divider.previousElementSibling;
-        const parent = divider.parentElement;
-        const parentW = parent.getBoundingClientRect().width;
-        const newW = Math.max(120, Math.min(parentW - 120, startLeftW + diff));
-        editEl.style.flex = 'none';
-        editEl.style.width = newW + 'px';
-    });
-
-    document.addEventListener('mouseup', () => {
-        if (!dragging) return;
-        dragging = false;
-        divider.classList.remove('dragging');
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-    });
-})();
-
-// Tab key inserts spaces instead of switching focus
+// Tab key inserts spaces
 function handleTab(e) {
     if (e.key === 'Tab') {
         e.preventDefault();
@@ -1374,7 +1278,6 @@ function handleTab(e) {
         const s = ta.selectionStart, end = ta.selectionEnd;
         ta.value = ta.value.substring(0, s) + '    ' + ta.value.substring(end);
         ta.selectionStart = ta.selectionEnd = s + 4;
-        syncHighlight();
     }
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -1387,58 +1290,6 @@ function syncScroll() {
 }
 
 // ── Syntax Highlighting (contenteditable) ─────────────────
-// Highlighting happens via syncHighlight() on textarea input
-
-const HL = {
-    python: [
-        [/(#.*$)/gm, 'cm'],
-        [/("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/g, 'st'],
-        [/\b(def|class|if|elif|else|for|while|try|except|finally|with|as|import|from|return|yield|raise|break|continue|pass|and|or|not|in|is|lambda|global|nonlocal|assert|del|True|False|None|async|await)\b/g, 'kw'],
-        [/\b(print|len|range|int|str|float|list|dict|set|tuple|type|isinstance|enumerate|zip|map|filter|sorted|reversed|open|input|format|abs|max|min|sum|any|all|round|pow|super)\b/g, 'bi'],
-        [/\b(\d+\.?\d*(?:e[+-]?\d+)?)\b/g, 'nu'],
-    ],
-    javascript: [
-        [/(\/\/.*$|\/\*[\s\S]*?\*\/)/gm, 'cm'],
-        [/(`(?:\\.|[^`\\])*`|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/g, 'st'],
-        [/\b(const|let|var|function|class|if|else|for|while|do|switch|case|break|continue|return|try|catch|finally|throw|new|typeof|instanceof|this|import|export|from|async|await|true|false|null|undefined)\b/g, 'kw'],
-        [/\b(console|document|window|Math|JSON|Array|Object|Promise|Date|fetch|setTimeout|parseInt)\b/g, 'bi'],
-        [/\b(\d+\.?\d*)\b/g, 'nu'],
-    ],
-    bash: [
-        [/(#.*$)/gm, 'cm'],
-        [/("(?:\\.|[^"\\])*"|'[^']*')/g, 'st'],
-        [/\b(if|then|else|elif|fi|for|while|do|done|case|esac|function|return|exit|local|export)\b/g, 'kw'],
-        [/\b(echo|printf|cd|ls|cat|grep|sed|awk|find|mkdir|rm|cp|mv|curl|wget|git|pip|python|node)\b/g, 'bi'],
-        [/\b(\d+)\b/g, 'nu'],
-    ],
-    zsh: null, // falls back to bash
-};
-
-function syncHighlight() {
-    const text = document.getElementById('codeInput').value;
-    const lang = document.getElementById('codeLang').value;
-    const rules = HL[lang] || HL[lang === 'zsh' ? 'bash' : 'python'] || HL.python;
-
-    // Escape HTML
-    let h = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-    // Apply rules in order (comments/strings first)
-    for (const [re, cls] of rules) {
-        re.lastIndex = 0;
-        h = h.replace(re, `<span class="${cls}">$&</span>`);
-    }
-
-    // Must end with newline so backdrop height matches textarea
-    document.getElementById('codeBackdrop').innerHTML = h + '\n';
-}
-
-function syncScroll() {
-    const ta = document.getElementById('codeInput');
-    const bd = document.getElementById('codeBackdrop');
-    bd.scrollTop = ta.scrollTop;
-    bd.scrollLeft = ta.scrollLeft;
-}
-
 function getCodeText() {
     return document.getElementById('codeInput').value;
 }
@@ -1451,26 +1302,21 @@ async function runCode() {
     const btn = document.getElementById('runBtn');
     const status = document.getElementById('codeStatus');
 
-    if (!code) {
-        outEl.className = 'code-out-content';
-        outEl.innerHTML = '<span class="ph">Write some code first...</span>';
-        return;
-    }
+    if (!code) { return; }
 
     btn.disabled = true;
     btn.textContent = 'Running...';
     status.textContent = '';
-    outEl.className = 'code-out-content';
-    outEl.textContent = 'Executing...';
+    outEl.className = 'code-output visible';
+    outEl.textContent = 'Running...';
 
     try {
         const result = await api('POST', '/api/v1/code/run', { language: lang, code });
-        outEl.className = 'code-out-content ' + (result.error ? 'err' : 'ok');
+        outEl.className = 'code-output visible ' + (result.error ? 'err' : 'ok');
         outEl.textContent = result.output || '(no output)';
-        status.textContent = result.error ? 'Exit: ' + (result.exit_code ?? '?') : 'OK';
-        status.style.color = result.error ? '#f07178' : '#c3e88d';
+        status.textContent = result.error ? 'Exit ' + (result.exit_code ?? '?') : 'OK';
     } catch(e) {
-        outEl.className = 'code-out-content err';
+        outEl.className = 'code-output visible err';
         outEl.textContent = 'Error: ' + e.message;
     } finally {
         btn.disabled = false;
