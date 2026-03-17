@@ -19,11 +19,12 @@
     }
 
     .gpa-card {
-        background: linear-gradient(135deg, var(--accent-blue), #0a5ca8);
+        background: linear-gradient(135deg, #1d8c6e, #13132b);
         border-radius: 4px;
         padding: 30px 20px;
         text-align: center;
-        box-shadow: 0 4px 12px rgba(13, 125, 216, 0.2);
+        box-shadow: 0 4px 20px rgba(46, 207, 161, 0.2);
+        border: 1px solid rgba(46,207,161,0.3);
     }
 
     .gpa-label {
@@ -189,15 +190,49 @@
     <!-- GPA Display -->
     <div class="gpa-display">
         <div class="gpa-card">
-            <div class="gpa-label">Cumulative GPA</div>
-            <div class="gpa-value" id="cumulativeGpa">0.00</div>
-            <div class="gpa-value-subtext" id="cumulativeCredits">0 credits completed</div>
+            <div class="gpa-label">Semester GPA</div>
+            <div class="gpa-value" id="semesterGpa">0.00</div>
+            <div class="gpa-value-subtext" id="semesterCredits">0 credits this semester</div>
+        </div>
+
+        <div class="gpa-card" id="weighted-gpa-card" style="display:none;">
+            <div class="gpa-label">Weighted GPA</div>
+            <div class="gpa-value" id="weightedGpa">0.00</div>
+            <div class="gpa-value-subtext" id="weightedGpaNote">With test/quiz requirement</div>
         </div>
 
         <div class="gpa-card">
-            <div class="gpa-label">Current Semester GPA</div>
-            <div class="gpa-value" id="semesterGpa">0.00</div>
-            <div class="gpa-value-subtext" id="semesterCredits">0 credits this semester</div>
+            <div class="gpa-label">Test/Quiz Combined</div>
+            <div class="gpa-value" id="testQuizAvg">—</div>
+            <div class="gpa-value-subtext" id="testQuizStatus">No test/quiz grades yet</div>
+        </div>
+    </div>
+
+    <!-- Weighted Average Settings -->
+    <div class="grade-scale-info" id="weighted-settings-panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <h4 style="margin:0;color:var(--accent);">⚖️ Program Weighted Rule</h4>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;">
+                <input type="checkbox" id="weighted-enabled" onchange="toggleWeightedMode()" style="width:auto;">
+                <span style="font-size:0.9em;color:var(--text-secondary);">Enable weighted rule</span>
+            </label>
+        </div>
+        <div id="weighted-config" style="display:none;">
+            <p style="font-size:0.85em;color:var(--text-secondary);margin-bottom:12px;">
+                Set a minimum combined grade for tests &amp; quizzes to pass, regardless of overall GPA. If the combined grade is below the minimum, the course is flagged as at risk even if the GPA grade is passing.
+            </p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Min. Test+Quiz Combined (%)</label>
+                    <input type="number" id="weighted-min-pct" value="50" min="0" max="100" step="1" onchange="calculateGPA()">
+                    <div style="font-size:0.78em;color:var(--text-muted);margin-top:4px;">e.g., 50 means tests+quizzes must average ≥50% to pass</div>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Max Grade Cap (%)</label>
+                    <input type="number" id="weighted-max-cap" value="100" min="50" max="200" step="1" onchange="calculateGPA()">
+                    <div style="font-size:0.78em;color:var(--text-muted);margin-top:4px;">Grades above this are capped when computing weighted GPA</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -258,6 +293,7 @@
             <div class="semester-title">Current Semester Courses</div>
             <div class="semester-gpa">
                 GPA: <span class="semester-gpa-value" id="currentSemesterGpa">0.00</span>
+                <span id="weighted-pass-warn" style="margin-left:12px;font-size:0.82em;color:#f0ad4e;display:none;">⚠ Test/quiz below minimum</span>
             </div>
         </div>
 
@@ -269,11 +305,13 @@
             <table class="courses-table">
                 <thead>
                     <tr>
-                        <th>Course Name</th>
-                        <th>Grade</th>
+                        <th>Course / Item</th>
+                        <th>Type</th>
+                        <th>Letter Grade</th>
+                        <th>% Grade</th>
                         <th>Credits</th>
                         <th>Points</th>
-                        <th>Actions</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody id="currentSemesterCourses">
@@ -302,10 +340,13 @@
 
     let courseCounter = 0;
 
+    // Types considered "tests/quizzes" for the weighted rule
+    const TEST_QUIZ_TYPES = ['exam', 'quiz', 'test'];
+
     function addCourseRow() {
         const tbody = document.getElementById('currentSemesterCourses');
         const rowId = 'course-' + (courseCounter++);
-        
+
         const row = document.createElement('tr');
         row.id = rowId;
         row.innerHTML = `
@@ -313,8 +354,18 @@
                 <input type="text" class="grade-input" placeholder="Course name" name="course_name">
             </td>
             <td>
+                <select class="grade-input" name="type" onchange="calculateRow('${rowId}')">
+                    <option value="other">Other</option>
+                    <option value="exam">Exam/Test</option>
+                    <option value="quiz">Quiz</option>
+                    <option value="assignment">Assignment</option>
+                    <option value="project">Project</option>
+                    <option value="lab">Lab</option>
+                </select>
+            </td>
+            <td>
                 <select class="grade-input" name="grade" onchange="calculateRow('${rowId}')">
-                    <option value="">Select Grade</option>
+                    <option value="">Grade</option>
                     <option value="A">A</option>
                     <option value="A-">A-</option>
                     <option value="B+">B+</option>
@@ -330,14 +381,17 @@
                 </select>
             </td>
             <td>
-                <input type="number" class="credits-input" placeholder="0" min="0" max="6" name="credits" onchange="calculateRow('${rowId}')">
+                <input type="number" class="credits-input" placeholder="%" min="0" max="150" step="0.1" name="pct_grade" oninput="calculateRow('${rowId}')" title="Percentage grade (can exceed 100)">
             </td>
-            <td style="font-weight: 600; color: var(--accent-blue);" class="points-value">0.0</td>
             <td>
-                <button class="btn btn-small btn-danger" onclick="removeCourseRow('${rowId}')">Remove</button>
+                <input type="number" class="credits-input" placeholder="Cr" min="0" max="6" name="credits" onchange="calculateRow('${rowId}')">
+            </td>
+            <td style="font-weight: 600; color: var(--accent);" class="points-value">0.0</td>
+            <td>
+                <button class="btn btn-small btn-danger" onclick="removeCourseRow('${rowId}')">✕</button>
             </td>
         `;
-        
+
         tbody.appendChild(row);
     }
 
@@ -361,29 +415,94 @@
         calculateGPA();
     }
 
+    function toggleWeightedMode() {
+        const enabled = document.getElementById('weighted-enabled').checked;
+        document.getElementById('weighted-config').style.display = enabled ? 'block' : 'none';
+        document.getElementById('weighted-gpa-card').style.display = enabled ? 'block' : 'none';
+        localStorage.setItem('scholarr_weighted_enabled', enabled ? '1' : '0');
+        calculateGPA();
+    }
+
     function calculateGPA() {
         const rows = document.querySelectorAll('#currentSemesterCourses tr');
         let totalPoints = 0;
         let totalCredits = 0;
+        let testQuizTotalPct = 0;
+        let testQuizCount = 0;
+        let weightedPoints = 0;
+        let weightedCredits = 0;
+        const weightedEnabled = document.getElementById('weighted-enabled').checked;
+        const minPct = parseFloat(document.getElementById('weighted-min-pct')?.value) || 50;
+        const maxCap = parseFloat(document.getElementById('weighted-max-cap')?.value) || 100;
 
         rows.forEach(row => {
             const gradeSelect = row.querySelector('select[name="grade"]');
             const creditsInput = row.querySelector('input[name="credits"]');
-            
-            if (gradeSelect && creditsInput && gradeSelect.value) {
-                const credits = parseFloat(creditsInput.value) || 0;
-                const grade = gradeSelect.value;
-                const gradePoints = gradeScale[grade] || 0;
-                
-                totalPoints += gradePoints * credits;
-                totalCredits += credits;
+            const typeSelect = row.querySelector('select[name="type"]');
+            const pctInput = row.querySelector('input[name="pct_grade"]');
+
+            if (!gradeSelect || !creditsInput || !gradeSelect.value) return;
+
+            const credits = parseFloat(creditsInput.value) || 0;
+            const grade = gradeSelect.value;
+            const gradePoints = gradeScale[grade] || 0;
+            const itemType = typeSelect ? typeSelect.value : 'other';
+            const pctGrade = pctInput ? parseFloat(pctInput.value) : null;
+
+            totalPoints += gradePoints * credits;
+            totalCredits += credits;
+
+            // Track test/quiz grades
+            if (TEST_QUIZ_TYPES.includes(itemType)) {
+                if (pctGrade !== null && !isNaN(pctGrade)) {
+                    testQuizTotalPct += pctGrade;
+                    testQuizCount++;
+                } else if (gradePoints >= 0) {
+                    // Estimate % from letter grade (rough: A=95,B=85,C=75,D=65,F=50)
+                    const est = { 'A':95,'A-':92,'B+':88,'B':85,'B-':82,'C+':78,'C':75,'C-':72,'D+':68,'D':65,'D-':62,'F':50 };
+                    testQuizTotalPct += est[grade] || 0;
+                    testQuizCount++;
+                }
+            }
+
+            // Weighted GPA: cap percentage at maxCap
+            if (weightedEnabled) {
+                const effectivePct = pctGrade !== null && !isNaN(pctGrade) ? Math.min(pctGrade, maxCap) : null;
+                let effectivePoints = gradePoints;
+                if (effectivePct !== null && maxCap !== 100) {
+                    // Scale the grade points based on capped %
+                    effectivePoints = (effectivePct / 100) * 4.0;
+                }
+                weightedPoints += effectivePoints * credits;
+                weightedCredits += credits;
             }
         });
 
-        const gpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : 0;
+        const gpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : '0.00';
         document.getElementById('currentSemesterGpa').textContent = gpa;
         document.getElementById('semesterGpa').textContent = gpa;
-        document.getElementById('semesterCredits').textContent = totalCredits + ' credits this semester';
+        document.getElementById('semesterCredits').textContent = totalCredits + ' credit' + (totalCredits !== 1 ? 's' : '') + ' this semester';
+
+        // Test/quiz combined
+        if (testQuizCount > 0) {
+            const tqAvg = testQuizTotalPct / testQuizCount;
+            document.getElementById('testQuizAvg').textContent = tqAvg.toFixed(1) + '%';
+            const passing = tqAvg >= (weightedEnabled ? minPct : 50);
+            document.getElementById('testQuizStatus').textContent = passing ? '✓ Meets minimum' : '⚠ Below minimum (' + (weightedEnabled ? minPct : 50) + '%)';
+            document.getElementById('testQuizStatus').style.color = passing ? 'rgba(255,255,255,0.85)' : '#f0ad4e';
+        } else {
+            document.getElementById('testQuizAvg').textContent = '—';
+            document.getElementById('testQuizStatus').textContent = 'No test/quiz grades yet';
+            document.getElementById('testQuizStatus').style.color = '';
+        }
+
+        // Weighted GPA
+        if (weightedEnabled) {
+            const wgpa = weightedCredits > 0 ? (weightedPoints / weightedCredits).toFixed(2) : '0.00';
+            document.getElementById('weightedGpa').textContent = wgpa;
+            const testQuizOk = testQuizCount === 0 || (testQuizTotalPct / testQuizCount) >= minPct;
+            document.getElementById('weightedGpaNote').textContent = testQuizOk ? 'On track to pass' : '⚠ Test/quiz below ' + minPct + '%';
+        }
     }
 
     function saveCourses() {
@@ -392,11 +511,18 @@
         rows.forEach(row => {
             const name = row.querySelector('input[name="course_name"]')?.value || '';
             const grade = row.querySelector('select[name="grade"]')?.value || '';
+            const type = row.querySelector('select[name="type"]')?.value || 'other';
+            const pct = row.querySelector('input[name="pct_grade"]')?.value || '';
             const credits = row.querySelector('input[name="credits"]')?.value || '';
-            if (name || grade) data.push({ name, grade, credits });
+            if (name || grade) data.push({ name, grade, type, pct, credits });
         });
         localStorage.setItem('scholarr_gpa_courses', JSON.stringify(data));
-        showToast('Courses saved to browser!', 'success');
+        // Save weighted settings too
+        const wEnabled = document.getElementById('weighted-enabled').checked;
+        localStorage.setItem('scholarr_weighted_enabled', wEnabled ? '1' : '0');
+        localStorage.setItem('scholarr_weighted_min', document.getElementById('weighted-min-pct').value);
+        localStorage.setItem('scholarr_weighted_cap', document.getElementById('weighted-max-cap').value);
+        showToast('Saved to browser!', 'success');
     }
 
     function clearCourses() {
@@ -408,6 +534,19 @@
 
     // Load from localStorage on page load
     document.addEventListener('DOMContentLoaded', function() {
+        // Restore weighted settings
+        const wEnabled = localStorage.getItem('scholarr_weighted_enabled') === '1';
+        document.getElementById('weighted-enabled').checked = wEnabled;
+        if (wEnabled) {
+            document.getElementById('weighted-config').style.display = 'block';
+            document.getElementById('weighted-gpa-card').style.display = 'block';
+        }
+        const wMin = localStorage.getItem('scholarr_weighted_min');
+        if (wMin) document.getElementById('weighted-min-pct').value = wMin;
+        const wCap = localStorage.getItem('scholarr_weighted_cap');
+        if (wCap) document.getElementById('weighted-max-cap').value = wCap;
+
+        // Restore courses
         try {
             const saved = JSON.parse(localStorage.getItem('scholarr_gpa_courses') || '[]');
             saved.forEach(c => {
@@ -416,7 +555,11 @@
                 const row = rows[rows.length - 1];
                 if (row) {
                     row.querySelector('input[name="course_name"]').value = c.name || '';
+                    const typeEl = row.querySelector('select[name="type"]');
+                    if (typeEl && c.type) typeEl.value = c.type;
                     row.querySelector('select[name="grade"]').value = c.grade || '';
+                    const pctEl = row.querySelector('input[name="pct_grade"]');
+                    if (pctEl && c.pct) pctEl.value = c.pct;
                     row.querySelector('input[name="credits"]').value = c.credits || '';
                     calculateRow(row.id);
                 }

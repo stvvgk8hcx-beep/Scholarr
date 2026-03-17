@@ -23,9 +23,13 @@
 <div style="display:flex;flex-direction:column;gap:0;">
 
     <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
         <h2 style="font-size:1.4em;font-weight:700;color:var(--text-primary);">Academic Items</h2>
-        <button class="btn" onclick="openAddItemModal()">➕ Add Item</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-small" onclick="exportItemsCSV()" title="Export to CSV">📊 Export CSV</button>
+            <button class="btn btn-secondary btn-small" onclick="exportItemsICS()" title="Export to calendar">📅 Export ICS</button>
+            <button class="btn" onclick="openAddItemModal()">➕ Add Item</button>
+        </div>
     </div>
 
     <!-- Filters -->
@@ -105,7 +109,7 @@
             <h2>Add Academic Item</h2>
             <button class="modal-close" onclick="closeAddItem()">&times;</button>
         </div>
-        <div class="modal-content" style="padding:16px;">
+        <div class="modal-body">
             <div class="form-group">
                 <label>Title *</label>
                 <input type="text" id="new-title" placeholder="e.g., Assignment 3">
@@ -147,16 +151,82 @@
                 </div>
             </div>
             <div class="form-group">
-                <label>Grade</label>
+                <label>Grade (%)</label>
                 <input type="number" id="new-grade" placeholder="e.g., 85" min="0" max="100" step="0.1">
             </div>
             <div class="form-group">
                 <label>Notes</label>
-                <textarea id="new-notes" rows="3" style="resize:vertical;" placeholder="Optional notes..."></textarea>
+                <textarea id="new-notes" rows="3" placeholder="Optional notes..."></textarea>
             </div>
             <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
                 <button class="btn btn-secondary" onclick="closeAddItem()">Cancel</button>
                 <button class="btn" onclick="createItem()">Create Item</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Item Modal -->
+<div id="editItemModal" class="modal" onclick="if(event.target===this)closeEditItem()">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Academic Item</h2>
+            <button class="modal-close" onclick="closeEditItem()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="edit-item-id">
+            <div class="form-group">
+                <label>Title *</label>
+                <input type="text" id="edit-item-title" placeholder="e.g., Assignment 3">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="form-group">
+                    <label>Type *</label>
+                    <select id="edit-item-type">
+                        <option value="assignment">Assignment</option>
+                        <option value="exam">Exam</option>
+                        <option value="project">Project</option>
+                        <option value="quiz">Quiz</option>
+                        <option value="presentation">Presentation</option>
+                        <option value="lab">Lab</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="edit-item-status">
+                        <option value="NotStarted">Not Started</option>
+                        <option value="InProgress">In Progress</option>
+                        <option value="Submitted">Submitted</option>
+                        <option value="Graded">Graded</option>
+                        <option value="Late">Late</option>
+                        <option value="Complete">Complete</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="form-group">
+                    <label>Course</label>
+                    <select id="edit-item-course">
+                        <option value="">No Course</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Due Date</label>
+                    <input type="date" id="edit-item-due">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Grade (%)</label>
+                <input type="number" id="edit-item-grade" placeholder="e.g., 85" min="0" max="100" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="edit-item-notes" rows="3" placeholder="Optional notes..."></textarea>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+                <button class="btn btn-secondary" onclick="closeEditItem()">Cancel</button>
+                <button class="btn" onclick="saveEditItem()">Save Changes</button>
             </div>
         </div>
     </div>
@@ -292,7 +362,57 @@ async function createItem() {
 }
 
 async function editItem(id) {
-    showToast('Edit coming soon — use the API directly for now', 'info');
+    try {
+        const item = await API.get(`/api/v1/academic-items/${id}`);
+        document.getElementById('edit-item-id').value = item.id;
+        document.getElementById('edit-item-title').value = item.title || item.name || '';
+        document.getElementById('edit-item-type').value = item.item_type || item.type || 'assignment';
+        document.getElementById('edit-item-status').value = item.status || 'NotStarted';
+        document.getElementById('edit-item-due').value = item.due_date ? item.due_date.slice(0,10) : '';
+        document.getElementById('edit-item-grade').value = (item.grade !== null && item.grade !== undefined) ? item.grade : '';
+        document.getElementById('edit-item-notes').value = item.notes || '';
+        // Populate course dropdown
+        const sel = document.getElementById('edit-item-course');
+        sel.innerHTML = '<option value="">No Course</option>';
+        try {
+            const data = await API.get('/api/v1/courses?page=1&page_size=100');
+            const courses = Array.isArray(data) ? data : (data.items || []);
+            courses.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = `${c.code} — ${c.name}`;
+                if (c.id === item.course_id) opt.selected = true;
+                sel.appendChild(opt);
+            });
+        } catch(e) {}
+        document.getElementById('editItemModal').classList.add('show');
+    } catch(e) { showToast('Could not load item: ' + e.message, 'error'); }
+}
+function closeEditItem() { document.getElementById('editItemModal').classList.remove('show'); }
+
+async function saveEditItem() {
+    const id = document.getElementById('edit-item-id').value;
+    const title = document.getElementById('edit-item-title').value.trim();
+    if (!title) { showToast('Title is required', 'warning'); return; }
+    const payload = {
+        title,
+        item_type: document.getElementById('edit-item-type').value,
+        status: document.getElementById('edit-item-status').value,
+    };
+    const courseId = document.getElementById('edit-item-course').value;
+    if (courseId) payload.course_id = parseInt(courseId);
+    const due = document.getElementById('edit-item-due').value;
+    if (due) payload.due_date = due;
+    const grade = document.getElementById('edit-item-grade').value;
+    if (grade !== '') payload.grade = parseFloat(grade);
+    const notes = document.getElementById('edit-item-notes').value.trim();
+    if (notes) payload.notes = notes;
+    try {
+        await API.put(`/api/v1/academic-items/${id}`, payload);
+        closeEditItem();
+        showToast('Item updated!', 'success');
+        loadItems();
+    } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function deleteItem(id, btn) {
@@ -317,6 +437,48 @@ function renderPagination(total, pageSize, current, onPage, containerId) {
     html += `<span style="padding:6px 12px;color:var(--text-secondary);font-size:0.9em;">Page ${current} of ${pages} (${total} total)</span>`;
     if (current < pages) html += `<button class="btn btn-secondary btn-small" onclick="(${onPage})(${current+1})">Next →</button>`;
     el.innerHTML = html;
+}
+
+async function exportItemsCSV() {
+    try {
+        showToast('Preparing CSV export...', 'info');
+        const data = await API.get('/api/v1/academic-items?page=1&page_size=500');
+        const items = Array.isArray(data) ? data : (data.items || []);
+        if (!items.length) { showToast('No items to export', 'warning'); return; }
+        const header = ['Title','Type','Course','Due Date','Status','Grade (%)','Notes'];
+        const rows = items.map(i => [
+            `"${(i.title||i.name||'').replace(/"/g,'""')}"`,
+            i.item_type||i.type||'',
+            i.course_code||'',
+            i.due_date||'',
+            i.status||'',
+            i.grade??'',
+            `"${(i.notes||'').replace(/"/g,'""')}"`
+        ].join(','));
+        const csv = [header.join(','), ...rows].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url;
+        a.download = `scholarr-items-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+        URL.revokeObjectURL(url);
+        showToast(`Exported ${items.length} items`, 'success');
+    } catch(e) { showToast('Export failed: ' + e.message, 'error'); }
+}
+
+async function exportItemsICS() {
+    try {
+        showToast('Generating ICS export...', 'info');
+        const data = await API.get('/api/v1/academic-items?page=1&page_size=500');
+        const items = (Array.isArray(data) ? data : (data.items || [])).filter(i => i.due_date);
+        if (!items.length) { showToast('No items with due dates to export', 'warning'); return; }
+        const result = await API.post('/api/v1/integrations/calendar/generate-ics', items);
+        if (!result.content) { showToast('Failed to generate ICS', 'error'); return; }
+        const blob = new Blob([result.content], { type: 'text/calendar;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'scholarr-calendar.ics'; a.click();
+        URL.revokeObjectURL(url);
+        showToast(`Exported ${items.length} deadlines as ICS. Open in Apple/Google/Outlook Calendar.`, 'success');
+    } catch(e) { showToast('Export failed: ' + e.message, 'error'); }
 }
 </script>
 {% endblock %}

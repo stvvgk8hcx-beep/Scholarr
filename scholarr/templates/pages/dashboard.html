@@ -4,59 +4,94 @@
 {% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
-<div style="display:flex; flex-direction:column; gap:24px;">
+<div style="display:flex; flex-direction:column; gap:20px;">
 
     <!-- Overview Cards -->
-    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px;">
-        <div class="stat-card">
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px;">
+        <div class="stat-card" style="border-left:3px solid var(--accent);">
             <div class="stat-label">Total Courses</div>
             <div class="stat-value" id="dash-course-count">—</div>
-            <div style="font-size:0.8em;color:var(--text-secondary);margin-top:6px;">Active courses being monitored</div>
+            <div style="font-size:0.8em;color:var(--text-secondary);margin-top:6px;">Courses being monitored</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" style="border-left:3px solid var(--warning);">
             <div class="stat-label">Active Items</div>
             <div class="stat-value" id="dash-items-count">—</div>
-            <div style="font-size:0.8em;color:var(--text-secondary);margin-top:6px;">Outstanding assignments & deadlines</div>
+            <div style="font-size:0.8em;color:var(--text-secondary);margin-top:6px;">Total academic items</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" style="border-left:3px solid #f0ad4e;">
             <div class="stat-label">Due This Week</div>
             <div class="stat-value" id="dash-upcoming-count">—</div>
-            <div style="font-size:0.8em;color:var(--text-secondary);margin-top:6px;">Deadlines in the next 7 days</div>
+            <div style="font-size:0.8em;color:var(--text-secondary);margin-top:6px;">Deadlines in 7 days</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-label">Managed Files</div>
-            <div class="stat-value" id="dash-files-count">—</div>
-            <div style="font-size:0.8em;color:var(--text-secondary);margin-top:6px;">Total tracked academic files</div>
+        <div class="stat-card" style="border-left:3px solid var(--info);">
+            <div class="stat-label">Avg Grade</div>
+            <div class="stat-value" id="dash-avg-grade">—</div>
+            <div style="font-size:0.8em;color:var(--text-secondary);margin-top:6px;">From graded items</div>
         </div>
     </div>
 
     <!-- Quick Actions -->
-    <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:4px;padding:20px;">
-        <h3 style="margin-bottom:14px;font-size:1em;font-weight:600;color:var(--text-primary);">Quick Actions</h3>
+    <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:6px;padding:18px;">
+        <h3 style="margin-bottom:14px;font-size:0.85em;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Quick Actions</h3>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <a href="/courses/add" class="btn">➕ New Course</a>
             <a href="/semesters" class="btn btn-secondary">📅 Semesters</a>
             <a href="/academic-items" class="btn btn-secondary">📝 Academic Items</a>
             <a href="/calendar" class="btn btn-secondary">🗓️ Calendar</a>
+            <a href="/gpa" class="btn btn-secondary">🎓 GPA Calc</a>
         </div>
     </div>
 
-    <!-- Two-column: Recent Activity + Upcoming Deadlines -->
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;">
+    <!-- Main Grid: Activity + Upcoming + Grades -->
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:16px;">
 
-        <!-- Recent Activity -->
-        <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:4px;overflow:hidden;">
-            <div style="padding:16px 20px;border-bottom:1px solid var(--border-color);font-weight:600;">Recent Activity</div>
-            <div id="dash-activity" style="max-height:340px;overflow-y:auto;padding:8px 0;">
-                <div class="loading">Loading activity...</div>
+        <!-- Left column: Activity + Grade Summary -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+            <!-- Recent Activity -->
+            <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:6px;overflow:hidden;">
+                <div style="padding:14px 18px;border-bottom:1px solid var(--border-color);font-weight:600;font-size:0.95em;">Recent Activity</div>
+                <div id="dash-activity" style="max-height:300px;overflow-y:auto;">
+                    <div class="loading">Loading activity...</div>
+                </div>
+            </div>
+
+            <!-- Grade Summary by Course -->
+            <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:6px;overflow:hidden;">
+                <div style="padding:14px 18px;border-bottom:1px solid var(--border-color);font-weight:600;font-size:0.95em;display:flex;justify-content:space-between;align-items:center;">
+                    <span>Grade Summary</span>
+                    <a href="/academic-items" style="font-size:0.8em;color:var(--accent);">View All →</a>
+                </div>
+                <div id="dash-grades" style="padding:8px 0;">
+                    <div class="loading">Loading grades...</div>
+                </div>
             </div>
         </div>
 
-        <!-- Upcoming Deadlines -->
-        <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:4px;overflow:hidden;">
-            <div style="padding:16px 20px;border-bottom:1px solid var(--border-color);font-weight:600;">Upcoming</div>
-            <div id="dash-deadlines" style="max-height:340px;overflow-y:auto;padding:8px 0;">
-                <div class="loading">Loading deadlines...</div>
+        <!-- Right column: Upcoming + Status breakdown -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+            <!-- Upcoming Deadlines -->
+            <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:6px;overflow:hidden;">
+                <div style="padding:14px 18px;border-bottom:1px solid var(--border-color);font-weight:600;font-size:0.95em;">Upcoming Deadlines</div>
+                <div id="dash-deadlines" style="max-height:260px;overflow-y:auto;">
+                    <div class="loading">Loading deadlines...</div>
+                </div>
+            </div>
+
+            <!-- Status Breakdown -->
+            <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:6px;overflow:hidden;">
+                <div style="padding:14px 18px;border-bottom:1px solid var(--border-color);font-weight:600;font-size:0.95em;">Items by Status</div>
+                <div id="dash-status" style="padding:12px 16px;">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+
+            <!-- File Count -->
+            <div class="stat-card" style="border-left:3px solid var(--accent);">
+                <div class="stat-label">Managed Files</div>
+                <div class="stat-value" id="dash-files-count">—</div>
+                <div style="font-size:0.8em;color:var(--text-secondary);margin-top:6px;"><a href="/library" style="color:var(--accent);">Browse Library →</a></div>
             </div>
         </div>
     </div>
@@ -93,20 +128,23 @@ async function loadDashboard() {
         document.getElementById('dash-files-count').textContent = '0';
     }
 
+    // Load all graded items for grade summary
+    loadGradeSummary();
+
     // Activity
     try {
         const history = await API.get('/api/v1/history?page=1&page_size=10');
-        const items = Array.isArray(history) ? history : (history.items || []);
+        const events = Array.isArray(history) ? history : (history.items || []);
         const el = document.getElementById('dash-activity');
-        if (!items.length) {
+        if (!events.length) {
             el.innerHTML = '<div class="loading">No activity yet.</div>';
         } else {
-            el.innerHTML = items.map(ev => `
-                <div style="padding:12px 20px;border-bottom:1px solid var(--border-color);display:flex;gap:12px;align-items:flex-start;">
-                    <div style="font-size:1.4em;">${getEventIcon(ev.event_type || ev.action || '')}</div>
+            el.innerHTML = events.map(ev => `
+                <div style="padding:10px 18px;border-bottom:1px solid var(--border-color);display:flex;gap:12px;align-items:flex-start;">
+                    <div style="font-size:1.2em;min-width:24px;text-align:center;">${getEventIcon(ev.event_type || ev.action || '')}</div>
                     <div style="flex:1;min-width:0;">
-                        <div style="font-weight:500;font-size:0.9em;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ev.description || ev.action || 'Event'}</div>
-                        <div style="font-size:0.78em;color:var(--text-secondary);margin-top:3px;">${formatRelativeTime(ev.timestamp || ev.created_at || new Date())}</div>
+                        <div style="font-size:0.88em;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ev.description || ev.action || 'Event'}</div>
+                        <div style="font-size:0.76em;color:var(--text-muted);margin-top:2px;">${formatRelativeTime(ev.timestamp || ev.created_at || new Date())}</div>
                     </div>
                 </div>
             `).join('');
@@ -121,23 +159,99 @@ async function loadDashboard() {
         const items = Array.isArray(upcoming) ? upcoming : [];
         const el = document.getElementById('dash-deadlines');
         if (!items.length) {
-            el.innerHTML = '<div class="loading">No upcoming deadlines 🎉</div>';
+            el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-secondary);font-size:0.88em;">No upcoming deadlines 🎉</div>';
         } else {
-            el.innerHTML = items.map(item => `
-                <div style="padding:12px 16px;border-bottom:1px solid var(--border-color);border-left:3px solid #f0ad4e;">
-                    <div style="font-weight:500;font-size:0.9em;color:var(--text-primary);">${item.title || item.name}</div>
-                    <div style="font-size:0.78em;color:var(--text-secondary);margin-top:2px;">${item.course_code || ''}</div>
-                    <div style="font-size:0.78em;color:#f0ad4e;margin-top:4px;font-weight:600;">Due: ${formatDate(item.due_date)}</div>
-                </div>
-            `).join('');
+            el.innerHTML = items.map(item => {
+                const daysLeft = Math.ceil((new Date(item.due_date) - new Date()) / 86400000);
+                const urgColor = daysLeft <= 1 ? 'var(--danger)' : daysLeft <= 3 ? 'var(--warning)' : 'var(--text-muted)';
+                return `
+                <div style="padding:10px 14px;border-bottom:1px solid var(--border-color);border-left:3px solid ${urgColor};">
+                    <div style="font-weight:500;font-size:0.88em;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.title || item.name}</div>
+                    <div style="font-size:0.76em;color:var(--text-secondary);margin-top:2px;">${item.course_code || 'No course'}</div>
+                    <div style="font-size:0.76em;color:${urgColor};margin-top:3px;font-weight:600;">Due: ${formatDate(item.due_date)} · ${daysLeft <= 0 ? 'Overdue' : daysLeft + 'd left'}</div>
+                </div>`;
+            }).join('');
         }
     } catch (e) {
-        document.getElementById('dash-deadlines').innerHTML = '<div class="loading">Could not load deadlines.</div>';
+        document.getElementById('dash-deadlines').innerHTML = '<div class="loading">Could not load.</div>';
+    }
+}
+
+async function loadGradeSummary() {
+    try {
+        // Get all graded items
+        const data = await API.get('/api/v1/academic-items?page=1&page_size=200&status=Graded');
+        const gradedItems = Array.isArray(data) ? data : (data.items || []);
+        const allData = await API.get('/api/v1/academic-items?page=1&page_size=200');
+        const allItems = Array.isArray(allData) ? allData : (allData.items || []);
+
+        // Compute average from items with grades
+        const itemsWithGrades = allItems.filter(i => i.grade !== null && i.grade !== undefined);
+        if (itemsWithGrades.length > 0) {
+            const avg = itemsWithGrades.reduce((s, i) => s + i.grade, 0) / itemsWithGrades.length;
+            document.getElementById('dash-avg-grade').textContent = avg.toFixed(1) + '%';
+        } else {
+            document.getElementById('dash-avg-grade').textContent = 'N/A';
+        }
+
+        // Status breakdown
+        const statusCounts = {};
+        allItems.forEach(i => { statusCounts[i.status] = (statusCounts[i.status] || 0) + 1; });
+        const total = allItems.length || 1;
+        const statuses = [
+            { key: 'Complete', label: 'Complete', color: 'var(--accent)' },
+            { key: 'Graded', label: 'Graded', color: '#5bc0de' },
+            { key: 'Submitted', label: 'Submitted', color: '#5cb85c' },
+            { key: 'InProgress', label: 'In Progress', color: 'var(--warning)' },
+            { key: 'NotStarted', label: 'Not Started', color: 'var(--text-muted)' },
+            { key: 'Late', label: 'Late', color: 'var(--danger)' },
+        ];
+        document.getElementById('dash-status').innerHTML = statuses.map(s => {
+            const count = statusCounts[s.key] || 0;
+            if (count === 0) return '';
+            const pct = Math.round(count / total * 100);
+            return `
+            <div style="margin-bottom:10px;">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                    <span style="font-size:0.82em;color:var(--text-secondary);">${s.label}</span>
+                    <span style="font-size:0.82em;color:var(--text-secondary);">${count} (${pct}%)</span>
+                </div>
+                <div class="progress"><div class="progress-bar" style="width:${pct}%;background:${s.color};"></div></div>
+            </div>`;
+        }).join('') || '<div style="color:var(--text-muted);font-size:0.88em;padding:8px 0;">No items yet.</div>';
+
+        // Grade summary by course
+        const byCourse = {};
+        itemsWithGrades.forEach(i => {
+            const k = i.course_code || 'Uncategorized';
+            if (!byCourse[k]) byCourse[k] = [];
+            byCourse[k].push(i.grade);
+        });
+        const el = document.getElementById('dash-grades');
+        if (!Object.keys(byCourse).length) {
+            el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-secondary);font-size:0.88em;">No graded items yet.</div>';
+        } else {
+            el.innerHTML = Object.entries(byCourse).map(([course, grades]) => {
+                const avg = grades.reduce((a,b) => a+b, 0) / grades.length;
+                const color = avg >= 90 ? 'var(--accent)' : avg >= 70 ? 'var(--warning)' : 'var(--danger)';
+                return `
+                <div style="padding:10px 18px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <div style="font-weight:600;font-size:0.88em;color:var(--text-primary);">${course}</div>
+                        <div style="font-size:0.76em;color:var(--text-secondary);">${grades.length} graded item${grades.length!==1?'s':''}</div>
+                    </div>
+                    <div style="font-size:1.2em;font-weight:700;color:${color};">${avg.toFixed(1)}%</div>
+                </div>`;
+            }).join('');
+        }
+    } catch(e) {
+        document.getElementById('dash-grades').innerHTML = '<div class="loading">Could not load grades.</div>';
+        document.getElementById('dash-avg-grade').textContent = '—';
     }
 }
 
 function getEventIcon(type) {
-    const m = { import:'📥', create:'✨', rename:'✏️', move:'📁', update:'🔄', delete:'🗑️' };
+    const m = { import:'📥', create:'✨', rename:'✏️', move:'📁', update:'🔄', delete:'🗑️', scan:'🔍' };
     return m[(type||'').toLowerCase()] || '◆';
 }
 </script>

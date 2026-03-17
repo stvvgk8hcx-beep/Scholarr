@@ -39,6 +39,7 @@
         <button class="settings-tab" onclick="switchTab('files',this)">File Management</button>
         <button class="settings-tab" onclick="switchTab('import',this)">Import</button>
         <button class="settings-tab" onclick="switchTab('api',this)">API & Security</button>
+        <button class="settings-tab" onclick="switchTab('backup',this)">Backup & Cloud</button>
     </div>
 
     <!-- General -->
@@ -123,6 +124,76 @@
             <div class="settings-actions">
                 <button class="btn" onclick="saveImportSettings()">Save Settings</button>
                 <span id="save-import-msg"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup & Cloud -->
+    <div class="settings-panel" id="panel-backup">
+        <!-- Local Backup -->
+        <div class="settings-card">
+            <h3>Local Backup</h3>
+            <p style="color:var(--text-secondary);font-size:0.88em;margin-bottom:16px;">Export all your academic data as a JSON file that you can store anywhere.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn" onclick="exportDataBackup()">💾 Export All Data</button>
+                <label class="btn btn-secondary" style="cursor:pointer;">
+                    📥 Restore from File <input type="file" accept=".json" style="display:none;" onchange="restoreFromFile(this)">
+                </label>
+            </div>
+            <div id="backup-status" style="margin-top:12px;"></div>
+        </div>
+
+        <!-- Calendar Export -->
+        <div class="settings-card">
+            <h3>Calendar Export</h3>
+            <p style="color:var(--text-secondary);font-size:0.88em;margin-bottom:16px;">Export your academic schedule to your preferred calendar app.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button class="btn btn-secondary" onclick="exportToCalendar('ics')">
+                    🍎 Apple Calendar (.ics)
+                </button>
+                <button class="btn btn-secondary" onclick="exportToCalendar('ics')">
+                    📅 Google Calendar (.ics)
+                </button>
+                <button class="btn btn-secondary" onclick="exportToCalendar('ics')">
+                    🪟 Outlook Calendar (.ics)
+                </button>
+            </div>
+            <div style="font-size:0.82em;color:var(--text-muted);margin-top:10px;">
+                ICS files can be imported into any calendar app. In Apple Calendar: File → Import. In Google Calendar: Settings → Import. In Outlook: File → Open &amp; Export → Import/Export.
+            </div>
+        </div>
+
+        <!-- Cloud Storage -->
+        <div class="settings-card">
+            <h3>Cloud Backup</h3>
+            <p style="color:var(--text-secondary);font-size:0.88em;margin-bottom:16px;">
+                To use cloud backup, export your data as a JSON file and upload it to your preferred cloud storage.
+            </p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
+
+                <div style="background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:6px;padding:16px;">
+                    <div style="font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+                        <span style="font-size:1.3em;">🔵</span> Google Drive
+                    </div>
+                    <div style="font-size:0.82em;color:var(--text-secondary);margin-bottom:12px;">Export your data then upload to Google Drive. Open <a href="https://drive.google.com" target="_blank" style="color:var(--accent);">drive.google.com</a> to manage backups.</div>
+                    <button class="btn btn-secondary btn-small" onclick="exportAndOpenCloud('google')">Export &amp; Open Drive</button>
+                </div>
+
+                <div style="background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:6px;padding:16px;">
+                    <div style="font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+                        <span style="font-size:1.3em;">🟦</span> OneDrive
+                    </div>
+                    <div style="font-size:0.82em;color:var(--text-secondary);margin-bottom:12px;">Export your data then upload to OneDrive. Open <a href="https://onedrive.live.com" target="_blank" style="color:var(--accent);">onedrive.live.com</a> to manage backups.</div>
+                    <button class="btn btn-secondary btn-small" onclick="exportAndOpenCloud('onedrive')">Export &amp; Open OneDrive</button>
+                </div>
+
+                <div style="background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:6px;padding:16px;">
+                    <div style="font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+                        <span style="font-size:1.3em;">☁️</span> iCloud Drive
+                    </div>
+                    <div style="font-size:0.82em;color:var(--text-secondary);margin-bottom:12px;">Export your data then upload to iCloud Drive. Open <a href="https://icloud.com/iclouddrive" target="_blank" style="color:var(--accent);">icloud.com/iclouddrive</a> to manage backups.</div>
+                    <button class="btn btn-secondary btn-small" onclick="exportAndOpenCloud('icloud')">Export &amp; Open iCloud</button>
+                </div>
             </div>
         </div>
     </div>
@@ -276,6 +347,104 @@ function toggleApiKey() {
 function copyApiKey() {
     const val = document.getElementById('cfg-api-key').value;
     navigator.clipboard.writeText(val).then(() => showToast('API key copied!', 'success'));
+}
+
+// ── Backup & Cloud ──────────────────────────────────────────
+async function exportDataBackup() {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = 'Exporting...';
+    try {
+        const [courses, items, semesters, files] = await Promise.all([
+            API.get('/api/v1/courses?page=1&page_size=500'),
+            API.get('/api/v1/academic-items?page=1&page_size=500'),
+            API.get('/api/v1/semesters'),
+            API.get('/api/v1/files?page=1&page_size=500'),
+        ]);
+        const backup = {
+            exported_at: new Date().toISOString(),
+            version: '1.0',
+            data: {
+                courses: Array.isArray(courses) ? courses : (courses.items || []),
+                academic_items: Array.isArray(items) ? items : (items.items || []),
+                semesters: Array.isArray(semesters) ? semesters : (semesters.items || []),
+                files: Array.isArray(files) ? files : (files.items || []),
+            }
+        };
+        const json = JSON.stringify(backup, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `scholarr-backup-${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        const el = document.getElementById('backup-status');
+        el.innerHTML = '<span class="save-ok">✓ Backup exported successfully!</span>';
+        setTimeout(() => el.innerHTML = '', 4000);
+        showToast('Backup exported!', 'success');
+    } catch(e) {
+        showToast('Export failed: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Export All Data';
+    }
+}
+
+async function restoreFromFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (!confirm('This will import data from the backup file. Existing data will NOT be overwritten — items will be added. Continue?')) {
+        input.value = ''; return;
+    }
+    try {
+        const text = await file.text();
+        const backup = JSON.parse(text);
+        if (!backup.data) { showToast('Invalid backup file', 'error'); return; }
+        const el = document.getElementById('backup-status');
+        el.innerHTML = '<span style="color:var(--text-secondary);">Importing...</span>';
+        let imported = 0, failed = 0;
+        // Import semesters first
+        for (const sem of (backup.data.semesters || [])) {
+            try { await API.post('/api/v1/semesters', { name: sem.name, start_date: sem.start_date, end_date: sem.end_date }); imported++; } catch(e) { failed++; }
+        }
+        // Import courses
+        for (const c of (backup.data.courses || [])) {
+            try { await API.post('/api/v1/courses', { name: c.name, code: c.code, professor: c.professor }); imported++; } catch(e) { failed++; }
+        }
+        // Import academic items
+        for (const item of (backup.data.academic_items || [])) {
+            try { await API.post('/api/v1/academic-items', { title: item.title, item_type: item.item_type || 'other', status: item.status || 'NotStarted', due_date: item.due_date, grade: item.grade }); imported++; } catch(e) { failed++; }
+        }
+        el.innerHTML = `<span class="save-ok">✓ Imported ${imported} items${failed ? ` (${failed} skipped)` : ''}</span>`;
+        showToast(`Restore complete: ${imported} imported`, 'success');
+    } catch(e) {
+        showToast('Restore failed: ' + e.message, 'error');
+    }
+    input.value = '';
+}
+
+async function exportToCalendar(service) {
+    showToast('Generating calendar export...', 'info');
+    try {
+        const data = await API.get('/api/v1/academic-items?page=1&page_size=500');
+        const items = (Array.isArray(data) ? data : (data.items || [])).filter(i => i.due_date);
+        if (!items.length) { showToast('No items with due dates to export', 'warning'); return; }
+        const result = await API.post('/api/v1/integrations/calendar/generate-ics', items);
+        if (!result.content) { showToast('Failed to generate ICS', 'error'); return; }
+        const blob = new Blob([result.content], { type: 'text/calendar;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'scholarr-calendar.ics'; a.click();
+        URL.revokeObjectURL(url);
+        showToast('Calendar exported! Import the .ics file into your calendar app.', 'success');
+    } catch(e) { showToast('Export failed: ' + e.message, 'error'); }
+}
+
+async function exportAndOpenCloud(provider) {
+    await exportDataBackup();
+    const urls = { google: 'https://drive.google.com', onedrive: 'https://onedrive.live.com', icloud: 'https://icloud.com/iclouddrive' };
+    setTimeout(() => window.open(urls[provider], '_blank'), 1500);
 }
 </script>
 {% endblock %}
