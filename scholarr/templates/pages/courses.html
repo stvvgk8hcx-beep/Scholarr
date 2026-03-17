@@ -1,255 +1,177 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Courses - Scholarr{% endblock %}
+{% block title %}Courses{% endblock %}
 {% block page_title %}Courses{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <!-- Header with Add Button -->
-    <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-white">All Courses</h1>
-        <a href="/courses/add" class="bg-primary text-black px-4 py-2 rounded font-semibold hover:bg-blue-400 transition">
-            ➕ Add Course
-        </a>
+<div style="display:flex;flex-direction:column;gap:16px;">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+        <h2 style="font-size:1.4em;font-weight:700;color:var(--text-primary);">All Courses</h2>
+        <a href="/courses/add" class="btn">➕ Add Course</a>
     </div>
 
-    <!-- Search & Filter Bar -->
-    <div class="bg-dark-card border border-dark-border rounded-lg p-4">
-        <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <!-- Search Input -->
-            <div class="flex-1 min-w-0">
-                <input type="text"
-                       id="course-search"
-                       placeholder="Search courses by code, name, or professor..."
-                       hx-get="/api/v1/courses"
-                       hx-trigger="keyup changed delay:500ms"
-                       hx-target="#courses-table"
-                       hx-swap="innerHTML"
-                       hx-vals='{"search": "PLACEHOLDER"}'
-                       class="w-full px-4 py-2 bg-dark-border border border-dark-border rounded text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                />
-            </div>
-
-            <!-- Filter Controls -->
-            <div class="flex gap-2 text-sm">
-                <select id="semester-filter"
-                        hx-get="/api/v1/courses"
-                        hx-trigger="change"
-                        hx-target="#courses-table"
-                        hx-swap="innerHTML"
-                        class="px-3 py-2 bg-dark-border border border-dark-border rounded text-white focus:outline-none focus:border-primary">
-                    <option value="">All Semesters</option>
-                    <!-- Options loaded from API -->
-                </select>
-
-                <label class="flex items-center gap-2 px-3 py-2 bg-dark-border border border-dark-border rounded cursor-pointer hover:bg-gray-700">
-                    <input type="checkbox"
-                           id="monitored-only"
-                           hx-get="/api/v1/courses"
-                           hx-trigger="change"
-                           hx-target="#courses-table"
-                           hx-swap="innerHTML"
-                           class="w-4 h-4"
-                    />
-                    <span class="text-white">Monitored Only</span>
-                </label>
-            </div>
-
-            <!-- Sort Buttons -->
-            <div class="flex gap-2 text-sm">
-                <button hx-get="/api/v1/courses?sort_key=name&sort_dir=asc"
-                        hx-target="#courses-table"
-                        hx-swap="innerHTML"
-                        class="px-3 py-2 bg-dark-border border border-dark-border rounded text-white hover:bg-gray-700 transition">
-                    A-Z
-                </button>
-                <button hx-get="/api/v1/courses?sort_key=created_at&sort_dir=desc"
-                        hx-target="#courses-table"
-                        hx-swap="innerHTML"
-                        class="px-3 py-2 bg-dark-border border border-dark-border rounded text-white hover:bg-gray-700 transition">
-                    Newest
-                </button>
-            </div>
+    <!-- Filters -->
+    <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:4px;padding:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="form-group" style="flex:2;min-width:180px;margin-bottom:0;">
+            <label>Search</label>
+            <input type="text" id="course-search" placeholder="Search by code, name, professor..." oninput="debouncedLoad()">
+        </div>
+        <div class="form-group" style="flex:1;min-width:150px;margin-bottom:0;">
+            <label>Semester</label>
+            <select id="semester-filter" onchange="loadCourses()">
+                <option value="">All Semesters</option>
+            </select>
+        </div>
+        <div class="form-group" style="min-width:140px;margin-bottom:0;">
+            <label>&nbsp;</label>
+            <label style="display:flex;align-items:center;gap:8px;padding:8px;cursor:pointer;">
+                <input type="checkbox" id="monitored-only" onchange="loadCourses()">
+                Monitored Only
+            </label>
+        </div>
+        <div style="display:flex;gap:6px;align-items:flex-end;">
+            <button class="btn btn-secondary btn-small" onclick="setSortAndLoad('name','asc')">A–Z</button>
+            <button class="btn btn-secondary btn-small" onclick="setSortAndLoad('created_at','desc')">Newest</button>
         </div>
     </div>
 
-    <!-- Bulk Actions Toolbar (hidden until selection) -->
-    <div id="bulk-actions" class="hidden bg-dark-card border border-dark-border rounded-lg p-4">
-        <div class="flex items-center justify-between">
-            <span class="text-sm text-gray-400">
-                <span id="selected-count">0</span> course(s) selected
-            </span>
-            <div class="flex gap-2">
-                <button class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm">
-                    🗑️ Delete
-                </button>
-                <button class="px-4 py-2 bg-dark-border text-white rounded hover:bg-gray-700 transition text-sm">
-                    📊 Export
-                </button>
-            </div>
-        </div>
+    <!-- Table -->
+    <div class="table-container" id="courses-container">
+        <table>
+            <thead>
+                <tr>
+                    <th onclick="setSortAndLoad('code','asc')" style="cursor:pointer;">Code ⇅</th>
+                    <th onclick="setSortAndLoad('name','asc')" style="cursor:pointer;">Name ⇅</th>
+                    <th>Professor</th>
+                    <th>Semester</th>
+                    <th>Items</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="courses-tbody">
+                <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-secondary);">Loading courses...</td></tr>
+            </tbody>
+        </table>
     </div>
 
-    <!-- Courses Table Container -->
-    <div class="bg-dark-card border border-dark-border rounded-lg overflow-hidden">
-        <!-- Table Header with Column Sorters -->
-        <div class="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-dark-border border-b border-dark-border text-xs font-semibold text-gray-300 uppercase tracking-wide">
-            <div class="col-span-1">
-                <input type="checkbox" id="select-all" class="w-4 h-4 cursor-pointer">
-            </div>
-            <button hx-get="/api/v1/courses?sort_key=code&sort_dir=asc"
-                    hx-target="#courses-table"
-                    hx-swap="innerHTML"
-                    class="col-span-2 text-left hover:text-primary cursor-pointer">
-                Code ⇅
-            </button>
-            <button hx-get="/api/v1/courses?sort_key=name&sort_dir=asc"
-                    hx-target="#courses-table"
-                    hx-swap="innerHTML"
-                    class="col-span-3 text-left hover:text-primary cursor-pointer">
-                Name ⇅
-            </button>
-            <button hx-get="/api/v1/courses?sort_key=professor&sort_dir=asc"
-                    hx-target="#courses-table"
-                    hx-swap="innerHTML"
-                    class="col-span-2 text-left hover:text-primary cursor-pointer">
-                Professor ⇅
-            </button>
-            <div class="col-span-1 text-left">Semester</div>
-            <div class="col-span-1 text-left">Items</div>
-            <div class="col-span-1 text-left">Status</div>
-            <div class="col-span-1 text-right">Actions</div>
-        </div>
+    <!-- Pagination -->
+    <div id="courses-pagination" style="display:flex;justify-content:center;gap:8px;margin-top:4px;"></div>
 
-        <!-- Courses Table Body - HTMX loaded -->
-        <div id="courses-table"
-             hx-get="/api/v1/courses?page=1&page_size=20"
-             hx-trigger="load"
-             hx-swap="innerHTML"
-             class="divide-y divide-dark-border">
-            <!-- Loading state -->
-            <div class="p-6 text-center text-gray-500 animate-pulse">
-                Loading courses...
-            </div>
-        </div>
-    </div>
-
-    <!-- Pagination (will be added by HTMX response) -->
-    <div id="pagination" class="flex justify-center gap-2">
-        <!-- Pagination controls -->
-    </div>
 </div>
-
-<!-- Course Row Template (rendered by HTMX response) -->
-<template id="course-row-template">
-    <div class="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-dark-border border-b border-dark-border items-center cursor-pointer transition"
-         onclick="window.location.href = '/courses/' + {{ id }}">
-        <div class="col-span-1">
-            <input type="checkbox" class="course-checkbox w-4 h-4 cursor-pointer" data-id="{{ id }}" onclick="event.stopPropagation()">
-        </div>
-        <div class="col-span-2">
-            <span class="font-mono text-sm font-semibold text-primary">{{ code }}</span>
-        </div>
-        <div class="col-span-3">
-            <p class="font-medium text-gray-200 truncate">{{ name }}</p>
-        </div>
-        <div class="col-span-2">
-            <p class="text-sm text-gray-400 truncate">{{ professor or 'N/A' }}</p>
-        </div>
-        <div class="col-span-1">
-            <span class="text-xs text-gray-500">{{ semester }}</span>
-        </div>
-        <div class="col-span-1">
-            <span class="text-sm text-gray-300">{{ item_count }}</span>
-        </div>
-        <div class="col-span-1">
-            <span class="px-2 py-1 rounded text-xs font-medium {% if monitored %}bg-green-900 text-green-200{% else %}bg-gray-700 text-gray-300{% endif %}">
-                {% if monitored %}✓ Active{% else %}○ Paused{% endif %}
-            </span>
-        </div>
-        <div class="col-span-1 text-right">
-            <button hx-confirm="Delete this course?"
-                    hx-delete="/api/v1/courses/{{ id }}"
-                    hx-target="#courses-table"
-                    hx-swap="innerHTML"
-                    onclick="event.stopPropagation()"
-                    class="text-red-400 hover:text-red-300 text-sm">
-                🗑️
-            </button>
-        </div>
-    </div>
-
-    <!-- Mobile Card View -->
-    <div class="block md:hidden p-4 border-b border-dark-border hover:bg-dark-border transition"
-         onclick="window.location.href = '/courses/' + {{ id }}">
-        <div class="flex items-start justify-between mb-2">
-            <div>
-                <p class="font-semibold text-primary">{{ code }}</p>
-                <p class="text-sm text-gray-300">{{ name }}</p>
-            </div>
-            <span class="px-2 py-1 rounded text-xs font-medium {% if monitored %}bg-green-900 text-green-200{% else %}bg-gray-700 text-gray-300{% endif %}">
-                {% if monitored %}✓{% else %}○{% endif %}
-            </span>
-        </div>
-        <div class="text-xs text-gray-500 space-y-1">
-            <p>Prof: {{ professor or 'N/A' }}</p>
-            <p>{{ semester }} • {{ item_count }} items</p>
-        </div>
-    </div>
-</template>
-
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-    // Load semesters for filter dropdown on page load
-    document.addEventListener('htmx:load', function() {
-        loadSemesters();
-    });
+let courseSortKey = 'name';
+let courseSortDir = 'asc';
+let coursePage = 1;
+const PAGE_SIZE = 20;
+let debounceTimer = null;
 
-    // Update search parameter when typing
-    document.getElementById('course-search').addEventListener('keyup', function(e) {
-        const searchVal = this.value;
-        const htmxElement = document.getElementById('courses-table');
-        htmxElement.setAttribute('hx-vals', JSON.stringify({'search': searchVal}));
-    });
+document.addEventListener('DOMContentLoaded', function() {
+    loadSemesterFilter();
+    loadCourses();
+});
 
-    // Handle select all checkbox
-    document.addEventListener('change', function(e) {
-        if (e.target.id === 'select-all') {
-            const checkboxes = document.querySelectorAll('.course-checkbox');
-            checkboxes.forEach(cb => cb.checked = e.target.checked);
-            updateBulkActions();
-        } else if (e.target.classList.contains('course-checkbox')) {
-            updateBulkActions();
+function setSortAndLoad(key, dir) {
+    courseSortKey = key;
+    courseSortDir = dir;
+    coursePage = 1;
+    loadCourses();
+}
+
+function debouncedLoad() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => loadCourses(), 400);
+}
+
+async function loadSemesterFilter() {
+    try {
+        const semesters = await API.get('/api/v1/semesters');
+        const sel = document.getElementById('semester-filter');
+        (Array.isArray(semesters) ? semesters : []).forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            sel.appendChild(opt);
+        });
+    } catch(e) { /* no semesters yet */ }
+}
+
+async function loadCourses() {
+    const search = document.getElementById('course-search').value.trim();
+    const semId = document.getElementById('semester-filter').value;
+    const monitored = document.getElementById('monitored-only').checked;
+
+    let url = `/api/v1/courses?page=${coursePage}&page_size=${PAGE_SIZE}&sort_key=${courseSortKey}&sort_dir=${courseSortDir}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (semId) url += `&semester_id=${semId}`;
+    if (monitored) url += `&monitored=true`;
+
+    const tbody = document.getElementById('courses-tbody');
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-secondary);">Loading...</td></tr>';
+
+    try {
+        const data = await API.get(url);
+        const items = Array.isArray(data) ? data : (data.items || []);
+        const total = data.total || items.length;
+
+        if (!items.length) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-secondary);">No courses found. <a href="/courses/add" style="color:var(--accent-blue);">Add one →</a></td></tr>';
+            document.getElementById('courses-pagination').innerHTML = '';
+            return;
         }
-    });
 
-    function updateBulkActions() {
-        const selected = document.querySelectorAll('.course-checkbox:checked').length;
-        const bulkActions = document.getElementById('bulk-actions');
-        if (selected > 0) {
-            bulkActions.classList.remove('hidden');
-            document.getElementById('selected-count').textContent = selected;
-        } else {
-            bulkActions.classList.add('hidden');
-        }
+        tbody.innerHTML = items.map(c => `
+            <tr onclick="window.location='/courses/${c.id}'" style="cursor:pointer;">
+                <td><span style="font-family:monospace;font-weight:600;color:var(--accent-blue);">${c.code}</span></td>
+                <td>${c.name}</td>
+                <td style="color:var(--text-secondary);">${c.professor || '—'}</td>
+                <td style="color:var(--text-secondary);">${c.semester_name || '—'}</td>
+                <td>${c.item_count ?? 0}</td>
+                <td>
+                    <span class="badge ${c.monitored ? 'badge-complete' : 'badge-notstarted'}">
+                        ${c.monitored ? '✓ Active' : '○ Paused'}
+                    </span>
+                </td>
+                <td onclick="event.stopPropagation()" style="display:flex;gap:6px;">
+                    <a href="/courses/${c.id}" class="btn btn-secondary btn-small">View</a>
+                    <button class="btn btn-small" style="background:#d9534f;border-color:#d9534f;" onclick="deleteCourse(${c.id}, this)">🗑️</button>
+                </td>
+            </tr>
+        `).join('');
+
+        renderPagination(total, PAGE_SIZE, coursePage, (p) => { coursePage = p; loadCourses(); }, 'courses-pagination');
+    } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:#d9534f;">Error: ${e.message}</td></tr>`;
     }
+}
 
-    async function loadSemesters() {
-        try {
-            const res = await fetch('/api/v1/semesters');
-            const semesters = await res.json();
-            const select = document.getElementById('semester-filter');
-            semesters.forEach(sem => {
-                const opt = document.createElement('option');
-                opt.value = sem.id;
-                opt.textContent = sem.name;
-                select.appendChild(opt);
-            });
-        } catch (error) {
-            console.error('Error loading semesters:', error);
-        }
+async function deleteCourse(id, btn) {
+    if (!confirm('Delete this course? Associated academic items will remain.')) return;
+    btn.disabled = true;
+    try {
+        await API.del(`/api/v1/courses/${id}`);
+        showToast('Course deleted', 'success');
+        loadCourses();
+    } catch(e) {
+        showToast('Could not delete: ' + e.message, 'error');
+        btn.disabled = false;
     }
+}
+
+function renderPagination(total, pageSize, current, onPage, containerId) {
+    const pages = Math.ceil(total / pageSize);
+    const el = document.getElementById(containerId);
+    if (pages <= 1) { el.innerHTML = ''; return; }
+    let html = '';
+    if (current > 1) html += `<button class="btn btn-secondary btn-small" onclick="(${onPage})(${current-1})">← Prev</button>`;
+    html += `<span style="padding:6px 12px;color:var(--text-secondary);font-size:0.9em;">Page ${current} of ${pages}</span>`;
+    if (current < pages) html += `<button class="btn btn-secondary btn-small" onclick="(${onPage})(${current+1})">Next →</button>`;
+    el.innerHTML = html;
+}
 </script>
 {% endblock %}

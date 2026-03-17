@@ -1,168 +1,322 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Academic Items - Scholarr{% endblock %}
-
+{% block title %}Academic Items{% endblock %}
 {% block page_title %}Academic Items{% endblock %}
 
-{% block header_actions %}
-<button class="btn btn-small" hx-get="/api/v1/academic-items/export" hx-target="body" hx-swap="none">Export</button>
+{% block extra_css %}
+<style>
+.filter-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+.filter-bar .form-group { margin-bottom: 0; }
+</style>
 {% endblock %}
 
 {% block content %}
-<style>
-    .filter-bar {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 15px;
-    }
+<div style="display:flex;flex-direction:column;gap:0;">
 
-    .status-badge {
-        white-space: nowrap;
-    }
-
-    .grade-cell {
-        font-weight: 600;
-        color: var(--accent-blue);
-    }
-
-    .date-cell {
-        color: var(--text-secondary);
-        font-size: 0.9em;
-    }
-</style>
-
-<!-- Filter Bar -->
-<div class="filter-bar">
-    <div class="form-group">
-        <label>Search Items</label>
-        <input type="text" 
-               id="searchInput"
-               placeholder="Search by title..."
-               hx-get="/api/v1/academic-items/search"
-               hx-target="#itemsTable"
-               hx-trigger="keyup changed delay:500ms"
-               hx-include="[name='type'], [name='status'], [name='course_id'], [name='date_from'], [name='date_to']">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <h2 style="font-size:1.4em;font-weight:700;color:var(--text-primary);">Academic Items</h2>
+        <button class="btn" onclick="openAddItemModal()">➕ Add Item</button>
     </div>
 
-    <div class="form-group">
-        <label>Type</label>
-        <select name="type" 
-                hx-get="/api/v1/academic-items/"
-                hx-target="#itemsTable"
-                hx-trigger="change">
-            <option value="">All Types</option>
-            <option value="assignment">Assignment</option>
-            <option value="exam">Exam</option>
-            <option value="project">Project</option>
-            <option value="quiz">Quiz</option>
-            <option value="presentation">Presentation</option>
-            <option value="lab">Lab</option>
-            <option value="other">Other</option>
-        </select>
+    <!-- Filters -->
+    <div class="filter-bar">
+        <div class="form-group">
+            <label>Search</label>
+            <input type="text" id="item-search" placeholder="Search by title..." oninput="debouncedLoad()">
+        </div>
+        <div class="form-group">
+            <label>Type</label>
+            <select id="item-type" onchange="loadItems()">
+                <option value="">All Types</option>
+                <option value="assignment">Assignment</option>
+                <option value="exam">Exam</option>
+                <option value="project">Project</option>
+                <option value="quiz">Quiz</option>
+                <option value="presentation">Presentation</option>
+                <option value="lab">Lab</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Status</label>
+            <select id="item-status" onchange="loadItems()">
+                <option value="">All Status</option>
+                <option value="NotStarted">Not Started</option>
+                <option value="InProgress">In Progress</option>
+                <option value="Submitted">Submitted</option>
+                <option value="Graded">Graded</option>
+                <option value="Late">Late</option>
+                <option value="Complete">Complete</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Course</label>
+            <select id="item-course" onchange="loadItems()">
+                <option value="">All Courses</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Due From</label>
+            <input type="date" id="item-from" onchange="loadItems()">
+        </div>
+        <div class="form-group">
+            <label>Due To</label>
+            <input type="date" id="item-to" onchange="loadItems()">
+        </div>
     </div>
 
-    <div class="form-group">
-        <label>Status</label>
-        <select name="status" 
-                hx-get="/api/v1/academic-items/"
-                hx-target="#itemsTable"
-                hx-trigger="change">
-            <option value="">All Status</option>
-            <option value="NotStarted">Not Started</option>
-            <option value="InProgress">In Progress</option>
-            <option value="Submitted">Submitted</option>
-            <option value="Graded">Graded</option>
-            <option value="Late">Late</option>
-            <option value="Incomplete">Incomplete</option>
-            <option value="Complete">Complete</option>
-        </select>
+    <!-- Table -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Course</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Grade</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="items-tbody">
+                <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-secondary);">Loading items...</td></tr>
+            </tbody>
+        </table>
     </div>
 
-    <div class="form-group">
-        <label>Course</label>
-        <select name="course_id" 
-                hx-get="/api/v1/academic-items/"
-                hx-target="#itemsTable"
-                hx-trigger="change">
-            <option value="">All Courses</option>
-            <!-- Populate with actual courses from API -->
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>Due From</label>
-        <input type="date" name="date_from"
-               hx-get="/api/v1/academic-items/"
-               hx-target="#itemsTable"
-               hx-trigger="change">
-    </div>
-
-    <div class="form-group">
-        <label>Due To</label>
-        <input type="date" name="date_to"
-               hx-get="/api/v1/academic-items/"
-               hx-target="#itemsTable"
-               hx-trigger="change">
-    </div>
+    <div id="items-pagination" style="display:flex;justify-content:center;gap:8px;margin-top:12px;"></div>
 </div>
 
-<!-- Items Table -->
-<div id="itemsTable" class="table-container">
-    <table>
-        <thead>
+<!-- Add Item Modal -->
+<div id="addItemModal" class="modal" onclick="if(event.target===this)closeAddItem()">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add Academic Item</h2>
+            <button class="modal-close" onclick="closeAddItem()">&times;</button>
+        </div>
+        <div class="modal-content" style="padding:16px;">
+            <div class="form-group">
+                <label>Title *</label>
+                <input type="text" id="new-title" placeholder="e.g., Assignment 3">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="form-group">
+                    <label>Type *</label>
+                    <select id="new-type">
+                        <option value="assignment">Assignment</option>
+                        <option value="exam">Exam</option>
+                        <option value="project">Project</option>
+                        <option value="quiz">Quiz</option>
+                        <option value="presentation">Presentation</option>
+                        <option value="lab">Lab</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="new-status">
+                        <option value="NotStarted">Not Started</option>
+                        <option value="InProgress">In Progress</option>
+                        <option value="Submitted">Submitted</option>
+                        <option value="Graded">Graded</option>
+                        <option value="Complete">Complete</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="form-group">
+                    <label>Course</label>
+                    <select id="new-course">
+                        <option value="">No Course</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Due Date</label>
+                    <input type="date" id="new-due">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Grade</label>
+                <input type="number" id="new-grade" placeholder="e.g., 85" min="0" max="100" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="new-notes" rows="3" style="resize:vertical;" placeholder="Optional notes..."></textarea>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+                <button class="btn btn-secondary" onclick="closeAddItem()">Cancel</button>
+                <button class="btn" onclick="createItem()">Create Item</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let itemPage = 1;
+const ITEM_PAGE_SIZE = 25;
+let debounceTimer = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadCourseFilter();
+    loadItems();
+});
+
+function debouncedLoad() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(loadItems, 400);
+}
+
+async function loadCourseFilter() {
+    try {
+        const data = await API.get('/api/v1/courses?page=1&page_size=100');
+        const courses = Array.isArray(data) ? data : (data.items || []);
+        const sel = document.getElementById('item-course');
+        const newSel = document.getElementById('new-course');
+        courses.forEach(c => {
+            [sel, newSel].forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = `${c.code} — ${c.name}`;
+                s.appendChild(opt);
+            });
+        });
+    } catch(e) { /* ignore */ }
+}
+
+async function loadItems() {
+    const search = document.getElementById('item-search').value.trim();
+    const type = document.getElementById('item-type').value;
+    const status = document.getElementById('item-status').value;
+    const courseId = document.getElementById('item-course').value;
+    const from = document.getElementById('item-from').value;
+    const to = document.getElementById('item-to').value;
+
+    let url = `/api/v1/academic-items?page=${itemPage}&page_size=${ITEM_PAGE_SIZE}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (type) url += `&item_type=${type}`;
+    if (status) url += `&status=${status}`;
+    if (courseId) url += `&course_id=${courseId}`;
+    if (from) url += `&due_after=${from}`;
+    if (to) url += `&due_before=${to}`;
+
+    const tbody = document.getElementById('items-tbody');
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-secondary);">Loading...</td></tr>';
+
+    try {
+        const data = await API.get(url);
+        const items = Array.isArray(data) ? data : (data.items || []);
+        const total = data.total || items.length;
+
+        if (!items.length) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-secondary);">No items found.</td></tr>';
+            document.getElementById('items-pagination').innerHTML = '';
+            return;
+        }
+
+        tbody.innerHTML = items.map(item => `
             <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Course</th>
-                <th>Due Date</th>
-                <th>Status</th>
-                <th>Grade</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="itemsBody">
-            <!-- Loaded via HTMX -->
-            <tr>
-                <td colspan="7" class="text-muted" style="text-align: center; padding: 40px;">
-                    Loading items... <span class="htmx-request"></span>
+                <td style="font-weight:500;">${item.title || item.name}</td>
+                <td><span class="badge badge-notstarted" style="text-transform:capitalize;">${item.item_type || item.type || '—'}</span></td>
+                <td style="color:var(--text-secondary);">${item.course_code || '—'}</td>
+                <td class="date-cell">${formatDate(item.due_date)}</td>
+                <td><span class="badge ${statusBadge(item.status)}">${item.status || 'NotStarted'}</span></td>
+                <td class="grade-cell">${item.grade !== null && item.grade !== undefined ? item.grade + '%' : '—'}</td>
+                <td style="display:flex;gap:6px;">
+                    <button class="btn btn-secondary btn-small" onclick="editItem(${item.id})">✏️</button>
+                    <button class="btn btn-small" style="background:#d9534f;border-color:#d9534f;" onclick="deleteItem(${item.id}, this)">🗑️</button>
                 </td>
             </tr>
-        </tbody>
-    </table>
-</div>
+        `).join('');
 
-<script>
-    // Load initial data
-    document.addEventListener('DOMContentLoaded', function() {
-        htmx.ajax('GET', '/api/v1/academic-items/paged', {
-            target: '#itemsBody',
-            swap: 'innerHTML'
-        });
-    });
-
-    // Helper function to get status badge class
-    function getStatusBadgeClass(status) {
-        const statusMap = {
-            'NotStarted': 'badge-notstarted',
-            'InProgress': 'badge-inprogress',
-            'Submitted': 'badge-submitted',
-            'Graded': 'badge-graded',
-            'Late': 'badge-late',
-            'Incomplete': 'badge-incomplete',
-            'Complete': 'badge-complete'
-        };
-        return statusMap[status] || 'badge-notstarted';
+        renderPagination(total, ITEM_PAGE_SIZE, itemPage,
+            (p) => { itemPage = p; loadItems(); }, 'items-pagination');
+    } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:#d9534f;">Error: ${e.message}</td></tr>`;
     }
+}
 
-    // Format date for display
-    function formatDate(dateString) {
-        if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+function statusBadge(status) {
+    const m = {
+        NotStarted:'badge-notstarted', InProgress:'badge-inprogress',
+        Submitted:'badge-submitted', Graded:'badge-graded',
+        Late:'badge-late', Incomplete:'badge-incomplete', Complete:'badge-complete'
+    };
+    return m[status] || 'badge-notstarted';
+}
+
+function openAddItemModal() {
+    document.getElementById('new-title').value = '';
+    document.getElementById('new-grade').value = '';
+    document.getElementById('new-notes').value = '';
+    document.getElementById('new-due').value = '';
+    document.getElementById('addItemModal').classList.add('show');
+}
+function closeAddItem() { document.getElementById('addItemModal').classList.remove('show'); }
+
+async function createItem() {
+    const title = document.getElementById('new-title').value.trim();
+    if (!title) { showToast('Title is required', 'warning'); return; }
+    const payload = {
+        title,
+        item_type: document.getElementById('new-type').value,
+        status: document.getElementById('new-status').value,
+    };
+    const courseId = document.getElementById('new-course').value;
+    if (courseId) payload.course_id = parseInt(courseId);
+    const due = document.getElementById('new-due').value;
+    if (due) payload.due_date = due;
+    const grade = document.getElementById('new-grade').value;
+    if (grade !== '') payload.grade = parseFloat(grade);
+    const notes = document.getElementById('new-notes').value.trim();
+    if (notes) payload.notes = notes;
+
+    try {
+        await API.post('/api/v1/academic-items', payload);
+        closeAddItem();
+        showToast('Item created!', 'success');
+        loadItems();
+    } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+
+async function editItem(id) {
+    showToast('Edit coming soon — use the API directly for now', 'info');
+}
+
+async function deleteItem(id, btn) {
+    if (!confirm('Delete this academic item?')) return;
+    btn.disabled = true;
+    try {
+        await API.del(`/api/v1/academic-items/${id}`);
+        showToast('Item deleted', 'success');
+        loadItems();
+    } catch(e) {
+        showToast('Error: ' + e.message, 'error');
+        btn.disabled = false;
     }
+}
 
-    // Expose functions to global scope for template use
-    window.getStatusBadgeClass = getStatusBadgeClass;
-    window.formatDate = formatDate;
+function renderPagination(total, pageSize, current, onPage, containerId) {
+    const pages = Math.ceil(total / pageSize);
+    const el = document.getElementById(containerId);
+    if (pages <= 1) { el.innerHTML = ''; return; }
+    let html = '';
+    if (current > 1) html += `<button class="btn btn-secondary btn-small" onclick="(${onPage})(${current-1})">← Prev</button>`;
+    html += `<span style="padding:6px 12px;color:var(--text-secondary);font-size:0.9em;">Page ${current} of ${pages} (${total} total)</span>`;
+    if (current < pages) html += `<button class="btn btn-secondary btn-small" onclick="(${onPage})(${current+1})">Next →</button>`;
+    el.innerHTML = html;
+}
 </script>
 {% endblock %}

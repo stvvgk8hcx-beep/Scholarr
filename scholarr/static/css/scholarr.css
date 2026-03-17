@@ -718,18 +718,42 @@ input[type="submit"] {
    Modals and Overlays
    ============================================================ */
 
+/* Modal wrapper — hidden by default, shown with .show */
 .modal-overlay {
+  display: none;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
+  background-color: rgba(0, 0, 0, 0.6);
   align-items: center;
   justify-content: center;
   z-index: 1500;
   animation: fadeIn 0.2s ease-out;
+}
+
+.modal-overlay.show {
+  display: flex;
+}
+
+/* Legacy .modal class used directly (treated as overlay wrapper) */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  align-items: center;
+  justify-content: center;
+  z-index: 1500;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal.show {
+  display: flex;
 }
 
 @keyframes fadeIn {
@@ -741,7 +765,9 @@ input[type="submit"] {
   }
 }
 
-.modal {
+/* Inner card box shown inside the modal overlay */
+.modal .modal-content,
+.modal-overlay .modal-box {
   background-color: #282c34;
   border: 1px solid #3a3f4a;
   border-radius: 6px;

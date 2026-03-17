@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Scholarr{% endblock %} - Academic File Management</title>
+    <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
 
     <!-- Main stylesheet -->
     <link rel="stylesheet" href="/static/css/scholarr.css">
 
-    <!-- HTMX for dynamic interactions (no JS frameworks) -->
+    <!-- HTMX for dynamic interactions -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
     <!-- Additional page-specific styles -->
@@ -33,64 +34,137 @@
         </div>
     </div>
 
-    <!-- Toast notification container for HTMX messages -->
+    <!-- Toast notification container -->
     <div class="toast-container" id="toast-container"></div>
 
     <!-- Page-specific scripts -->
-    {% block extra_js %}{% endblock %}
+    {% block extra_scripts %}{% endblock %}
 
-    <!-- Global HTMX configuration and utilities -->
+    <!-- Global utilities -->
     <script>
-        // Configure HTMX defaults
-        htmx.config.defaultIndicatorStyle = 'spinner';
-        htmx.config.historyCacheSize = 0;
+        // ── API key ──────────────────────────────────────────────
+        window.SCHOLARR_API_KEY = "{{ api_key }}";
 
-        // Toast notification handler for HTMX responses
-        document.body.addEventListener('htmx:afterSwap', function(evt) {
-            const response = evt.detail.xhr.getResponseHeader('X-Toast-Message');
-            const toastType = evt.detail.xhr.getResponseHeader('X-Toast-Type') || 'info';
-
-            if (response) {
-                showToast(response, toastType);
+        // ── Global fetch helpers with API key ────────────────────
+        window.API = {
+            headers: {
+                'X-API-Key': window.SCHOLARR_API_KEY,
+                'Content-Type': 'application/json'
+            },
+            async get(url) {
+                const res = await fetch(url, { headers: { 'X-API-Key': window.SCHOLARR_API_KEY } });
+                if (!res.ok) throw new Error(`GET ${url} → ${res.status}`);
+                return res.json();
+            },
+            async post(url, data) {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: this.headers,
+                    body: JSON.stringify(data)
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.detail || `POST ${url} → ${res.status}`);
+                }
+                return res.json();
+            },
+            async put(url, data) {
+                const res = await fetch(url, {
+                    method: 'PUT',
+                    headers: this.headers,
+                    body: JSON.stringify(data)
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.detail || `PUT ${url} → ${res.status}`);
+                }
+                return res.json();
+            },
+            async del(url) {
+                const res = await fetch(url, {
+                    method: 'DELETE',
+                    headers: { 'X-API-Key': window.SCHOLARR_API_KEY }
+                });
+                if (!res.ok) throw new Error(`DELETE ${url} → ${res.status}`);
+                return res.status === 204 ? null : res.json().catch(() => null);
+            },
+            async postForm(url, formData) {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'X-API-Key': window.SCHOLARR_API_KEY },
+                    body: formData
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.detail || `POST ${url} → ${res.status}`);
+                }
+                return res.json();
             }
+        };
+
+        // ── HTMX: always send the API key header ─────────────────
+        htmx.config.historyCacheSize = 0;
+        document.body.addEventListener('htmx:configRequest', function(evt) {
+            evt.detail.headers['X-API-Key'] = window.SCHOLARR_API_KEY;
         });
 
-        // Show toast notification
+        // ── Toast notifications ───────────────────────────────────
         function showToast(message, type = 'info') {
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
-            toast.innerHTML = `
-                <span>${message}</span>
-                <span class="toast-close">&times;</span>
-            `;
-
-            const container = document.getElementById('toast-container');
-            container.appendChild(toast);
-
-            // Auto-remove after 5 seconds
+            toast.innerHTML = `<span>${message}</span><span class="toast-close">&times;</span>`;
+            document.getElementById('toast-container').appendChild(toast);
             setTimeout(() => {
-                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                toast.style.opacity = '0';
                 setTimeout(() => toast.remove(), 300);
-            }, 5000);
-
-            // Manual close
-            toast.querySelector('.toast-close').addEventListener('click', () => {
-                toast.remove();
-            });
+            }, 4000);
+            toast.querySelector('.toast-close').addEventListener('click', () => toast.remove());
         }
+        window.showToast = showToast;
 
-        // Handle navigation active states
+        // ── HTMX toast from response headers ─────────────────────
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            const msg = evt.detail.xhr.getResponseHeader('X-Toast-Message');
+            const type = evt.detail.xhr.getResponseHeader('X-Toast-Type') || 'info';
+            if (msg) showToast(msg, type);
+        });
+
+        // ── Navigation active state ───────────────────────────────
         document.addEventListener('DOMContentLoaded', function() {
-            const currentPath = window.location.pathname;
+            const path = window.location.pathname;
             document.querySelectorAll('.nav-item').forEach(item => {
                 const href = item.getAttribute('href') || item.getAttribute('data-href');
-                if (href && currentPath.startsWith(href)) {
+                if (!href || href === '/') {
+                    if (path === '/') item.classList.add('active');
+                    else item.classList.remove('active');
+                } else if (href && path.startsWith(href)) {
                     item.classList.add('active');
                 } else {
                     item.classList.remove('active');
                 }
             });
         });
+
+        // ── Global date formatter ─────────────────────────────────
+        window.formatDate = function(dateString) {
+            if (!dateString) return 'N/A';
+            const d = new Date(dateString + (dateString.includes('T') ? '' : 'T00:00:00'));
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        };
+
+        window.formatRelativeTime = function(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            if (diffMins < 1) return 'just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return date.toLocaleDateString();
+        };
     </script>
 </body>
 </html>

@@ -1,247 +1,220 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Calendar - Scholarr{% endblock %}
-
+{% block title %}Calendar{% endblock %}
 {% block page_title %}Academic Calendar{% endblock %}
-
-{% block header_actions %}
-<button class="btn btn-small" hx-get="/api/v1/calendar/export" hx-target="body" hx-swap="none">Export iCal</button>
-{% endblock %}
 
 {% block extra_css %}
 <style>
-    .calendar-container {
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        padding: 20px;
-        margin-top: 20px;
-    }
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.cal-header-cell {
+    background: var(--bg-tertiary);
+    padding: 10px 6px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.82em;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+.cal-day {
+    background: var(--bg-secondary);
+    min-height: 90px;
+    padding: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+}
+.cal-day:hover { background: var(--bg-tertiary); }
+.cal-day.other-month { background: #1a1d23; }
+.cal-day.other-month .day-num { color: var(--text-secondary); }
+.cal-day.today { background: rgba(53,197,244,0.08); border-left: 3px solid var(--accent-blue); }
+.day-num { font-weight: 600; font-size: 0.9em; margin-bottom: 4px; }
+.cal-events { display: flex; flex-direction: column; gap: 2px; }
+.cal-event {
+    font-size: 0.7em; padding: 2px 5px; border-radius: 2px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: #fff; cursor: pointer;
+}
+.cal-event:hover { opacity: 0.85; }
+.ev-assignment { background: #0d7dd8; }
+.ev-exam { background: #d9534f; }
+.ev-project { background: #5cb85c; }
+.ev-quiz { background: #f0ad4e; color:#333; }
+.ev-other { background: #666; }
 
-    .calendar-nav {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-    }
-
-    .calendar-month {
-        font-size: 1.5em;
-        font-weight: 600;
-    }
-
-    .calendar-grid {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 1px;
-        background-color: var(--border-color);
-        padding: 1px;
-        border-radius: 4px;
-        overflow: hidden;
-    }
-
-    .calendar-day-header {
-        background-color: var(--bg-tertiary);
-        padding: 12px 8px;
-        text-align: center;
-        font-weight: 600;
-        font-size: 0.85em;
-        color: var(--text-secondary);
-    }
-
-    .calendar-day {
-        background-color: var(--bg-secondary);
-        padding: 12px 8px;
-        min-height: 100px;
-        position: relative;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .calendar-day:hover {
-        background-color: var(--bg-tertiary);
-    }
-
-    .calendar-day.other-month {
-        background-color: #1a1a1a;
-        color: var(--text-secondary);
-    }
-
-    .calendar-day.today {
-        background-color: rgba(13, 125, 216, 0.1);
-        border-left: 3px solid var(--accent-blue);
-    }
-
-    .calendar-day-number {
-        font-weight: 600;
-        margin-bottom: 8px;
-        font-size: 0.95em;
-    }
-
-    .calendar-day.other-month .calendar-day-number {
-        color: var(--text-secondary);
-    }
-
-    .calendar-events {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-
-    .calendar-event {
-        font-size: 0.75em;
-        padding: 2px 4px;
-        border-radius: 2px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        color: white;
-        cursor: pointer;
-    }
-
-    .calendar-event:hover {
-        text-decoration: underline;
-    }
-
-    .calendar-event-assignment {
-        background-color: #0d7dd8;
-    }
-
-    .calendar-event-exam {
-        background-color: #d9534f;
-    }
-
-    .calendar-event-project {
-        background-color: #5cb85c;
-    }
-
-    .calendar-event-quiz {
-        background-color: #f0ad4e;
-    }
-
-    .calendar-event-other {
-        background-color: #666666;
-    }
-
-    /* Day Details Panel */
-    .day-details {
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        padding: 20px;
-        margin-top: 20px;
-    }
-
-    .day-details h3 {
-        color: var(--accent-blue);
-        margin-bottom: 15px;
-    }
-
-    .day-items {
-        list-style: none;
-    }
-
-    .day-item {
-        background-color: var(--bg-tertiary);
-        padding: 12px;
-        border-radius: 4px;
-        margin-bottom: 10px;
-        border-left: 3px solid var(--accent-blue);
-    }
-
-    .day-item-title {
-        font-weight: 600;
-        margin-bottom: 5px;
-    }
-
-    .day-item-course {
-        color: var(--text-secondary);
-        font-size: 0.9em;
-    }
+.day-detail {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 16px;
+    margin-top: 16px;
+}
+.day-detail h3 { color: var(--accent-blue); margin-bottom: 12px; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="calendar-container">
+<div style="display:flex;flex-direction:column;gap:16px;">
+
     <!-- Navigation -->
-    <div class="calendar-nav">
-        <button class="btn btn-secondary btn-small"
-                hx-get="/api/v1/calendar/prev"
-                hx-target="#calendarView"
-                hx-swap="innerHTML">← Previous</button>
-        
-        <div class="calendar-month" id="currentMonth">
-            {{ current_month }} {{ current_year }}
-        </div>
-        
-        <button class="btn btn-secondary btn-small"
-                hx-get="/api/v1/calendar/next"
-                hx-target="#calendarView"
-                hx-swap="innerHTML">Next →</button>
+    <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:4px;padding:16px;display:flex;align-items:center;justify-content:space-between;">
+        <button class="btn btn-secondary" onclick="changeMonth(-1)">← Previous</button>
+        <div style="font-size:1.3em;font-weight:700;color:var(--text-primary);" id="cal-month-label">March 2026</div>
+        <button class="btn btn-secondary" onclick="changeMonth(1)">Next →</button>
     </div>
 
     <!-- Calendar Grid -->
-    <div id="calendarView" hx-trigger="load" hx-get="/api/v1/calendar/month">
-        <div class="calendar-grid" id="calendarGrid">
-            <!-- Days will be loaded via HTMX -->
-            <!-- Headers -->
-            <div class="calendar-day-header">Sun</div>
-            <div class="calendar-day-header">Mon</div>
-            <div class="calendar-day-header">Tue</div>
-            <div class="calendar-day-header">Wed</div>
-            <div class="calendar-day-header">Thu</div>
-            <div class="calendar-day-header">Fri</div>
-            <div class="calendar-day-header">Sat</div>
-            
-            <!-- Loading placeholder -->
-            <div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-secondary);">
-                Loading calendar...
-            </div>
+    <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:4px;padding:1px;overflow:hidden;">
+        <div class="cal-grid" id="cal-grid">
+            <div class="cal-header-cell">Sun</div>
+            <div class="cal-header-cell">Mon</div>
+            <div class="cal-header-cell">Tue</div>
+            <div class="cal-header-cell">Wed</div>
+            <div class="cal-header-cell">Thu</div>
+            <div class="cal-header-cell">Fri</div>
+            <div class="cal-header-cell">Sat</div>
+            <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-secondary);">Loading calendar...</div>
         </div>
     </div>
-</div>
 
-<!-- Day Details Panel -->
-<div id="dayDetailsPanel" class="day-details" style="display: none;">
-    <h3 id="selectedDayTitle">Selected Day</h3>
-    <ul class="day-items" id="dayItemsList">
-        <!-- Items for selected day -->
-    </ul>
+    <!-- Day Details -->
+    <div class="day-detail" id="day-detail" style="display:none;">
+        <h3 id="day-detail-title">Selected Day</h3>
+        <div id="day-detail-items"><div class="loading">No items for this day.</div></div>
+    </div>
 </div>
+{% endblock %}
 
+{% block extra_scripts %}
 <script>
-    let currentMonth = new Date().getMonth();
-    let currentYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let calYear = new Date().getFullYear();
+let allItems = [];  // cached items for the month
 
-    function loadCalendar(month, year) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}`;
-        htmx.ajax('GET', `/api/v1/calendar/month?date=${dateStr}`, {
-            target: '#calendarGrid',
-            swap: 'innerHTML'
-        });
-        document.getElementById('currentMonth').textContent = 
-            new Date(year, month).toLocaleString('en-US', { month: 'long', year: 'numeric' });
+document.addEventListener('DOMContentLoaded', loadCalendar);
+
+async function changeMonth(delta) {
+    calMonth += delta;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    loadCalendar();
+}
+
+async function loadCalendar() {
+    const monthStr = String(calMonth + 1).padStart(2, '0');
+    document.getElementById('cal-month-label').textContent =
+        new Date(calYear, calMonth).toLocaleString('en-US', { month: 'long', year: 'numeric' });
+
+    // Build grid with placeholders
+    renderGrid([]);
+
+    try {
+        const start = `${calYear}-${monthStr}-01`;
+        const lastDay = new Date(calYear, calMonth + 1, 0).getDate();
+        const end = `${calYear}-${monthStr}-${String(lastDay).padStart(2,'0')}`;
+        const data = await API.get(`/api/v1/academic-items?page=1&page_size=200&due_after=${start}&due_before=${end}`);
+        allItems = Array.isArray(data) ? data : (data.items || []);
+    } catch(e) {
+        allItems = [];
     }
+    renderGrid(allItems);
+}
 
-    function selectDay(day) {
-        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        htmx.ajax('GET', `/api/v1/academic-items/?due_date=${dateStr}`, {
-            target: '#dayItemsList',
-            swap: 'innerHTML'
-        });
+function renderGrid(items) {
+    const firstDay = new Date(calYear, calMonth, 1).getDay(); // 0=Sun
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const today = new Date();
 
-        const date = new Date(currentYear, currentMonth, day);
-        document.getElementById('selectedDayTitle').textContent = 
-            date.toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-        document.getElementById('dayDetailsPanel').style.display = 'block';
-    }
-
-    // Load initial calendar
-    document.addEventListener('DOMContentLoaded', function() {
-        loadCalendar(currentMonth, currentYear);
+    // Group items by date string
+    const byDate = {};
+    items.forEach(item => {
+        if (!item.due_date) return;
+        const d = item.due_date.slice(0, 10);
+        if (!byDate[d]) byDate[d] = [];
+        byDate[d].push(item);
     });
 
-    // Expose functions globally
-    window.selectDay = selectDay;
+    const grid = document.getElementById('cal-grid');
+    // Keep day headers
+    const headers = Array.from(grid.querySelectorAll('.cal-header-cell'));
+    grid.innerHTML = '';
+    headers.forEach(h => grid.appendChild(h));
+
+    // Empty cells before first day
+    for (let i = 0; i < firstDay; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-day other-month';
+        cell.innerHTML = '<div class="day-num"></div>';
+        grid.appendChild(cell);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const monthStr = String(calMonth + 1).padStart(2, '0');
+        const dateStr = `${calYear}-${monthStr}-${String(day).padStart(2, '0')}`;
+        const isToday = today.getFullYear() === calYear && today.getMonth() === calMonth && today.getDate() === day;
+
+        const cell = document.createElement('div');
+        cell.className = 'cal-day' + (isToday ? ' today' : '');
+        cell.onclick = () => showDayDetail(day, dateStr, byDate[dateStr] || []);
+
+        const dayItems = byDate[dateStr] || [];
+        const eventHtml = dayItems.slice(0, 3).map(item => {
+            const type = (item.item_type || item.type || 'other').toLowerCase();
+            const cls = ['assignment','exam','project','quiz'].includes(type) ? `ev-${type}` : 'ev-other';
+            return `<div class="cal-event ${cls}" title="${item.title || item.name}">${item.title || item.name}</div>`;
+        }).join('') + (dayItems.length > 3 ? `<div style="font-size:0.68em;color:var(--text-secondary);margin-top:2px;">+${dayItems.length-3} more</div>` : '');
+
+        cell.innerHTML = `<div class="day-num">${day}</div><div class="cal-events">${eventHtml}</div>`;
+        grid.appendChild(cell);
+    }
+
+    // Fill remaining cells
+    const totalCells = firstDay + daysInMonth;
+    const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+    for (let i = 0; i < remaining; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-day other-month';
+        cell.innerHTML = '<div class="day-num"></div>';
+        grid.appendChild(cell);
+    }
+}
+
+function showDayDetail(day, dateStr, items) {
+    const panel = document.getElementById('day-detail');
+    const title = document.getElementById('day-detail-title');
+    const content = document.getElementById('day-detail-items');
+    const d = new Date(dateStr + 'T00:00:00');
+    title.textContent = d.toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+    if (!items.length) {
+        content.innerHTML = '<div style="color:var(--text-secondary);padding:12px 0;">No academic items due on this day.</div>';
+    } else {
+        content.innerHTML = items.map(item => `
+            <div style="background:var(--bg-tertiary);padding:12px;border-radius:3px;margin-bottom:8px;border-left:3px solid var(--accent-blue);">
+                <div style="font-weight:600;margin-bottom:4px;">${item.title || item.name}</div>
+                <div style="font-size:0.85em;color:var(--text-secondary);">${item.course_code || ''} · <span style="text-transform:capitalize;">${item.item_type || item.type || 'other'}</span></div>
+                <div style="margin-top:6px;">
+                    <span class="badge ${statusBadge(item.status)}">${item.status || 'NotStarted'}</span>
+                    ${item.grade !== null && item.grade !== undefined ? `<span style="margin-left:8px;font-size:0.85em;color:var(--accent-blue);">Grade: ${item.grade}%</span>` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    panel.style.display = 'block';
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function statusBadge(status) {
+    const m = { NotStarted:'badge-notstarted', InProgress:'badge-inprogress', Submitted:'badge-submitted',
+                Graded:'badge-graded', Late:'badge-late', Complete:'badge-complete' };
+    return m[status] || 'badge-notstarted';
+}
 </script>
 {% endblock %}

@@ -1,243 +1,177 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Activity Log - Scholarr{% endblock %}
-
+{% block title %}Activity Log{% endblock %}
 {% block page_title %}Activity Log{% endblock %}
 
 {% block extra_css %}
 <style>
-    .activity-filters {
-        background-color: var(--bg-secondary);
-        padding: 20px;
-        border-radius: 4px;
-        margin-bottom: 20px;
-        border: 1px solid var(--border-color);
-        display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
-        align-items: flex-end;
-    }
+.activity-filters {
+    background: var(--bg-secondary);
+    padding: 16px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+.activity-filters .form-group { margin-bottom: 0; flex: 1; min-width: 150px; }
 
-    .activity-filters .form-group {
-        margin-bottom: 0;
-        flex: 1;
-        min-width: 150px;
-    }
-
-    .timeline {
-        position: relative;
-        padding: 20px 0;
-    }
-
-    .timeline::before {
-        content: '';
-        position: absolute;
-        left: 25px;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background-color: var(--border-color);
-    }
-
-    .activity-entry {
-        margin-left: 80px;
-        margin-bottom: 30px;
-        position: relative;
-        padding: 15px 20px;
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        transition: all 0.2s;
-    }
-
-    .activity-entry:hover {
-        border-color: var(--accent-blue);
-        background-color: var(--bg-tertiary);
-    }
-
-    .activity-icon {
-        position: absolute;
-        left: -45px;
-        top: 12px;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background-color: var(--bg-tertiary);
-        border: 2px solid var(--border-color);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        font-size: 0.9em;
-    }
-
-    .activity-icon.import { background-color: rgba(13, 125, 216, 0.2); border-color: #0d7dd8; color: #0d7dd8; }
-    .activity-icon.rename { background-color: rgba(92, 184, 92, 0.2); border-color: #5cb85c; color: #5cb85c; }
-    .activity-icon.move { background-color: rgba(240, 173, 78, 0.2); border-color: #f0ad4e; color: #f0ad4e; }
-    .activity-icon.delete { background-color: rgba(217, 83, 79, 0.2); border-color: #d9534f; color: #d9534f; }
-    .activity-icon.create { background-color: rgba(92, 184, 92, 0.2); border-color: #5cb85c; color: #5cb85c; }
-    .activity-icon.update { background-color: rgba(102, 102, 102, 0.2); border-color: #666666; color: #666666; }
-
-    .activity-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: start;
-        margin-bottom: 10px;
-    }
-
-    .activity-title {
-        font-weight: 600;
-        font-size: 1em;
-        color: var(--text-primary);
-    }
-
-    .activity-time {
-        color: var(--text-secondary);
-        font-size: 0.85em;
-        white-space: nowrap;
-    }
-
-    .activity-entity {
-        color: var(--text-secondary);
-        font-size: 0.9em;
-        margin-bottom: 8px;
-    }
-
-    .activity-entity-name {
-        color: var(--accent-blue);
-        font-weight: 500;
-    }
-
-    .activity-details {
-        background-color: var(--bg-tertiary);
-        padding: 12px;
-        border-radius: 3px;
-        font-size: 0.85em;
-        color: var(--text-secondary);
-        margin-top: 10px;
-        max-height: 100px;
-        overflow-y: auto;
-    }
-
-    .activity-details p {
-        margin: 5px 0;
-    }
-
-    .loading {
-        text-align: center;
-        padding: 40px 20px;
-        color: var(--text-secondary);
-    }
-
-    .load-more {
-        text-align: center;
-        padding: 20px;
-    }
-
-    .load-more .btn {
-        margin-top: 10px;
-    }
+.timeline { position: relative; padding: 4px 0; }
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 20px; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--border-color);
+}
+.activity-entry {
+    margin-left: 64px;
+    margin-bottom: 16px;
+    position: relative;
+    padding: 14px 16px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    transition: border-color 0.2s;
+}
+.activity-entry:hover { border-color: var(--accent-blue); }
+.activity-icon {
+    position: absolute;
+    left: -44px; top: 12px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1em;
+}
+.activity-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.activity-title { font-weight: 600; color: var(--text-primary); }
+.activity-time { color: var(--text-secondary); font-size: 0.82em; white-space: nowrap; margin-left: 12px; }
+.activity-entity { color: var(--text-secondary); font-size: 0.88em; }
 </style>
 {% endblock %}
 
 {% block content %}
+<div style="display:flex;flex-direction:column;gap:0;">
 
-<!-- Filter Bar -->
-<div class="activity-filters">
-    <div class="form-group">
-        <label>Event Type</label>
-        <select name="event_type"
-                hx-get="/api/v1/history/"
-                hx-target="#activityTimeline"
-                hx-swap="innerHTML"
-                hx-include="[name='date_from'], [name='date_to']">
-            <option value="">All Events</option>
-            <option value="import">Import</option>
-            <option value="create">Create</option>
-            <option value="rename">Rename</option>
-            <option value="move">Move</option>
-            <option value="update">Update</option>
-            <option value="delete">Delete</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>From Date</label>
-        <input type="date" name="date_from"
-               hx-get="/api/v1/history/"
-               hx-target="#activityTimeline"
-               hx-swap="innerHTML"
-               hx-include="[name='event_type'], [name='date_to']">
-    </div>
-
-    <div class="form-group">
-        <label>To Date</label>
-        <input type="date" name="date_to"
-               hx-get="/api/v1/history/"
-               hx-target="#activityTimeline"
-               hx-swap="innerHTML"
-               hx-include="[name='event_type'], [name='date_from']">
-    </div>
-</div>
-
-<!-- Activity Timeline -->
-<div class="timeline">
-    <div id="activityTimeline">
-        <div class="loading">
-            Loading activity log... <span class="htmx-request"></span>
+    <!-- Filters -->
+    <div class="activity-filters">
+        <div class="form-group">
+            <label>Event Type</label>
+            <select id="filter-type" onchange="loadActivity()">
+                <option value="">All Events</option>
+                <option value="import">Import</option>
+                <option value="create">Create</option>
+                <option value="rename">Rename</option>
+                <option value="move">Move</option>
+                <option value="update">Update</option>
+                <option value="delete">Delete</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>From Date</label>
+            <input type="date" id="filter-from" onchange="loadActivity()">
+        </div>
+        <div class="form-group">
+            <label>To Date</label>
+            <input type="date" id="filter-to" onchange="loadActivity()">
         </div>
     </div>
-    
-    <!-- Infinite scroll trigger -->
-    <div id="scrollTrigger"
-         hx-get="/api/v1/history/?page=2"
-         hx-target="#activityTimeline"
-         hx-swap="beforeend"
-         hx-trigger="revealed"
-         style="text-align: center; padding: 20px; color: var(--text-secondary);">
-        Load more...
+
+    <!-- Timeline -->
+    <div class="timeline">
+        <div id="activityTimeline">
+            <div class="loading">Loading activity log...</div>
+        </div>
+        <div id="load-more-area" style="text-align:center;padding:16px;display:none;">
+            <button class="btn btn-secondary" id="load-more-btn" onclick="loadMore()">Load More</button>
+        </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_scripts %}
 <script>
-    // Map event types to icons
-    function getEventIcon(eventType) {
-        const iconMap = {
-            'import': '📥',
-            'create': '✨',
-            'rename': '✎',
-            'move': '↦',
-            'update': '⟲',
-            'delete': '✕'
-        };
-        return iconMap[eventType] || '◆';
-    }
+let actPage = 1;
+const ACT_PAGE_SIZE = 20;
+let actTotal = 0;
 
-    function formatRelativeTime(dateString) {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMs / 3600000);
-        const diffDays = Math.floor(diffMs / 86400000);
+document.addEventListener('DOMContentLoaded', loadActivity);
 
-        if (diffMins < 1) return 'just now';
-        if (diffMins < 60) return `${diffMins}m ago`;
-        if (diffHours < 24) return `${diffHours}h ago`;
-        if (diffDays < 7) return `${diffDays}d ago`;
-        return date.toLocaleDateString();
-    }
+async function loadActivity() {
+    actPage = 1;
+    actTotal = 0;
+    document.getElementById('activityTimeline').innerHTML = '<div class="loading">Loading activity...</div>';
+    document.getElementById('load-more-area').style.display = 'none';
+    await fetchActivity(true);
+}
 
-    // Load initial activity
-    document.addEventListener('DOMContentLoaded', function() {
-        htmx.ajax('GET', '/api/v1/history/?page=1', {
-            target: '#activityTimeline',
-            swap: 'innerHTML'
+async function loadMore() {
+    actPage++;
+    await fetchActivity(false);
+}
+
+async function fetchActivity(reset) {
+    const type = document.getElementById('filter-type').value;
+    const from = document.getElementById('filter-from').value;
+    const to = document.getElementById('filter-to').value;
+
+    let url = `/api/v1/history?page=${actPage}&page_size=${ACT_PAGE_SIZE}`;
+    if (type) url += `&event_type=${type}`;
+    if (from) url += `&date_from=${from}`;
+    if (to) url += `&date_to=${to}`;
+
+    try {
+        const data = await API.get(url);
+        const events = Array.isArray(data) ? data : (data.items || []);
+        actTotal = data.total || events.length;
+
+        const container = document.getElementById('activityTimeline');
+        if (reset) container.innerHTML = '';
+
+        if (!events.length && reset) {
+            container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);">No activity recorded yet.</div>';
+            document.getElementById('load-more-area').style.display = 'none';
+            return;
+        }
+
+        events.forEach(ev => {
+            const entry = document.createElement('div');
+            entry.className = 'activity-entry';
+            const icon = getEventIcon(ev.event_type || ev.action || '');
+            const iconClass = (ev.event_type || '').toLowerCase();
+            entry.innerHTML = `
+                <div class="activity-icon ${iconClass}">${icon}</div>
+                <div class="activity-header">
+                    <div class="activity-title">${ev.description || ev.action || 'Event'}</div>
+                    <div class="activity-time">${formatRelativeTime(ev.timestamp || ev.created_at || new Date())}</div>
+                </div>
+                <div class="activity-entity">${ev.entity_type ? `${ev.entity_type}: ` : ''}${ev.entity_name || ''}</div>
+            `;
+            container.appendChild(entry);
         });
-    });
 
-    // Expose functions globally
-    window.getEventIcon = getEventIcon;
-    window.formatRelativeTime = formatRelativeTime;
+        const shown = (actPage - 1) * ACT_PAGE_SIZE + events.length;
+        const moreArea = document.getElementById('load-more-area');
+        if (shown < actTotal) {
+            moreArea.style.display = 'block';
+        } else {
+            moreArea.style.display = 'none';
+        }
+    } catch(e) {
+        if (actPage === 1) {
+            document.getElementById('activityTimeline').innerHTML =
+                `<div style="text-align:center;padding:40px;color:#d9534f;">Could not load activity: ${e.message}</div>`;
+        }
+    }
+}
+
+function getEventIcon(type) {
+    const m = { import:'📥', create:'✨', rename:'✏️', move:'📁', update:'🔄', delete:'🗑️' };
+    return m[(type||'').toLowerCase()] || '◆';
+}
 </script>
 {% endblock %}

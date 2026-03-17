@@ -285,15 +285,8 @@
 
     <!-- Action Buttons -->
     <div class="action-buttons">
-        <button class="btn" 
-                hx-post="/api/v1/gpa/save"
-                hx-include="#currentSemesterCourses input"
-                hx-target="body"
-                hx-swap="none">Save Courses</button>
-        <button class="btn btn-secondary" 
-                hx-get="/api/v1/gpa/load"
-                hx-target="#currentSemesterCourses"
-                hx-swap="innerHTML">Load from API</button>
+        <button class="btn" onclick="saveCourses()">💾 Save to Browser</button>
+        <button class="btn btn-secondary" onclick="clearCourses()">✕ Clear All</button>
     </div>
 </div>
 
@@ -393,15 +386,43 @@
         document.getElementById('semesterCredits').textContent = totalCredits + ' credits this semester';
     }
 
-    // Load initial courses
-    document.addEventListener('DOMContentLoaded', function() {
-        htmx.ajax('GET', '/api/v1/gpa/load', {
-            target: '#currentSemesterCourses',
-            swap: 'innerHTML',
-            onload: function() {
-                calculateGPA();
-            }
+    function saveCourses() {
+        const rows = document.querySelectorAll('#currentSemesterCourses tr');
+        const data = [];
+        rows.forEach(row => {
+            const name = row.querySelector('input[name="course_name"]')?.value || '';
+            const grade = row.querySelector('select[name="grade"]')?.value || '';
+            const credits = row.querySelector('input[name="credits"]')?.value || '';
+            if (name || grade) data.push({ name, grade, credits });
         });
+        localStorage.setItem('scholarr_gpa_courses', JSON.stringify(data));
+        showToast('Courses saved to browser!', 'success');
+    }
+
+    function clearCourses() {
+        if (!confirm('Clear all courses?')) return;
+        document.getElementById('currentSemesterCourses').innerHTML = '';
+        localStorage.removeItem('scholarr_gpa_courses');
+        calculateGPA();
+    }
+
+    // Load from localStorage on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            const saved = JSON.parse(localStorage.getItem('scholarr_gpa_courses') || '[]');
+            saved.forEach(c => {
+                addCourseRow();
+                const rows = document.querySelectorAll('#currentSemesterCourses tr');
+                const row = rows[rows.length - 1];
+                if (row) {
+                    row.querySelector('input[name="course_name"]').value = c.name || '';
+                    row.querySelector('select[name="grade"]').value = c.grade || '';
+                    row.querySelector('input[name="credits"]').value = c.credits || '';
+                    calculateRow(row.id);
+                }
+            });
+        } catch(e) {}
+        calculateGPA();
     });
 
     // Expose functions globally
@@ -409,5 +430,7 @@
     window.removeCourseRow = removeCourseRow;
     window.calculateRow = calculateRow;
     window.calculateGPA = calculateGPA;
+    window.saveCourses = saveCourses;
+    window.clearCourses = clearCourses;
 </script>
 {% endblock %}

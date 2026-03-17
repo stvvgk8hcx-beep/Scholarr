@@ -63,6 +63,20 @@ async def update_semester(
     return updated
 
 
+@router.put("/{id}/activate", response_model=SemesterResponse)
+async def activate_semester(
+    id: int,
+    db: AsyncSession = Depends(get_db_session),
+    api_key: str = Depends(verify_api_key),
+):
+    """Set a semester as active (deactivates all others)."""
+    service = SemesterService(db)
+    updated = await service.set_active_semester(id)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Semester not found")
+    return updated
+
+
 @router.delete("/{id}", status_code=204)
 async def delete_semester(
     id: int,

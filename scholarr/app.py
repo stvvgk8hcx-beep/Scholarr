@@ -10,8 +10,6 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-import sentry_sdk
-
 from scholarr.api.v1.router import router as v1_router
 from scholarr.core.config import settings
 from scholarr.signalr import ConnectionManager
@@ -21,6 +19,8 @@ logger = logging.getLogger(__name__)
 # Template engine — looks in scholarr/templates/
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "templates")
 templates = Jinja2Templates(directory=TEMPLATE_DIR)
+# Make the API key and settings available to all templates
+templates.env.globals["api_key"] = ""  # Will be updated in create_app()
 
 
 async def startup_event():
@@ -100,8 +100,12 @@ def create_app() -> FastAPI:
         redirect_slashes=False,
     )
 
+    # Inject API key into all templates globally
+    templates.env.globals["api_key"] = settings.api_key
+
     # Sentry error tracking (optional)
     if settings.sentry_dsn:
+        import sentry_sdk
         sentry_sdk.init(
             dsn=settings.sentry_dsn,
             environment=settings.environment,
@@ -256,8 +260,13 @@ def create_app() -> FastAPI:
             content={"detail": str(exc), "error_code": "forbidden"},
         )
 
+    from fastapi.exceptions import RequestValidationError
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+
     @app.exception_handler(Exception)
     async def general_exception_handler(request: Request, exc: Exception):
+        if isinstance(exc, (RequestValidationError, StarletteHTTPException)):
+            raise exc
         logger.error(f"Unhandled exception: {exc}", exc_info=True)
         return JSONResponse(
             status_code=500,

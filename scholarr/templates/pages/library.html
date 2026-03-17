@@ -1,279 +1,199 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}File Library - Scholarr{% endblock %}
-
+{% block title %}File Library{% endblock %}
 {% block page_title %}File Library{% endblock %}
 
 {% block extra_css %}
 <style>
-    .library-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
-        margin-bottom: 30px;
-    }
-
-    .stat-card {
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        padding: 20px;
-    }
-
-    .stat-label {
-        color: var(--text-secondary);
-        font-size: 0.9em;
-        margin-bottom: 8px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .stat-value {
-        font-size: 2em;
-        font-weight: 700;
-        color: var(--accent-blue);
-    }
-
-    .storage-bar {
-        background-color: var(--bg-tertiary);
-        border-radius: 4px;
-        height: 8px;
-        margin-top: 10px;
-        overflow: hidden;
-    }
-
-    .storage-used {
-        background: linear-gradient(90deg, var(--accent-blue), #0d7dd8);
-        height: 100%;
-        border-radius: 4px;
-        transition: width 0.3s;
-    }
-
-    .storage-label {
-        font-size: 0.75em;
-        color: var(--text-secondary);
-        margin-top: 8px;
-    }
-
-    .type-distribution {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 10px;
-        margin-top: 10px;
-    }
-
-    .type-item {
-        background-color: var(--bg-tertiary);
-        padding: 10px;
-        border-radius: 3px;
-        text-align: center;
-        font-size: 0.85em;
-    }
-
-    .type-count {
-        font-weight: 600;
-        color: var(--accent-blue);
-        display: block;
-    }
-
-    .file-filters {
-        background-color: var(--bg-secondary);
-        padding: 20px;
-        border-radius: 4px;
-        margin-bottom: 20px;
-        border: 1px solid var(--border-color);
-        display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
-        align-items: flex-end;
-    }
-
-    .file-filters .form-group {
-        margin-bottom: 0;
-        flex: 1;
-        min-width: 150px;
-    }
-
-    .file-size {
-        color: var(--text-secondary);
-        font-size: 0.85em;
-    }
-
-    .file-type-badge {
-        display: inline-block;
-        background-color: var(--bg-tertiary);
-        padding: 4px 8px;
-        border-radius: 3px;
-        font-size: 0.75em;
-        font-weight: 600;
-        color: var(--accent-blue);
-        margin-right: 8px;
-    }
-
-    .file-actions {
-        display: flex;
-        gap: 8px;
-    }
-
-    .file-actions .btn-small {
-        padding: 4px 8px;
-        font-size: 0.8em;
-    }
+.file-filters {
+    background: var(--bg-secondary);
+    padding: 16px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+.file-filters .form-group { margin-bottom: 0; flex: 1; min-width: 140px; }
+.file-ext {
+    display: inline-block;
+    background: var(--bg-tertiary);
+    padding: 2px 7px;
+    border-radius: 2px;
+    font-size: 0.75em;
+    font-weight: 600;
+    color: var(--accent-blue);
+    font-family: monospace;
+}
 </style>
 {% endblock %}
 
 {% block content %}
+<div style="display:flex;flex-direction:column;gap:0;">
 
-<!-- Statistics Cards -->
-<div class="library-stats">
-    <!-- Total Files -->
-    <div class="stat-card">
-        <div class="stat-label">Total Files</div>
-        <div class="stat-value" id="totalFiles">0</div>
-    </div>
-
-    <!-- Total Size -->
-    <div class="stat-card">
-        <div class="stat-label">Total Size</div>
-        <div class="stat-value" id="totalSize">0 GB</div>
-        <div class="storage-bar">
-            <div class="storage-used" id="storageBar" style="width: 0%;"></div>
+    <!-- Filters -->
+    <div class="file-filters">
+        <div class="form-group">
+            <label>Search Files</label>
+            <input type="text" id="lib-search" placeholder="Search by filename..." oninput="debouncedLoad()">
         </div>
-        <div class="storage-label" id="storageLabel">0 GB / 100 GB</div>
-    </div>
-
-    <!-- File Type Distribution -->
-    <div class="stat-card">
-        <div class="stat-label">File Types</div>
-        <div class="type-distribution" id="typeDistribution">
-            <!-- Loaded via HTMX -->
+        <div class="form-group">
+            <label>Format</label>
+            <input type="text" id="lib-format" placeholder="e.g. pdf, docx" oninput="debouncedLoad()">
         </div>
     </div>
+
+    <!-- Stats bar -->
+    <div style="display:flex;gap:16px;margin-bottom:12px;">
+        <div class="stat-card" style="flex:1;padding:12px 18px;">
+            <div class="stat-label">Total Files</div>
+            <div class="stat-value" id="lib-total-files">—</div>
+        </div>
+        <div class="stat-card" style="flex:1;padding:12px 18px;">
+            <div class="stat-label">Total Size</div>
+            <div class="stat-value" id="lib-total-size">—</div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Filename</th>
+                    <th>Format</th>
+                    <th>Size</th>
+                    <th>Version</th>
+                    <th>Date Imported</th>
+                    <th>Hash</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="files-tbody">
+                <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-secondary);">Loading files...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div id="files-pagination" style="display:flex;justify-content:center;gap:8px;margin-top:12px;"></div>
 </div>
+{% endblock %}
 
-<!-- File Filters -->
-<div class="file-filters">
-    <div class="form-group">
-        <label>Search Files</label>
-        <input type="text" 
-               id="fileSearch"
-               placeholder="Search by filename..."
-               hx-get="/api/v1/managed-files/"
-               hx-target="#filesTable"
-               hx-trigger="keyup changed delay:500ms"
-               hx-include="[name='file_type'], [name='course_id'], [name='date_from']">
-    </div>
-
-    <div class="form-group">
-        <label>File Type</label>
-        <select name="file_type"
-                hx-get="/api/v1/managed-files/"
-                hx-target="#filesTable"
-                hx-trigger="change">
-            <option value="">All Types</option>
-            <option value="pdf">PDF</option>
-            <option value="docx">Word</option>
-            <option value="xlsx">Excel</option>
-            <option value="pptx">PowerPoint</option>
-            <option value="txt">Text</option>
-            <option value="image">Images</option>
-            <option value="video">Videos</option>
-            <option value="other">Other</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>Course</label>
-        <select name="course_id"
-                hx-get="/api/v1/managed-files/"
-                hx-target="#filesTable"
-                hx-trigger="change">
-            <option value="">All Courses</option>
-            <!-- Loaded from API -->
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>Uploaded After</label>
-        <input type="date" name="date_from"
-               hx-get="/api/v1/managed-files/"
-               hx-target="#filesTable"
-               hx-trigger="change">
-    </div>
-</div>
-
-<!-- Files Table -->
-<div id="filesTable" class="table-container">
-    <table>
-        <thead>
-            <tr>
-                <th>Filename</th>
-                <th>Type</th>
-                <th>Course</th>
-                <th>Size</th>
-                <th>Date Added</th>
-                <th>Hash</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="filesBody">
-            <tr>
-                <td colspan="7" class="text-muted" style="text-align: center; padding: 40px;">
-                    Loading files... <span class="htmx-request"></span>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-</div>
-
+{% block extra_scripts %}
 <script>
-    // Format bytes to human readable size
-    function formatBytes(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+let filePage = 1;
+const FILE_PAGE_SIZE = 25;
+let allFiles = [];
+let debounceTimer = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadFiles();
+});
+
+function debouncedLoad() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => { filePage = 1; renderFiles(); }, 300);
+}
+
+async function loadFiles() {
+    const tbody = document.getElementById('files-tbody');
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-secondary);">Loading...</td></tr>';
+
+    try {
+        allFiles = await API.get('/api/v1/files');
+        if (!Array.isArray(allFiles)) allFiles = allFiles.items || [];
+        filePage = 1;
+        renderFiles();
+
+        // Update stats
+        document.getElementById('lib-total-files').textContent = allFiles.length;
+        const totalSize = allFiles.reduce((acc, f) => acc + (f.size || 0), 0);
+        document.getElementById('lib-total-size').textContent = formatBytes(totalSize);
+    } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:#d9534f;">Error: ${e.message}</td></tr>`;
+    }
+}
+
+function renderFiles() {
+    const search = document.getElementById('lib-search').value.trim().toLowerCase();
+    const format = document.getElementById('lib-format').value.trim().toLowerCase();
+
+    let filtered = allFiles;
+    if (search) filtered = filtered.filter(f => (f.original_filename || f.path || '').toLowerCase().includes(search));
+    if (format) filtered = filtered.filter(f => (f.format || '').toLowerCase().includes(format));
+
+    const tbody = document.getElementById('files-tbody');
+    const total = filtered.length;
+    const start = (filePage - 1) * FILE_PAGE_SIZE;
+    const page = filtered.slice(start, start + FILE_PAGE_SIZE);
+
+    if (!page.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-secondary);">No files found.</td></tr>';
+        document.getElementById('files-pagination').innerHTML = '';
+        return;
     }
 
-    // Load initial files
-    document.addEventListener('DOMContentLoaded', function() {
-        // Load files
-        htmx.ajax('GET', '/api/v1/managed-files/paged', {
-            target: '#filesBody',
-            swap: 'innerHTML'
-        });
+    tbody.innerHTML = page.map(f => {
+        const name = f.original_filename || f.path || '—';
+        const ext = (f.format || name.split('.').pop() || '?').toUpperCase();
+        return `
+            <tr>
+                <td style="font-weight:500;word-break:break-all;">
+                    <span class="file-ext">${ext}</span>
+                    ${name}
+                </td>
+                <td style="color:var(--text-secondary);">${f.format || '—'}</td>
+                <td style="color:var(--text-secondary);">${formatBytes(f.size || 0)}</td>
+                <td style="color:var(--text-secondary);">v${f.version || 1}</td>
+                <td style="color:var(--text-secondary);">${formatDate(f.date_imported || f.created_at)}</td>
+                <td style="font-family:monospace;font-size:0.75em;color:var(--text-secondary);">${(f.hash || '').slice(0,12)}${(f.hash||'').length > 12 ? '…' : ''}</td>
+                <td>
+                    <button class="btn btn-small" style="background:#d9534f;border-color:#d9534f;" onclick="deleteFile(${f.id}, this)">🗑️</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
 
-        // Load stats
-        htmx.ajax('GET', '/api/v1/managed-files/stats', {
-            target: '#filesBody',
-            swap: 'none',
-            onload: function(xhr) {
-                try {
-                    const stats = JSON.parse(xhr.response);
-                    document.getElementById('totalFiles').textContent = stats.total_files;
-                    document.getElementById('totalSize').textContent = formatBytes(stats.total_size);
-                    
-                    // Update storage bar
-                    const percentage = (stats.total_size / stats.max_storage) * 100;
-                    document.getElementById('storageBar').style.width = percentage + '%';
-                    document.getElementById('storageLabel').textContent = 
-                        formatBytes(stats.total_size) + ' / ' + formatBytes(stats.max_storage);
+    renderPagination(total, FILE_PAGE_SIZE, filePage,
+        (p) => { filePage = p; renderFiles(); }, 'files-pagination');
+}
 
-                    // Populate type distribution
-                    let typeHtml = '';
-                    for (const [type, count] of Object.entries(stats.by_type)) {
-                        typeHtml += `<div class="type-item"><span class="type-count">${count}</span>${type}</div>`;
-                    }
-                    document.getElementById('typeDistribution').innerHTML = typeHtml;
-                } catch (e) {
-                    console.error('Error loading stats:', e);
-                }
-            }
-        });
-    });
+async function deleteFile(id, btn) {
+    if (!confirm('Delete this file record?')) return;
+    btn.disabled = true;
+    try {
+        await API.del(`/api/v1/files/${id}`);
+        showToast('File deleted', 'success');
+        allFiles = allFiles.filter(f => f.id !== id);
+        document.getElementById('lib-total-files').textContent = allFiles.length;
+        const totalSize = allFiles.reduce((acc, f) => acc + (f.size || 0), 0);
+        document.getElementById('lib-total-size').textContent = formatBytes(totalSize);
+        renderFiles();
+    } catch(e) {
+        showToast('Error: ' + e.message, 'error');
+        btn.disabled = false;
+    }
+}
 
-    // Expose formatBytes globally
-    window.formatBytes = formatBytes;
+function formatBytes(bytes) {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return (bytes / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
+}
+
+function renderPagination(total, pageSize, current, onPage, containerId) {
+    const pages = Math.ceil(total / pageSize);
+    const el = document.getElementById(containerId);
+    if (pages <= 1) { el.innerHTML = ''; return; }
+    let html = '';
+    if (current > 1) html += `<button class="btn btn-secondary btn-small" onclick="(${onPage})(${current-1})">← Prev</button>`;
+    html += `<span style="padding:6px 12px;color:var(--text-secondary);font-size:0.9em;">Page ${current} of ${pages}</span>`;
+    if (current < pages) html += `<button class="btn btn-secondary btn-small" onclick="(${onPage})(${current+1})">Next →</button>`;
+    el.innerHTML = html;
+}
 </script>
 {% endblock %}

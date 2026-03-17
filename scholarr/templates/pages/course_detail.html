@@ -1,329 +1,281 @@
 {% extends "layouts/base.html" %}
 
-{% block title %}Course Detail - Scholarr{% endblock %}
+{% block title %}Course Detail{% endblock %}
 {% block page_title %}Course Details{% endblock %}
 
+{% block extra_css %}
+<style>
+.course-header {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+.course-header-left h2 { font-size: 1.6em; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.course-header-left .course-meta { color: var(--text-secondary); font-size: 0.9em; }
+.course-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border-color); margin-bottom: 20px; }
+.course-tab {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.95em;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s;
+}
+.course-tab:hover { color: var(--text-primary); }
+.course-tab.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+.danger-zone {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+.danger-zone h4 { color: #d9534f; margin-bottom: 12px; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="space-y-6">
+<div>
     <!-- Course Header -->
-    <div id="course-header"
-         hx-get="/api/v1/courses/{{ course_id }}"
-         hx-trigger="load"
-         hx-swap="innerHTML"
-         class="bg-dark-card border border-dark-border rounded-lg p-6">
-        <!-- Loading state -->
-        <div class="animate-pulse space-y-3">
-            <div class="h-8 bg-dark-border rounded w-1/3"></div>
-            <div class="h-4 bg-dark-border rounded w-1/2"></div>
+    <div class="course-header" id="course-header">
+        <div class="course-header-left">
+            <div style="color:var(--text-secondary);font-size:0.85em;margin-bottom:4px;" id="hdr-code">Loading...</div>
+            <h2 id="hdr-name">—</h2>
+            <div class="course-meta" id="hdr-meta"></div>
+        </div>
+        <div id="hdr-badge"></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="course-tabs">
+        <button class="course-tab active" onclick="switchTab('files')">📁 Files</button>
+        <button class="course-tab" onclick="switchTab('items')">📝 Items</button>
+        <button class="course-tab" onclick="switchTab('activity')">⏱️ Activity</button>
+        <button class="course-tab" onclick="switchTab('edit')">⚙️ Edit</button>
+    </div>
+
+    <!-- Files Tab -->
+    <div class="tab-panel active" id="tab-files">
+        <div id="files-list">
+            <div class="loading">Loading files...</div>
         </div>
     </div>
 
-    <!-- Tab Navigation -->
-    <div class="bg-dark-card border border-dark-border rounded-lg">
-        <div class="flex border-b border-dark-border">
-            <button class="tab-button active px-6 py-4 text-sm font-medium border-b-2 border-primary text-primary hover:text-primary transition"
-                    data-tab="files">
-                📁 Files
-            </button>
-            <button class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-400 hover:text-white transition"
-                    data-tab="items">
-                📝 Items
-            </button>
-            <button class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-400 hover:text-white transition"
-                    data-tab="activity">
-                ⏱️ Activity
-            </button>
-            <button class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-400 hover:text-white transition"
-                    data-tab="settings">
-                ⚙️ Settings
-            </button>
+    <!-- Items Tab -->
+    <div class="tab-panel" id="tab-items">
+        <div id="items-list">
+            <div class="loading">Loading items...</div>
         </div>
+    </div>
 
-        <!-- Tab Contents -->
-        <div class="p-6">
-            <!-- Files Tab -->
-            <div class="tab-content" id="files-tab">
-                <h3 class="text-lg font-semibold text-white mb-4">Course Files</h3>
-                <div id="files-container"
-                     hx-get="/api/v1/managed-files?course_id={{ course_id }}&page=1&page_size=20"
-                     hx-trigger="load"
-                     hx-swap="innerHTML"
-                     class="space-y-2">
-                    <!-- Loading state -->
-                    <div class="text-center text-gray-500 py-8 animate-pulse">
-                        Loading files...
-                    </div>
+    <!-- Activity Tab -->
+    <div class="tab-panel" id="tab-activity">
+        <div id="activity-list">
+            <div class="loading">Loading activity...</div>
+        </div>
+    </div>
+
+    <!-- Edit Tab -->
+    <div class="tab-panel" id="tab-edit">
+        <div style="max-width:600px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group">
+                    <label>Course Code *</label>
+                    <input type="text" id="edit-code" placeholder="CS 101">
+                </div>
+                <div class="form-group">
+                    <label>Credits</label>
+                    <input type="number" id="edit-credits" min="0" max="12" placeholder="3">
                 </div>
             </div>
-
-            <!-- Items Tab -->
-            <div class="tab-content hidden" id="items-tab">
-                <h3 class="text-lg font-semibold text-white mb-4">Academic Items</h3>
-                <div id="items-container"
-                     hx-get="/api/v1/academic-items?course_id={{ course_id }}&page=1&page_size=20"
-                     hx-trigger="load"
-                     hx-swap="innerHTML"
-                     class="space-y-2">
-                    <!-- Loading state -->
-                    <div class="text-center text-gray-500 py-8 animate-pulse">
-                        Loading items...
-                    </div>
-                </div>
+            <div class="form-group">
+                <label>Course Name *</label>
+                <input type="text" id="edit-name" placeholder="Introduction to Computer Science">
+            </div>
+            <div class="form-group">
+                <label>Professor</label>
+                <input type="text" id="edit-professor" placeholder="Dr. Jane Smith">
+            </div>
+            <div class="form-group">
+                <label>Semester</label>
+                <select id="edit-semester"></select>
+            </div>
+            <div class="form-group">
+                <label>Color</label>
+                <input type="color" id="edit-color" value="#0d7dd8" style="height:38px;padding:4px;">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="edit-notes" rows="4" placeholder="Any notes about this course..."></textarea>
+            </div>
+            <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                <input type="checkbox" id="edit-monitored">
+                <label for="edit-monitored" style="margin:0;cursor:pointer;">Monitor this course</label>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:8px;">
+                <button class="btn" onclick="saveCourse()">💾 Save Changes</button>
+                <button class="btn btn-secondary" onclick="loadCourse()">↺ Reset</button>
             </div>
 
-            <!-- Activity Tab -->
-            <div class="tab-content hidden" id="activity-tab">
-                <h3 class="text-lg font-semibold text-white mb-4">Course Activity</h3>
-                <div id="activity-container"
-                     hx-get="/api/v1/history?entity_type=course&page=1&page_size=20"
-                     hx-trigger="load"
-                     hx-swap="innerHTML"
-                     class="space-y-2">
-                    <!-- Loading state -->
-                    <div class="text-center text-gray-500 py-8 animate-pulse">
-                        Loading activity...
-                    </div>
-                </div>
-            </div>
-
-            <!-- Settings Tab -->
-            <div class="tab-content hidden" id="settings-tab">
-                <h3 class="text-lg font-semibold text-white mb-6">Edit Course</h3>
-
-                <!-- Edit Course Form (HTMX) -->
-                <form id="edit-course-form"
-                      hx-put="/api/v1/courses/{{ course_id }}"
-                      hx-swap="none"
-                      class="space-y-4 max-w-2xl">
-
-                    <!-- Course Code -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Course Code</label>
-                        <input type="text" name="code" id="code-input"
-                               class="w-full px-4 py-2 bg-dark-border border border-dark-border rounded text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                               placeholder="CS 101"
-                        />
-                    </div>
-
-                    <!-- Course Name -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Course Name</label>
-                        <input type="text" name="name" id="name-input"
-                               class="w-full px-4 py-2 bg-dark-border border border-dark-border rounded text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                               placeholder="Introduction to Computer Science"
-                        />
-                    </div>
-
-                    <!-- Professor -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Professor</label>
-                        <input type="text" name="professor" id="professor-input"
-                               class="w-full px-4 py-2 bg-dark-border border border-dark-border rounded text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                               placeholder="Dr. Jane Smith"
-                        />
-                    </div>
-
-                    <!-- Semester -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Semester</label>
-                        <select name="semester_id" id="semester-input"
-                                class="w-full px-4 py-2 bg-dark-border border border-dark-border rounded text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
-                            <!-- Options loaded from API -->
-                        </select>
-                    </div>
-
-                    <!-- Credits -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Credits</label>
-                        <input type="number" name="credits" id="credits-input" min="0" max="12"
-                               class="w-full px-4 py-2 bg-dark-border border border-dark-border rounded text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                               placeholder="3"
-                        />
-                    </div>
-
-                    <!-- Color Picker -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Color</label>
-                        <input type="color" name="color" id="color-input"
-                               class="w-full h-12 px-4 bg-dark-border border border-dark-border rounded cursor-pointer"
-                        />
-                    </div>
-
-                    <!-- Notes -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Notes</label>
-                        <textarea name="notes" id="notes-input"
-                                  class="w-full px-4 py-2 bg-dark-border border border-dark-border rounded text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"
-                                  rows="4"
-                                  placeholder="Add any notes about this course..."
-                        ></textarea>
-                    </div>
-
-                    <!-- Monitored Toggle -->
-                    <div class="flex items-center gap-3">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="monitored" id="monitored-input"
-                                   class="w-4 h-4 rounded bg-dark-border border-dark-border text-primary focus:ring-primary"
-                            />
-                            <span class="text-sm font-medium text-gray-300">Monitor this course</span>
-                        </label>
-                    </div>
-
-                    <!-- Form Actions -->
-                    <div class="flex gap-3 pt-4 border-t border-dark-border">
-                        <button type="submit" class="bg-primary text-black px-6 py-2 rounded font-semibold hover:bg-blue-400 transition">
-                            💾 Save Changes
-                        </button>
-                        <button type="button" class="bg-dark-border text-gray-300 px-6 py-2 rounded hover:bg-gray-700 transition"
-                                onclick="location.reload()">
-                            Cancel
-                        </button>
-                    </div>
-                </form>
-
-                <!-- Delete Course Section -->
-                <div class="mt-8 pt-8 border-t border-dark-border">
-                    <h4 class="text-lg font-semibold text-white mb-4">Danger Zone</h4>
-                    <p class="text-sm text-gray-400 mb-4">
-                        Delete this course and optionally remove all associated files.
-                    </p>
-                    <button hx-delete="/api/v1/courses/{{ course_id }}"
-                            hx-confirm="Are you sure? This action cannot be undone."
-                            hx-on::after-request="if(event.detail.xhr.status === 204) { window.location.href = '/courses'; }"
-                            class="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition">
-                        🗑️ Delete Course
-                    </button>
-                </div>
+            <div class="danger-zone">
+                <h4>Danger Zone</h4>
+                <p style="color:var(--text-secondary);font-size:0.88em;margin-bottom:12px;">Delete this course and all its data. This cannot be undone.</p>
+                <button class="btn" style="background:#d9534f;border-color:#d9534f;" onclick="deleteCourse()">🗑️ Delete Course</button>
             </div>
         </div>
     </div>
 </div>
-
-<!-- File Row Template -->
-<template id="file-row-template">
-    <div class="flex items-center justify-between p-4 bg-dark-border rounded hover:bg-gray-700 transition">
-        <div class="flex items-center gap-3 flex-1 min-w-0">
-            <span class="text-2xl">📄</span>
-            <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-gray-200 truncate">{{ name }}</p>
-                <p class="text-xs text-gray-500">{{ type }} • {{ size }} • Imported {{ imported_date }}</p>
-            </div>
-        </div>
-        <button class="text-gray-400 hover:text-red-400 text-sm">🗑️</button>
-    </div>
-</template>
-
-<!-- Item Row Template -->
-<template id="item-row-template">
-    <div class="flex items-center justify-between p-4 bg-dark-border rounded hover:bg-gray-700 transition">
-        <div class="flex-1">
-            <p class="text-sm font-medium text-gray-200">{{ name }}</p>
-            <p class="text-xs text-gray-500 mt-1">{{ type }} • Due: {{ due_date }}</p>
-        </div>
-        <span class="px-2 py-1 rounded text-xs font-medium {% if status == 'completed' %}bg-green-900 text-green-200{% elif status == 'submitted' %}bg-blue-900 text-blue-200{% else %}bg-orange-900 text-orange-200{% endif %}">
-            {{ status }}
-        </span>
-    </div>
-</template>
-
-<!-- Activity Item Template -->
-<template id="activity-item-template">
-    <div class="p-4 border-l-2 border-primary hover:bg-dark-border transition">
-        <p class="text-sm font-medium text-gray-200">{{ action }}</p>
-        <p class="text-xs text-gray-500 mt-1">{{ timestamp }}</p>
-    </div>
-</template>
-
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-    const courseId = {{ course_id }};
+const courseId = {{ course_id }};
+let courseData = null;
 
-    // Tab switching
-    document.querySelectorAll('.tab-button').forEach(button => {
-        button.addEventListener('click', function() {
-            const tabName = this.dataset.tab;
+document.addEventListener('DOMContentLoaded', function() {
+    loadCourse();
+    loadItems();
+    loadActivity();
+});
 
-            // Remove active state from all buttons
-            document.querySelectorAll('.tab-button').forEach(btn => {
-                btn.classList.remove('active', 'border-primary', 'text-primary');
-                btn.classList.add('border-transparent', 'text-gray-400');
-            });
+function switchTab(name) {
+    const names = ['files', 'items', 'activity', 'edit'];
+    document.querySelectorAll('.course-tab').forEach((btn, i) => {
+        btn.classList.toggle('active', names[i] === name);
+    });
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+}
 
-            // Add active state to clicked button
-            this.classList.add('active', 'border-primary', 'text-primary');
-            this.classList.remove('border-transparent', 'text-gray-400');
+async function loadCourse() {
+    try {
+        courseData = await API.get(`/api/v1/courses/${courseId}`);
+        document.getElementById('hdr-code').textContent = courseData.code || '';
+        document.getElementById('hdr-name').textContent = courseData.name || 'Unknown Course';
+        document.getElementById('hdr-meta').textContent =
+            [courseData.professor ? `Prof. ${courseData.professor}` : null, courseData.semester_name || null]
+            .filter(Boolean).join(' · ');
+        document.getElementById('hdr-badge').innerHTML = courseData.monitored
+            ? '<span class="badge-active">● Monitored</span>'
+            : '<span class="badge-inactive">Not Monitored</span>';
 
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.add('hidden');
-            });
+        document.getElementById('edit-code').value = courseData.code || '';
+        document.getElementById('edit-name').value = courseData.name || '';
+        document.getElementById('edit-professor').value = courseData.professor || '';
+        document.getElementById('edit-credits').value = courseData.credits || '';
+        document.getElementById('edit-color').value = courseData.color || '#0d7dd8';
+        document.getElementById('edit-notes').value = courseData.notes || '';
+        document.getElementById('edit-monitored').checked = courseData.monitored || false;
 
-            // Show clicked tab content
-            document.getElementById(tabName + '-tab').classList.remove('hidden');
+        const semesters = await API.get('/api/v1/semesters');
+        const sel = document.getElementById('edit-semester');
+        sel.innerHTML = '<option value="">No Semester</option>';
+        (Array.isArray(semesters) ? semesters : []).forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            if (s.id === courseData.semester_id) opt.selected = true;
+            sel.appendChild(opt);
         });
-    });
-
-    // Load course data on page load
-    document.addEventListener('htmx:load', function() {
-        loadCourseData();
-    });
-
-    async function loadCourseData() {
-        try {
-            const res = await fetch(`/api/v1/courses/${courseId}`);
-            const course = await res.json();
-
-            // Populate form fields
-            document.getElementById('code-input').value = course.code;
-            document.getElementById('name-input').value = course.name;
-            document.getElementById('professor-input').value = course.professor || '';
-            document.getElementById('credits-input').value = course.credits || 0;
-            document.getElementById('color-input').value = course.color || '#00d4ff';
-            document.getElementById('notes-input').value = course.notes || '';
-            document.getElementById('monitored-input').checked = course.monitored || false;
-
-            // Load semesters
-            const semetersRes = await fetch('/api/v1/semesters');
-            const semesters = await semetersRes.json();
-            const semesterSelect = document.getElementById('semester-input');
-            semesters.forEach(sem => {
-                const opt = document.createElement('option');
-                opt.value = sem.id;
-                opt.textContent = sem.name;
-                if (sem.id === course.semester_id) opt.selected = true;
-                semesterSelect.appendChild(opt);
-            });
-
-            // Update course header
-            const headerHtml = `
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="text-sm text-gray-400 font-medium">${course.code}</p>
-                        <h2 class="text-3xl font-bold text-white mt-2">${course.name}</h2>
-                        <p class="text-gray-400 mt-2">Prof. ${course.professor || 'N/A'} • ${course.semester || 'N/A'}</p>
-                    </div>
-                    <div class="text-right">
-                        <span class="px-3 py-1 rounded text-sm font-medium ${course.monitored ? 'bg-green-900 text-green-200' : 'bg-gray-700 text-gray-300'}">
-                            ${course.monitored ? '✓ Monitored' : '○ Not Monitored'}
-                        </span>
-                    </div>
-                </div>
-            `;
-            document.getElementById('course-header').innerHTML = headerHtml;
-        } catch (error) {
-            console.error('Error loading course data:', error);
-        }
+    } catch(e) {
+        showToast('Could not load course: ' + e.message, 'error');
     }
+}
 
-    // Form submission
-    document.getElementById('edit-course-form').addEventListener('htmx:afterRequest', function(event) {
-        if (event.detail.xhr.status === 200) {
-            // Reload course data to show updates
-            loadCourseData();
-            alert('Course updated successfully!');
+async function saveCourse() {
+    const code = document.getElementById('edit-code').value.trim();
+    const name = document.getElementById('edit-name').value.trim();
+    if (!code || !name) { showToast('Code and name are required', 'warning'); return; }
+    const semVal = document.getElementById('edit-semester').value;
+    const payload = {
+        code,
+        name,
+        professor: document.getElementById('edit-professor').value.trim() || null,
+        credits: parseInt(document.getElementById('edit-credits').value) || null,
+        semester_id: semVal ? parseInt(semVal) : null,
+        color: document.getElementById('edit-color').value,
+        notes: document.getElementById('edit-notes').value.trim() || null,
+        monitored: document.getElementById('edit-monitored').checked,
+    };
+    try {
+        await API.put(`/api/v1/courses/${courseId}`, payload);
+        showToast('Course updated!', 'success');
+        loadCourse();
+    } catch(e) {
+        showToast('Error: ' + e.message, 'error');
+    }
+}
+
+async function deleteCourse() {
+    if (!confirm('Delete this course? This cannot be undone.')) return;
+    try {
+        await API.del(`/api/v1/courses/${courseId}`);
+        showToast('Course deleted', 'success');
+        setTimeout(() => { window.location.href = '/courses'; }, 800);
+    } catch(e) {
+        showToast('Error: ' + e.message, 'error');
+    }
+}
+
+async function loadItems() {
+    const el = document.getElementById('items-list');
+    const el2 = document.getElementById('files-list');
+    try {
+        const data = await API.get(`/api/v1/academic-items?course_id=${courseId}&page=1&page_size=50`);
+        const items = Array.isArray(data) ? data : (data.items || []);
+        if (!items.length) {
+            const msg = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">No academic items for this course.</div>';
+            el.innerHTML = msg;
+            el2.innerHTML = msg;
+            return;
         }
-    });
+        const table = `<div class="table-container"><table>
+            <thead><tr><th>Title</th><th>Type</th><th>Due</th><th>Status</th></tr></thead>
+            <tbody>${items.map(it => `
+                <tr>
+                    <td style="font-weight:500;">${it.title || it.name || '—'}</td>
+                    <td style="color:var(--text-secondary);">${it.item_type || '—'}</td>
+                    <td style="color:var(--text-secondary);">${formatDate(it.due_date)}</td>
+                    <td><span class="${it.status === 'completed' ? 'badge-active' : 'badge-inactive'}">${it.status || '—'}</span></td>
+                </tr>`).join('')}
+            </tbody></table></div>`;
+        el.innerHTML = table;
+        el2.innerHTML = table;
+    } catch(e) {
+        const err = `<div style="padding:20px;color:#d9534f;">Error: ${e.message}</div>`;
+        el.innerHTML = err;
+        el2.innerHTML = err;
+    }
+}
+
+async function loadActivity() {
+    const el = document.getElementById('activity-list');
+    try {
+        const data = await API.get(`/api/v1/history?page=1&page_size=20`);
+        const events = Array.isArray(data) ? data : (data.items || []);
+        if (!events.length) {
+            el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">No activity recorded.</div>';
+            return;
+        }
+        el.innerHTML = events.map(ev => `
+            <div style="padding:14px 16px;border-bottom:1px solid var(--border-color);border-left:3px solid var(--accent-blue);margin-bottom:8px;background:var(--bg-secondary);border-radius:0 4px 4px 0;">
+                <div style="font-weight:500;font-size:0.9em;">${ev.description || ev.action || 'Event'}</div>
+                <div style="font-size:0.78em;color:var(--text-secondary);margin-top:4px;">${formatRelativeTime(ev.timestamp || ev.created_at || new Date())}</div>
+            </div>
+        `).join('');
+    } catch(e) {
+        el.innerHTML = `<div style="padding:20px;color:#d9534f;">Error: ${e.message}</div>`;
+    }
+}
 </script>
 {% endblock %}

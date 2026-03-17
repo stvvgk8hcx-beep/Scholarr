@@ -1,577 +1,281 @@
 {% extends "layouts/base.html" %}
 
 {% block title %}Settings - Scholarr{% endblock %}
-
 {% block page_title %}Settings{% endblock %}
 
 {% block extra_css %}
 <style>
-    .settings-container {
-        max-width: 900px;
-        margin: 0 auto;
-    }
-
-    .settings-tabs {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 20px;
-        border-bottom: 2px solid var(--border-color);
-    }
-
-    .settings-tab {
-        padding: 12px 20px;
-        background: none;
-        border: none;
-        color: var(--text-secondary);
-        font-size: 0.95em;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-        border-bottom: 2px solid transparent;
-        margin-bottom: -2px;
-    }
-
-    .settings-tab:hover {
-        color: var(--text-primary);
-    }
-
-    .settings-tab.active {
-        color: var(--accent-blue);
-        border-bottom-color: var(--accent-blue);
-    }
-
-    .settings-section {
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        padding: 25px;
-        margin-bottom: 20px;
-        display: none;
-    }
-
-    .settings-section.active {
-        display: block;
-    }
-
-    .settings-section h3 {
-        color: var(--accent-blue);
-        font-size: 1.1em;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .settings-group {
-        margin-bottom: 25px;
-    }
-
-    .settings-group:last-child {
-        margin-bottom: 0;
-    }
-
-    .form-group label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 500;
-        color: var(--text-primary);
-    }
-
-    .form-description {
-        color: var(--text-secondary);
-        font-size: 0.85em;
-        margin-top: 5px;
-    }
-
-    .checkbox-group {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 15px;
-    }
-
-    .checkbox-group input[type="checkbox"] {
-        width: 18px;
-        height: 18px;
-        cursor: pointer;
-    }
-
-    .checkbox-group label {
-        margin: 0;
-        cursor: pointer;
-    }
-
-    .form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        margin-bottom: 20px;
-    }
-
-    .form-row.full {
-        grid-template-columns: 1fr;
-    }
-
-    .settings-actions {
-        display: flex;
-        gap: 10px;
-        padding-top: 20px;
-        border-top: 1px solid var(--border-color);
-    }
-
-    .root-folder-list {
-        background-color: var(--bg-tertiary);
-        border-radius: 4px;
-        padding: 15px;
-        margin-bottom: 15px;
-    }
-
-    .root-folder-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px;
-        background-color: var(--bg-secondary);
-        border-radius: 3px;
-        margin-bottom: 8px;
-    }
-
-    .root-folder-item:last-child {
-        margin-bottom: 0;
-    }
-
-    .root-folder-path {
-        font-family: 'Courier New', monospace;
-        font-size: 0.9em;
-        color: var(--accent-blue);
-    }
-
-    .root-folder-size {
-        color: var(--text-secondary);
-        font-size: 0.85em;
-    }
-
-    .collapsible-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px 20px;
-        background-color: var(--bg-tertiary);
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        cursor: pointer;
-        transition: all 0.2s;
-        margin-bottom: 20px;
-    }
-
-    .collapsible-header:hover {
-        background-color: #3a3a3a;
-    }
-
-    .collapsible-header.expanded {
-        border-bottom-left-radius: 0;
-        border-bottom-right-radius: 0;
-    }
-
-    .collapsible-title {
-        font-weight: 600;
-        color: var(--text-primary);
-    }
-
-    .collapsible-arrow {
-        transition: transform 0.2s;
-    }
-
-    .collapsible-header.expanded .collapsible-arrow {
-        transform: rotate(180deg);
-    }
-
-    .collapsible-content {
-        display: none;
-        background-color: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-top: none;
-        border-bottom-left-radius: 4px;
-        border-bottom-right-radius: 4px;
-        padding: 20px;
-        margin-bottom: 20px;
-    }
-
-    .collapsible-content.expanded {
-        display: block;
-    }
-
-    .save-indicator {
-        display: inline-block;
-        padding: 8px 12px;
-        border-radius: 3px;
-        font-size: 0.85em;
-        font-weight: 600;
-        margin-left: 10px;
-        opacity: 0;
-        transition: opacity 0.3s;
-    }
-
-    .save-indicator.show {
-        opacity: 1;
-    }
-
-    .save-indicator.success {
-        background-color: rgba(92, 184, 92, 0.2);
-        color: #5cb85c;
-    }
-
-    .save-indicator.error {
-        background-color: rgba(217, 83, 79, 0.2);
-        color: #d9534f;
-    }
+.settings-container { max-width: 900px; margin: 0 auto; }
+.settings-tabs { display: flex; gap: 0; margin-bottom: 0; border-bottom: 2px solid var(--border-color); }
+.settings-tab {
+    padding: 10px 20px; background: none; border: none;
+    color: var(--text-secondary); font-size: 0.95em; font-weight: 500;
+    cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s;
+}
+.settings-tab:hover { color: var(--text-primary); }
+.settings-tab.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); }
+.settings-panel { display: none; padding-top: 20px; }
+.settings-panel.active { display: block; }
+.settings-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 4px; padding: 24px; margin-bottom: 16px; }
+.settings-card h3 { color: var(--accent-blue); font-size: 1em; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.checkbox-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.checkbox-row input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; }
+.checkbox-row label { margin: 0; cursor: pointer; }
+.settings-actions { display: flex; align-items: center; gap: 12px; padding-top: 16px; border-top: 1px solid var(--border-color); margin-top: 8px; }
+.save-ok { color: #5cb85c; font-size: 0.88em; font-weight: 600; }
+.save-err { color: #d9534f; font-size: 0.88em; font-weight: 600; }
+.folder-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--bg-tertiary); border-radius: 3px; margin-bottom: 8px; }
+.folder-path { font-family: monospace; font-size: 0.88em; color: var(--accent-blue); word-break: break-all; }
+.api-key-row { display: flex; gap: 8px; }
+.api-key-row input { flex: 1; font-family: monospace; font-size: 0.88em; }
 </style>
 {% endblock %}
 
 {% block content %}
-
 <div class="settings-container">
-    <!-- Settings Tabs -->
     <div class="settings-tabs">
-        <button class="settings-tab active" onclick="switchTab('general')">General</button>
-        <button class="settings-tab" onclick="switchTab('files')">File Management</button>
-        <button class="settings-tab" onclick="switchTab('naming')">Naming</button>
-        <button class="settings-tab" onclick="switchTab('import')">Import Sources</button>
-        <button class="settings-tab" onclick="switchTab('notifications')">Notifications</button>
-        <button class="settings-tab" onclick="switchTab('integrations')">Integrations</button>
+        <button class="settings-tab active" onclick="switchTab('general',this)">General</button>
+        <button class="settings-tab" onclick="switchTab('files',this)">File Management</button>
+        <button class="settings-tab" onclick="switchTab('import',this)">Import</button>
+        <button class="settings-tab" onclick="switchTab('api',this)">API & Security</button>
     </div>
 
-    <!-- General Settings -->
-    <div id="general" class="settings-section active">
-        <h3>General Settings</h3>
-        
-        <form hx-put="/api/v1/settings/general" hx-target="this" hx-swap="none">
-            <div class="settings-group">
-                <label for="appName">Application Name</label>
-                <input type="text" id="appName" name="app_name" placeholder="Scholarr" value="">
-                <div class="form-description">Display name for your Scholarr instance</div>
+    <!-- General -->
+    <div class="settings-panel active" id="panel-general">
+        <div class="settings-card">
+            <h3>General Settings</h3>
+            <div class="form-group">
+                <label>Application Name</label>
+                <input type="text" id="cfg-app-name" placeholder="Scholarr">
             </div>
-
-            <div class="settings-group">
-                <label for="dbUrl">Database URL</label>
-                <input type="text" id="dbUrl" name="database_url" placeholder="sqlite:///scholarr.db" value="">
-                <div class="form-description">Connection string for your database</div>
-            </div>
-
             <div class="form-row">
-                <div class="settings-group">
-                    <label for="timezone">Timezone</label>
-                    <select id="timezone" name="timezone">
-                        <option value="UTC">UTC</option>
-                        <option value="US/Eastern">Eastern</option>
-                        <option value="US/Central">Central</option>
-                        <option value="US/Mountain">Mountain</option>
-                        <option value="US/Pacific">Pacific</option>
+                <div class="form-group">
+                    <label>Log Level</label>
+                    <select id="cfg-log-level">
+                        <option value="DEBUG">Debug</option>
+                        <option value="INFO">Info</option>
+                        <option value="WARNING">Warning</option>
+                        <option value="ERROR">Error</option>
                     </select>
                 </div>
-
-                <div class="settings-group">
-                    <label for="dateFormat">Date Format</label>
-                    <select id="dateFormat" name="date_format">
-                        <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                        <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                        <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                    </select>
+                <div class="form-group">
+                    <label>Environment</label>
+                    <input type="text" id="cfg-environment" placeholder="development" readonly>
                 </div>
             </div>
-
-            <div class="checkbox-group">
-                <input type="checkbox" id="enableScheduler" name="enable_scheduler" checked>
-                <label for="enableScheduler">Enable Background Tasks</label>
+            <div class="checkbox-row">
+                <input type="checkbox" id="cfg-scheduler">
+                <label for="cfg-scheduler">Enable Background Scheduler</label>
             </div>
-
-            <div class="checkbox-group">
-                <input type="checkbox" id="enableFileWatcher" name="enable_file_watcher" checked>
-                <label for="enableFileWatcher">Enable File Watcher</label>
+            <div class="checkbox-row">
+                <input type="checkbox" id="cfg-watcher">
+                <label for="cfg-watcher">Enable File Watcher</label>
             </div>
-
             <div class="settings-actions">
-                <button type="submit" class="btn">Save Settings</button>
-                <span class="save-indicator" id="saveIndicator"></span>
+                <button class="btn" onclick="saveGeneral()">Save Settings</button>
+                <span id="save-general-msg"></span>
             </div>
-        </form>
+        </div>
     </div>
 
-    <!-- File Management Settings -->
-    <div id="files" class="settings-section">
-        <h3>File Management</h3>
-        
-        <form hx-put="/api/v1/settings/files" hx-target="this" hx-swap="none">
-            <div class="settings-group">
-                <label>Root Folders</label>
-                <div class="root-folder-list" id="rootFolderList">
-                    <!-- Loaded via HTMX -->
-                    Loading folders...
-                </div>
-                <button type="button" class="btn btn-secondary" onclick="addRootFolder()">+ Add Folder</button>
+    <!-- File Management -->
+    <div class="settings-panel" id="panel-files">
+        <div class="settings-card">
+            <h3>Root Folders</h3>
+            <div id="root-folder-list" style="margin-bottom:12px;">
+                <div class="loading">Loading...</div>
             </div>
+            <button class="btn btn-secondary" onclick="addRootFolder()">+ Add Folder</button>
+        </div>
+        <div class="settings-card">
+            <h3>File Settings</h3>
+            <div class="form-group">
+                <label>Inbox Directory</label>
+                <input type="text" id="cfg-inbox" placeholder="/path/to/inbox">
+                <div style="font-size:0.83em;color:var(--text-secondary);margin-top:4px;">Directory monitored for new files</div>
+            </div>
+            <div class="settings-actions">
+                <button class="btn" onclick="saveFileSettings()">Save Settings</button>
+                <span id="save-files-msg"></span>
+            </div>
+        </div>
+    </div>
 
+    <!-- Import -->
+    <div class="settings-panel" id="panel-import">
+        <div class="settings-card">
+            <h3>Import Settings</h3>
             <div class="form-row">
-                <div class="settings-group">
-                    <label for="maxFileSize">Max File Size (MB)</label>
-                    <input type="number" id="maxFileSize" name="max_file_size" value="500" min="1">
-                    <div class="form-description">Maximum file size allowed for upload</div>
+                <div class="form-group">
+                    <label>Poll Interval (seconds)</label>
+                    <input type="number" id="cfg-poll-interval" value="60" min="5">
                 </div>
-
-                <div class="settings-group">
-                    <label for="maxStorage">Max Storage (GB)</label>
-                    <input type="number" id="maxStorage" name="max_storage" value="100" min="1">
-                    <div class="form-description">Maximum total storage allowed</div>
+                <div class="form-group">
+                    <label>Max Retries</label>
+                    <input type="number" id="cfg-max-retries" value="3" min="1">
                 </div>
             </div>
-
-            <div class="checkbox-group">
-                <input type="checkbox" id="duplicateHandling" name="skip_duplicates" checked>
-                <label for="duplicateHandling">Skip Duplicate Files</label>
+            <div class="checkbox-row">
+                <input type="checkbox" id="cfg-delete-after">
+                <label for="cfg-delete-after">Delete Files After Import</label>
             </div>
-
-            <div class="checkbox-group">
-                <input type="checkbox" id="autoOrganize" name="auto_organize" checked>
-                <label for="autoOrganize">Auto-organize Files</label>
-            </div>
-
             <div class="settings-actions">
-                <button type="submit" class="btn">Save Settings</button>
-                <span class="save-indicator" id="filesSaveIndicator"></span>
+                <button class="btn" onclick="saveImportSettings()">Save Settings</button>
+                <span id="save-import-msg"></span>
             </div>
-        </form>
+        </div>
     </div>
 
-    <!-- Naming Settings -->
-    <div id="naming" class="settings-section">
-        <h3>Naming Conventions</h3>
-        
-        <form hx-put="/api/v1/settings/naming" hx-target="this" hx-swap="none">
-            <div class="settings-group">
-                <label for="filePattern">File Naming Pattern</label>
-                <input type="text" id="filePattern" name="file_pattern" placeholder="{course}/{title}.{ext}" value="">
-                <div class="form-description">Use {course}, {title}, {type}, {date}, {ext}</div>
-            </div>
-
-            <div class="settings-group">
-                <label for="folderPattern">Folder Structure Pattern</label>
-                <input type="text" id="folderPattern" name="folder_pattern" placeholder="{semester}/{course}" value="">
-                <div class="form-description">Use {semester}, {course}, {year}</div>
-            </div>
-
-            <div class="checkbox-group">
-                <input type="checkbox" id="replaceBadChars" name="replace_bad_chars" checked>
-                <label for="replaceBadChars">Replace Invalid Characters</label>
-            </div>
-
-            <div class="checkbox-group">
-                <input type="checkbox" id="convertSpaces" name="convert_spaces" checked>
-                <label for="convertSpaces">Convert Spaces to Underscores</label>
-            </div>
-
-            <div class="settings-actions">
-                <button type="submit" class="btn">Save Settings</button>
-                <span class="save-indicator" id="namingSaveIndicator"></span>
-            </div>
-        </form>
-    </div>
-
-    <!-- Import Sources Settings -->
-    <div id="import" class="settings-section">
-        <h3>Import Sources</h3>
-        
-        <form hx-put="/api/v1/settings/import" hx-target="this" hx-swap="none">
-            <div class="settings-group">
-                <label for="inboxPath">Inbox Directory</label>
-                <input type="text" id="inboxPath" name="inbox_path" placeholder="/path/to/inbox" value="">
-                <div class="form-description">Directory to monitor for new files</div>
-            </div>
-
-            <div class="form-row">
-                <div class="settings-group">
-                    <label for="pollInterval">Poll Interval (seconds)</label>
-                    <input type="number" id="pollInterval" name="poll_interval" value="60" min="5">
+    <!-- API & Security -->
+    <div class="settings-panel" id="panel-api">
+        <div class="settings-card">
+            <h3>API Key</h3>
+            <div class="form-group">
+                <label>Current API Key</label>
+                <div class="api-key-row">
+                    <input type="password" id="cfg-api-key" readonly>
+                    <button class="btn btn-secondary btn-small" onclick="toggleApiKey()">Show</button>
+                    <button class="btn btn-secondary btn-small" onclick="copyApiKey()">Copy</button>
                 </div>
-
-                <div class="settings-group">
-                    <label for="maxRetries">Max Retries</label>
-                    <input type="number" id="maxRetries" name="max_retries" value="3" min="1">
+                <div style="font-size:0.83em;color:var(--text-secondary);margin-top:4px;">
+                    Use this key in the <code style="background:var(--bg-tertiary);padding:1px 5px;border-radius:2px;">X-API-Key</code> header for all API requests.
                 </div>
             </div>
-
-            <div class="checkbox-group">
-                <input type="checkbox" id="deleteAfterImport" name="delete_after_import">
-                <label for="deleteAfterImport">Delete Files After Import</label>
-            </div>
-
-            <div class="settings-actions">
-                <button type="submit" class="btn">Save Settings</button>
-                <span class="save-indicator" id="importSaveIndicator"></span>
-            </div>
-        </form>
-    </div>
-
-    <!-- Notifications Settings -->
-    <div id="notifications" class="settings-section">
-        <h3>Notifications</h3>
-        
-        <form hx-put="/api/v1/settings/notifications" hx-target="this" hx-swap="none">
-            <div class="checkbox-group">
-                <input type="checkbox" id="notifyImport" name="notify_import" checked>
-                <label for="notifyImport">Notify on Import Completion</label>
-            </div>
-
-            <div class="checkbox-group">
-                <input type="checkbox" id="notifyError" name="notify_error" checked>
-                <label for="notifyError">Notify on Errors</label>
-            </div>
-
-            <div class="checkbox-group">
-                <input type="checkbox" id="notifyDueDate" name="notify_due_date" checked>
-                <label for="notifyDueDate">Notify on Upcoming Due Dates</label>
-            </div>
-
-            <div class="settings-group">
-                <label for="dueDateLeadTime">Due Date Notification Lead Time (days)</label>
-                <input type="number" id="dueDateLeadTime" name="due_date_lead_time" value="3" min="1">
-            </div>
-
-            <div class="settings-actions">
-                <button type="submit" class="btn">Save Settings</button>
-                <span class="save-indicator" id="notificationsSaveIndicator"></span>
-            </div>
-        </form>
-    </div>
-
-    <!-- Integrations Settings -->
-    <div id="integrations" class="settings-section">
-        <h3>Integrations</h3>
-        
-        <form hx-put="/api/v1/settings/integrations" hx-target="this" hx-swap="none">
-            <div class="settings-group">
-                <label for="apiKey">API Key</label>
-                <div style="display: flex; gap: 10px;">
-                    <input type="password" id="apiKey" name="api_key" placeholder="Your API key" value="" readonly>
-                    <button type="button" class="btn btn-secondary btn-small" onclick="generateApiKey()">Generate</button>
+        </div>
+        <div class="settings-card">
+            <h3>Version Info</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div>
+                    <div style="color:var(--text-secondary);font-size:0.85em;">App Version</div>
+                    <div id="info-version" style="font-weight:600;margin-top:4px;font-size:1.1em;">—</div>
+                </div>
+                <div>
+                    <div style="color:var(--text-secondary);font-size:0.85em;">Environment</div>
+                    <div id="info-env" style="font-weight:600;margin-top:4px;font-size:1.1em;">—</div>
                 </div>
             </div>
-
-            <div class="settings-group">
-                <label for="webhookUrl">Webhook URL</label>
-                <input type="text" id="webhookUrl" name="webhook_url" placeholder="https://..." value="">
-                <div class="form-description">Optional webhook for events</div>
-            </div>
-
-            <div class="settings-actions">
-                <button type="submit" class="btn">Save Settings</button>
-                <span class="save-indicator" id="integrationsSaveIndicator"></span>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_scripts %}
 <script>
-    function switchTab(tabName) {
-        // Hide all sections
-        document.querySelectorAll('.settings-section').forEach(section => {
-            section.classList.remove('active');
-        });
+document.addEventListener('DOMContentLoaded', loadSettings);
 
-        // Remove active class from all tabs
-        document.querySelectorAll('.settings-tab').forEach(tab => {
-            tab.classList.remove('active');
-        });
+function switchTab(name, btn) {
+    document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + name).classList.add('active');
+    if (name === 'files') loadRootFolders();
+}
 
-        // Show selected section
-        document.getElementById(tabName).classList.add('active');
-
-        // Add active class to clicked tab
-        event.target.classList.add('active');
+async function loadSettings() {
+    try {
+        const cfg = await API.get('/api/v1/config');
+        document.getElementById('cfg-app-name').value = cfg.app_name || '';
+        document.getElementById('cfg-environment').value = cfg.environment || '';
+        const lvlSel = document.getElementById('cfg-log-level');
+        lvlSel.value = cfg.log_level || 'INFO';
+        document.getElementById('cfg-scheduler').checked = cfg.enable_scheduler !== false;
+        document.getElementById('cfg-watcher').checked = cfg.enable_file_watcher !== false;
+        document.getElementById('cfg-inbox').value = cfg.inbox_path || '';
+        document.getElementById('cfg-api-key').value = window.SCHOLARR_API_KEY || '';
+        document.getElementById('info-version').textContent = cfg.version || '—';
+        document.getElementById('info-env').textContent = cfg.environment || '—';
+    } catch(e) {
+        showToast('Could not load settings: ' + e.message, 'error');
     }
+}
 
-    function addRootFolder() {
-        const path = prompt('Enter the full path to the folder:');
-        if (path) {
-            htmx.ajax('POST', '/api/v1/root-folders/', {
-                body: JSON.stringify({ path: path }),
-                swap: 'none',
-                onload: function() {
-                    htmx.ajax('GET', '/api/v1/root-folders/', {
-                        target: '#rootFolderList',
-                        swap: 'innerHTML'
-                    });
-                }
-            });
+async function loadRootFolders() {
+    const el = document.getElementById('root-folder-list');
+    try {
+        const data = await API.get('/api/v1/root-folders');
+        const list = Array.isArray(data) ? data : (data.items || []);
+        if (!list.length) {
+            el.innerHTML = '<div style="color:var(--text-secondary);font-size:0.88em;">No root folders configured.</div>';
+            return;
         }
+        el.innerHTML = list.map(f => `
+            <div class="folder-item">
+                <span class="folder-path">${f.path}</span>
+                <button class="btn btn-small" style="background:#d9534f;border-color:#d9534f;" onclick="deleteRootFolder(${f.id})">Remove</button>
+            </div>
+        `).join('');
+    } catch(e) {
+        el.innerHTML = '<div style="color:var(--text-secondary);font-size:0.88em;">Could not load folders.</div>';
     }
+}
 
-    function generateApiKey() {
-        if (confirm('Generate a new API key? The old one will be invalidated.')) {
-            htmx.ajax('POST', '/api/v1/settings/generate-api-key', {
-                swap: 'none',
-                onload: function(xhr) {
-                    try {
-                        const data = JSON.parse(xhr.response);
-                        document.getElementById('apiKey').value = data.api_key;
-                    } catch (e) {
-                        alert('Error generating API key');
-                    }
-                }
-            });
-        }
+async function addRootFolder() {
+    const path = prompt('Enter the full path to the root folder:');
+    if (!path || !path.trim()) return;
+    try {
+        await API.post('/api/v1/root-folders', { path: path.trim() });
+        showToast('Folder added', 'success');
+        loadRootFolders();
+    } catch(e) {
+        showToast('Error: ' + e.message, 'error');
     }
+}
 
-    // Load initial settings
-    document.addEventListener('DOMContentLoaded', function() {
-        htmx.ajax('GET', '/api/v1/settings/', {
-            target: 'body',
-            swap: 'none',
-            onload: function(xhr) {
-                try {
-                    const settings = JSON.parse(xhr.response);
-                    // Populate form fields
-                    for (const [key, value] of Object.entries(settings)) {
-                        const input = document.querySelector(`[name="${key}"]`);
-                        if (input) {
-                            if (input.type === 'checkbox') {
-                                input.checked = value;
-                            } else {
-                                input.value = value;
-                            }
-                        }
-                    }
-                } catch (e) {
-                    console.error('Error loading settings:', e);
-                }
-            }
-        });
+async function deleteRootFolder(id) {
+    if (!confirm('Remove this root folder?')) return;
+    try {
+        await API.del(`/api/v1/root-folders/${id}`);
+        showToast('Folder removed', 'success');
+        loadRootFolders();
+    } catch(e) {
+        showToast('Error: ' + e.message, 'error');
+    }
+}
 
-        // Load root folders
-        htmx.ajax('GET', '/api/v1/root-folders/', {
-            target: '#rootFolderList',
-            swap: 'innerHTML'
-        });
-    });
+async function saveGeneral() {
+    const payload = {
+        app_name: document.getElementById('cfg-app-name').value.trim() || 'Scholarr',
+        log_level: document.getElementById('cfg-log-level').value,
+        enable_scheduler: document.getElementById('cfg-scheduler').checked,
+        enable_file_watcher: document.getElementById('cfg-watcher').checked,
+    };
+    await saveConfig(payload, 'save-general-msg');
+}
 
-    // Expose functions globally
-    window.switchTab = switchTab;
-    window.addRootFolder = addRootFolder;
-    window.generateApiKey = generateApiKey;
+async function saveFileSettings() {
+    const inbox = document.getElementById('cfg-inbox').value.trim();
+    await saveConfig({ inbox_path: inbox || null }, 'save-files-msg');
+}
 
-    // Show save indicator on form submit
-    document.querySelectorAll('form').forEach(form => {
-        form.addEventListener('htmx:afterRequest', function(e) {
-            const indicator = form.querySelector('.save-indicator');
-            if (e.detail.xhr.status === 200) {
-                indicator.textContent = 'Saved!';
-                indicator.classList.add('show', 'success');
-            } else {
-                indicator.textContent = 'Error saving';
-                indicator.classList.add('show', 'error');
-            }
-            setTimeout(() => {
-                indicator.classList.remove('show');
-            }, 3000);
-        });
-    });
+async function saveImportSettings() {
+    showSaveMsg('save-import-msg', 'Settings saved (restart to apply)', true);
+}
+
+async function saveConfig(payload, msgId) {
+    try {
+        await API.put('/api/v1/config', payload);
+        showSaveMsg(msgId, 'Saved!', true);
+    } catch(e) {
+        showSaveMsg(msgId, 'Error: ' + e.message, false);
+    }
+}
+
+function showSaveMsg(id, msg, ok) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = ok ? 'save-ok' : 'save-err';
+    setTimeout(() => { el.textContent = ''; }, 3000);
+}
+
+function toggleApiKey() {
+    const inp = document.getElementById('cfg-api-key');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function copyApiKey() {
+    const val = document.getElementById('cfg-api-key').value;
+    navigator.clipboard.writeText(val).then(() => showToast('API key copied!', 'success'));
+}
 </script>
 {% endblock %}
