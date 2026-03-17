@@ -68,10 +68,10 @@
         <div style="font-size:1.3em;font-weight:700;color:var(--text-primary);" id="cal-month-label">March 2026</div>
         <button class="btn btn-secondary" onclick="changeMonth(1)">Next →</button>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-left:auto;">
-            <button class="btn btn-secondary btn-small" onclick="exportICS()" title="Export to Apple/Google/Outlook Calendar">📅 Export ICS</button>
-            <button class="btn btn-secondary btn-small" onclick="exportCSV()" title="Export to spreadsheet">📊 Export CSV</button>
+            <button class="btn btn-secondary btn-small" onclick="exportICS()" title="Export to Apple/Google/Outlook Calendar">Export ICS</button>
+            <button class="btn btn-secondary btn-small" onclick="exportCSV()" title="Export to spreadsheet">Export CSV</button>
             <label class="btn btn-secondary btn-small" style="cursor:pointer;" title="Import from calendar app">
-                📥 Import ICS <input type="file" accept=".ics" style="display:none;" onchange="importICS(this)">
+                Import ICS <input type="file" accept=".ics" style="display:none;" onchange="importICS(this)">
             </label>
         </div>
     </div>

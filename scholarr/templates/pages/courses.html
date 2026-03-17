@@ -9,7 +9,7 @@
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;">
         <h2 style="font-size:1.4em;font-weight:700;color:var(--text-primary);">All Courses</h2>
-        <a href="/courses/add" class="btn">➕ Add Course</a>
+        <a href="/courses/add" class="btn">Add Course</a>
     </div>
 
     <!-- Filters -->
@@ -139,7 +139,7 @@ async function loadCourses() {
                 </td>
                 <td onclick="event.stopPropagation()" style="display:flex;gap:6px;">
                     <a href="/courses/${c.id}" class="btn btn-secondary btn-small">View</a>
-                    <button class="btn btn-small" style="background:#d9534f;border-color:#d9534f;" onclick="deleteCourse(${c.id}, this)">🗑️</button>
+                    <button class="btn btn-small" style="background:#d9534f;border-color:#d9534f;" onclick="deleteCourse(${c.id}, this)">Del</button>
                 </td>
             </tr>
         `).join('');

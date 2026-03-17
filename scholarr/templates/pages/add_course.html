@@ -8,7 +8,7 @@
     <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:6px;padding:28px;">
 
         <div class="alert alert-info" style="margin-bottom:20px;">
-            📚 Add a new course to Scholarr. Once created, you can track assignments, exams, and deadlines.
+            Add a new course to Scholarr. Once created, you can track assignments, exams, and deadlines.
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
@@ -74,7 +74,7 @@
         <div id="form-error" style="display:none;" class="alert alert-danger"></div>
 
         <div style="display:flex;gap:10px;">
-            <button class="btn" id="submit-btn" onclick="submitCourse()">➕ Create Course</button>
+            <button class="btn" id="submit-btn" onclick="submitCourse()">Create Course</button>
             <a href="/courses" class="btn btn-secondary">Cancel</a>
         </div>
     </div>
@@ -145,7 +145,7 @@ async function submitCourse() {
         errEl.textContent = 'Error: ' + e.message;
         errEl.style.display = 'block';
         btn.disabled = false;
-        btn.textContent = '➕ Create Course';
+        btn.textContent = 'Create Course';
     }
 }
 </script>

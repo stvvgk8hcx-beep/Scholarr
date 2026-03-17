@@ -222,16 +222,16 @@
 
         <!-- Timer -->
         <div class="timer-card">
-            <div class="phase-badge" id="phase-badge">⏱ Focus Session</div>
+            <div class="phase-badge" id="phase-badge">Focus Session</div>
             <div class="timer-display" id="timer-display">25:00</div>
             <div class="timer-progress">
                 <div class="timer-progress-bar" id="progress-bar" style="width:100%;"></div>
             </div>
             <div class="session-dots" id="session-dots"></div>
             <div class="timer-controls">
-                <button class="btn btn-secondary" onclick="resetTimer()">↺ Reset</button>
-                <button class="btn btn-start" id="start-btn" onclick="toggleTimer()">▶ Start</button>
-                <button class="btn btn-secondary" onclick="skipPhase()">Skip →</button>
+                <button class="btn btn-secondary" onclick="resetTimer()">Reset</button>
+                <button class="btn btn-start" id="start-btn" onclick="toggleTimer()">Start</button>
+                <button class="btn btn-secondary" onclick="skipPhase()">Skip</button>
             </div>
         </div>
 
@@ -423,7 +423,7 @@ function toggleTimer() {
 function startTimer() {
     if (getCfg().notify && Notification.permission === 'default') Notification.requestPermission();
     isRunning = true;
-    document.getElementById('start-btn').textContent = '⏸ Pause';
+    document.getElementById('start-btn').textContent = 'Pause';
     document.getElementById('timer-display').classList.remove('paused');
     timerInterval = setInterval(tick, 1000);
 }
@@ -431,13 +431,13 @@ function startTimer() {
 function pauseTimer() {
     isRunning = false;
     clearInterval(timerInterval);
-    document.getElementById('start-btn').textContent = '▶ Resume';
+    document.getElementById('start-btn').textContent = 'Resume';
     document.getElementById('timer-display').classList.add('paused');
 }
 
 function resetTimer() {
     pauseTimer();
-    document.getElementById('start-btn').textContent = '▶ Start';
+    document.getElementById('start-btn').textContent = 'Start';
     setPhase(phase, true);
 }
 
@@ -464,17 +464,17 @@ function setPhase(p, reset) {
     const bar = document.getElementById('progress-bar');
 
     if (p === 'focus') {
-        badge.textContent = '⏱ Focus Session';
+        badge.textContent = 'Focus Session';
         badge.className = 'phase-badge';
         display.className = 'timer-display' + (isRunning ? '' : ' paused');
         bar.className = 'timer-progress-bar';
     } else if (p === 'short') {
-        badge.textContent = '☕ Short Break';
+        badge.textContent = 'Short Break';
         badge.className = 'phase-badge break';
         display.className = 'timer-display break' + (isRunning ? '' : ' paused');
         bar.className = 'timer-progress-bar break';
     } else {
-        badge.textContent = '🌿 Long Break';
+        badge.textContent = 'Long Break';
         badge.className = 'phase-badge break';
         display.className = 'timer-display break' + (isRunning ? '' : ' paused');
         bar.className = 'timer-progress-bar break';
@@ -487,7 +487,7 @@ function setPhase(p, reset) {
 function onPhaseComplete(natural) {
     clearInterval(timerInterval);
     isRunning = false;
-    document.getElementById('start-btn').textContent = '▶ Start';
+    document.getElementById('start-btn').textContent = 'Start';
 
     if (phase === 'focus' && natural) {
         completedPomodoros++;

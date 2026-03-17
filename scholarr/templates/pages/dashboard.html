@@ -34,11 +34,11 @@
     <div style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:6px;padding:18px;">
         <h3 style="margin-bottom:14px;font-size:0.85em;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Quick Actions</h3>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <a href="/courses/add" class="btn">➕ New Course</a>
-            <a href="/semesters" class="btn btn-secondary">📅 Semesters</a>
-            <a href="/academic-items" class="btn btn-secondary">📝 Academic Items</a>
-            <a href="/calendar" class="btn btn-secondary">🗓️ Calendar</a>
-            <a href="/gpa" class="btn btn-secondary">🎓 GPA Calc</a>
+            <a href="/courses/add" class="btn">New Course</a>
+            <a href="/semesters" class="btn btn-secondary">Semesters</a>
+            <a href="/academic-items" class="btn btn-secondary">Academic Items</a>
+            <a href="/calendar" class="btn btn-secondary">Calendar</a>
+            <a href="/gpa" class="btn btn-secondary">GPA Calc</a>
         </div>
     </div>
 
@@ -251,8 +251,8 @@ async function loadGradeSummary() {
 }
 
 function getEventIcon(type) {
-    const m = { import:'📥', create:'✨', rename:'✏️', move:'📁', update:'🔄', delete:'🗑️', scan:'🔍' };
-    return m[(type||'').toLowerCase()] || '◆';
+    const m = { import:'↓', create:'+', rename:'~', move:'→', update:'↻', delete:'×', scan:'○' };
+    return m[(type||'').toLowerCase()] || '·';
 }
 </script>
 {% endblock %}

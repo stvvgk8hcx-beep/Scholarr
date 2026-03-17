@@ -26,9 +26,9 @@
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
         <h2 style="font-size:1.4em;font-weight:700;color:var(--text-primary);">Academic Items</h2>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="btn btn-secondary btn-small" onclick="exportItemsCSV()" title="Export to CSV">📊 Export CSV</button>
-            <button class="btn btn-secondary btn-small" onclick="exportItemsICS()" title="Export to calendar">📅 Export ICS</button>
-            <button class="btn" onclick="openAddItemModal()">➕ Add Item</button>
+            <button class="btn btn-secondary btn-small" onclick="exportItemsCSV()" title="Export to CSV">Export CSV</button>
+            <button class="btn btn-secondary btn-small" onclick="exportItemsICS()" title="Export to calendar">Export ICS</button>
+            <button class="btn" onclick="openAddItemModal()">Add Item</button>
         </div>
     </div>
 
@@ -310,7 +310,7 @@ async function loadItems() {
                 <td class="grade-cell">${item.grade !== null && item.grade !== undefined ? item.grade + '%' : '—'}</td>
                 <td style="display:flex;gap:6px;">
                     <button class="btn btn-secondary btn-small" onclick="editItem(${item.id})">✏️</button>
-                    <button class="btn btn-small" style="background:#d9534f;border-color:#d9534f;" onclick="deleteItem(${item.id}, this)">🗑️</button>
+                    <button class="btn btn-small" style="background:#d9534f;border-color:#d9534f;" onclick="deleteItem(${item.id}, this)">Del</button>
                 </td>
             </tr>
         `).join('');

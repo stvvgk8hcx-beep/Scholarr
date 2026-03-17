@@ -166,8 +166,8 @@ async function fetchActivity(reset) {
 }
 
 function getEventIcon(type) {
-    const m = { import:'📥', rename:'✏️', move:'📁', delete:'🗑️', gradechange:'📊', statuschange:'🔄', archive:'📦', extract:'📤', duplicate:'📋' };
-    return m[(type||'').toLowerCase()] || '◆';
+    const m = { import:'↓', rename:'~', move:'→', delete:'×', gradechange:'#', statuschange:'↻', archive:'↓', extract:'↑', duplicate:'⊕' };
+    return m[(type||'').toLowerCase()] || '·';
 }
 </script>
 {% endblock %}

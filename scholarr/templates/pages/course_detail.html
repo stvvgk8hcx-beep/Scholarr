@@ -64,10 +64,10 @@
 
     <!-- Tabs -->
     <div class="course-tabs">
-        <button class="course-tab active" onclick="switchTab('files')">📁 Files</button>
-        <button class="course-tab" onclick="switchTab('items')">📝 Items</button>
-        <button class="course-tab" onclick="switchTab('activity')">📈 Study & Activity</button>
-        <button class="course-tab" onclick="switchTab('edit')">⚙️ Edit</button>
+        <button class="course-tab active" onclick="switchTab('files')">Files</button>
+        <button class="course-tab" onclick="switchTab('items')">Items</button>
+        <button class="course-tab" onclick="switchTab('activity')">Study &amp; Activity</button>
+        <button class="course-tab" onclick="switchTab('edit')">Settings</button>
     </div>
 
     <!-- Files Tab -->
@@ -154,14 +154,14 @@
                 <label for="edit-monitored" style="margin:0;cursor:pointer;">Monitor this course</label>
             </div>
             <div style="display:flex;gap:10px;margin-top:8px;">
-                <button class="btn" onclick="saveCourse()">💾 Save Changes</button>
-                <button class="btn btn-secondary" onclick="loadCourse()">↺ Reset</button>
+                <button class="btn" onclick="saveCourse()">Save Changes</button>
+                <button class="btn btn-secondary" onclick="loadCourse()">Reset</button>
             </div>
 
             <div class="danger-zone">
                 <h4>Danger Zone</h4>
                 <p style="color:var(--text-secondary);font-size:0.88em;margin-bottom:12px;">Delete this course and all its data. This cannot be undone.</p>
-                <button class="btn" style="background:#d9534f;border-color:#d9534f;" onclick="deleteCourse()">🗑️ Delete Course</button>
+                <button class="btn" style="background:#d9534f;border-color:#d9534f;" onclick="deleteCourse()">Delete Course</button>
             </div>
         </div>
     </div>

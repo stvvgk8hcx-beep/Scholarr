@@ -150,7 +150,7 @@ function renderFiles() {
                 <td style="color:var(--text-secondary);">${formatDate(f.date_imported || f.created_at)}</td>
                 <td style="font-family:monospace;font-size:0.75em;color:var(--text-secondary);">${(f.hash || '').slice(0,12)}${(f.hash||'').length > 12 ? '…' : ''}</td>
                 <td>
-                    <button class="btn btn-small" style="background:#d9534f;border-color:#d9534f;" onclick="deleteFile(${f.id}, this)">🗑️</button>
+                    <button class="btn btn-small" style="background:#d9534f;border-color:#d9534f;" onclick="deleteFile(${f.id}, this)">Del</button>
                 </td>
             </tr>
         `;
