@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Writing — Scholarr</title>
+    <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Inter:wght@300;400&family=Lora:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root {
+    --editor-bg: #13132b;
+    --editor-text: #d0d2e4;
+    --editor-muted: #5a5e80;
+    --editor-accent: #2ecfa1;
+    --editor-toolbar-bg: rgba(26,26,56,0.92);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: var(--editor-bg);
+    color: var(--editor-text);
+    font-family: 'Lora', Georgia, serif;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    cursor: text;
+}
+
+/* Background layer */
+.editor-bg {
+    position: fixed; inset: 0; z-index: 0;
+    transition: opacity 1.5s ease;
+}
+.bg-gradient { background: linear-gradient(135deg, #13132b 0%, #1a1a38 50%, #13132b 100%); }
+.bg-night { background: linear-gradient(180deg, #0a0a1a 0%, #151530 40%, #1a1a38 100%); }
+.bg-forest { background: linear-gradient(160deg, #0d1a0d 0%, #132013 40%, #0a150a 100%); }
+.bg-ocean { background: linear-gradient(160deg, #0a1520 0%, #0d1f30 40%, #081318 100%); }
+.bg-warmth { background: linear-gradient(160deg, #1a1510 0%, #201a12 40%, #151210 100%); }
+.bg-aurora {
+    background: linear-gradient(135deg, #13132b, #1a2040, #132030, #13132b);
+    background-size: 400% 400%;
+    animation: aurora 20s ease infinite;
+}
+@keyframes aurora {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* Writing area */
+.editor-container {
+    position: relative; z-index: 1;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 20px 40px;
+    overflow-y: auto;
+}
+
+.editor-title {
+    width: 100%;
+    max-width: 680px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--editor-text);
+    font-family: inherit;
+    font-size: 1.8em;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 24px;
+    opacity: 0.9;
+}
+.editor-title::placeholder { color: var(--editor-muted); }
+
+.editor-content {
+    width: 100%;
+    max-width: 680px;
+    min-height: 60vh;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--editor-text);
+    font-family: inherit;
+    font-size: 1.15em;
+    line-height: 1.85;
+    resize: none;
+    flex: 1;
+}
+.editor-content::placeholder { color: var(--editor-muted); }
+
+/* Floating toolbar */
+.editor-toolbar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--editor-toolbar-bg);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 10;
+    opacity: 0;
+    transform: translateY(100%);
+    transition: opacity 0.4s, transform 0.4s;
+}
+.editor-toolbar.visible { opacity: 1; transform: translateY(0); }
+
+.toolbar-group { display: flex; align-items: center; gap: 8px; }
+
+.tb-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--editor-muted);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.78em;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    font-family: 'Inter', sans-serif;
+}
+.tb-btn:hover { color: var(--editor-text); border-color: rgba(255,255,255,0.2); }
+.tb-btn.active { color: var(--editor-accent); border-color: var(--editor-accent); }
+
+.tb-select {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--editor-muted);
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 0.78em;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+}
+.tb-select option { background: #1a1a38; color: #e0e2f0; }
+
+.tb-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.08); margin: 0 4px; }
+
+.status-bar {
+    color: var(--editor-muted);
+    font-size: 0.72em;
+    font-family: 'Inter', sans-serif;
+    display: flex; gap: 16px;
+}
+
+/* Timer badge */
+.timer-badge {
+    position: fixed;
+    top: 16px; right: 20px;
+    background: rgba(26,26,56,0.8);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.82em;
+    font-family: 'Inter', sans-serif;
+    color: var(--editor-accent);
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.4s;
+}
+.timer-badge.visible { opacity: 1; }
+
+/* Back button */
+.back-btn {
+    position: fixed;
+    top: 16px; left: 20px;
+    background: rgba(26,26,56,0.8);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.78em;
+    font-family: 'Inter', sans-serif;
+    color: var(--editor-muted);
+    cursor: pointer;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.4s;
+    text-decoration: none;
+}
+.back-btn:hover { color: var(--editor-text); }
+.back-btn.visible { opacity: 1; }
+
+/* Volume slider */
+.vol-slider {
+    -webkit-appearance: none;
+    width: 60px; height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    outline: none;
+}
+.vol-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--editor-accent);
+    cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="editor-bg bg-gradient" id="editorBg"></div>
+
+<!-- Back button & timer (auto-hide) -->
+<a href="/notes" class="back-btn" id="backBtn">Back to Notes</a>
+<div class="timer-badge" id="timerBadge">0:00</div>
+
+<!-- Writing area -->
+<div class="editor-container" id="editorContainer">
+    <input type="text" class="editor-title" id="noteTitle" placeholder="Untitled Note" autocomplete="off" spellcheck="false">
+    <textarea class="editor-content" id="noteContent" placeholder="Start writing..." spellcheck="false"></textarea>
+</div>
+
+<!-- Toolbar (auto-hide) -->
+<div class="editor-toolbar" id="toolbar">
+    <div class="toolbar-group">
+        <select class="tb-select" id="selFont" onchange="setFont(this.value)" title="Font">
+            <option value="'Lora', Georgia, serif">Lora</option>
+            <option value="'Inter', sans-serif">Inter</option>
+            <option value="'JetBrains Mono', monospace">Mono</option>
+            <option value="'Caveat', cursive">Handwriting</option>
+        </select>
+        <select class="tb-select" id="selSize" onchange="setFontSize(this.value)" title="Size">
+            <option value="1em">Small</option>
+            <option value="1.15em" selected>Medium</option>
+            <option value="1.35em">Large</option>
+            <option value="1.6em">Extra Large</option>
+        </select>
+        <div class="tb-divider"></div>
+        <select class="tb-select" id="selBg" onchange="setBg(this.value)" title="Background">
+            <option value="bg-gradient">Default</option>
+            <option value="bg-night">Night Sky</option>
+            <option value="bg-forest">Forest</option>
+            <option value="bg-ocean">Ocean</option>
+            <option value="bg-warmth">Warmth</option>
+            <option value="bg-aurora">Aurora</option>
+        </select>
+        <div class="tb-divider"></div>
+        <select class="tb-select" id="selAmbient" onchange="setAmbient(this.value)" title="Ambient Sound">
+            <option value="">Silence</option>
+            <option value="rain">Rain</option>
+            <option value="forest">Forest</option>
+            <option value="ocean">Ocean Waves</option>
+            <option value="fire">Fireplace</option>
+            <option value="cafe">Coffee Shop</option>
+        </select>
+        <input type="range" class="vol-slider" id="ambientVol" min="0" max="100" value="30" oninput="setAmbientVol(this.value)" title="Volume">
+        <div class="tb-divider"></div>
+        <select class="tb-select" id="selKeys" onchange="setKeySounds(this.value)" title="Typing Sounds">
+            <option value="">Silent</option>
+            <option value="soft">Soft Clicks</option>
+            <option value="typewriter">Typewriter</option>
+            <option value="mechanical">Mechanical</option>
+        </select>
+    </div>
+    <div class="toolbar-group">
+        <div class="status-bar">
+            <span id="wordCount">0 words</span>
+            <span id="charCount">0 chars</span>
+            <span id="saveStatus">Saved</span>
+        </div>
+        <div class="tb-divider"></div>
+        <button class="tb-btn" onclick="exportNote('txt')" title="Export as text">TXT</button>
+        <button class="tb-btn" onclick="toggleFullscreen()" title="Toggle fullscreen">Fullscreen</button>
+    </div>
+</div>
+
+<script>
+window.SCHOLARR_API_KEY = "{{ api_key }}";
+const NOTE_ID = {{ note_id }};
+let saveTimer = null;
+let sessionStart = Date.now();
+let keySoundCtx = null;
+let ambientAudio = null;
+let toolbarTimer = null;
+let currentPrefs = {};
+
+// ── API helper ──────────────────────────────────────────
+async function api(method, url, data) {
+    const opts = { method, headers: { 'X-API-Key': window.SCHOLARR_API_KEY, 'Content-Type': 'application/json' } };
+    if (data) opts.body = JSON.stringify(data);
+    const r = await fetch(url, opts);
+    if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.detail || r.status); }
+    return r.status === 204 ? null : r.json();
+}
+
+// ── Load note ───────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const note = await api('GET', `/api/v1/notes/${NOTE_ID}`);
+        document.getElementById('noteTitle').value = note.title || '';
+        document.getElementById('noteContent').value = note.content || '';
+        updateCounts();
+        if (note.preferences) {
+            currentPrefs = note.preferences;
+            if (currentPrefs.font) { document.getElementById('selFont').value = currentPrefs.font; setFont(currentPrefs.font); }
+            if (currentPrefs.fontSize) { document.getElementById('selSize').value = currentPrefs.fontSize; setFontSize(currentPrefs.fontSize); }
+            if (currentPrefs.bg) { document.getElementById('selBg').value = currentPrefs.bg; setBg(currentPrefs.bg); }
+            if (currentPrefs.ambient) { document.getElementById('selAmbient').value = currentPrefs.ambient; setAmbient(currentPrefs.ambient); }
+            if (currentPrefs.keySounds) { document.getElementById('selKeys').value = currentPrefs.keySounds; setKeySounds(currentPrefs.keySounds); }
+            if (currentPrefs.ambientVol !== undefined) { document.getElementById('ambientVol').value = currentPrefs.ambientVol; }
+        }
+        document.title = `${note.title || 'Untitled'} — Scholarr`;
+    } catch(e) {
+        console.error('Load error:', e);
+    }
+    setupAutoHide();
+    setupKeySounds();
+    startTimer();
+});
+
+// ── Auto-save ───────────────────────────────────────────
+function scheduleSave() {
+    clearTimeout(saveTimer);
+    document.getElementById('saveStatus').textContent = 'Saving...';
+    saveTimer = setTimeout(saveNote, 1500);
+}
+
+async function saveNote() {
+    const title = document.getElementById('noteTitle').value.trim() || 'Untitled';
+    const content = document.getElementById('noteContent').value;
+    const elapsed = Math.round((Date.now() - sessionStart) / 1000);
+    const words = content.trim() ? content.trim().split(/\s+/).length : 0;
+    currentPrefs = {
+        font: document.getElementById('selFont').value,
+        fontSize: document.getElementById('selSize').value,
+        bg: document.getElementById('selBg').value,
+        ambient: document.getElementById('selAmbient').value,
+        keySounds: document.getElementById('selKeys').value,
+        ambientVol: parseInt(document.getElementById('ambientVol').value),
+    };
+    try {
+        await api('PUT', `/api/v1/notes/${NOTE_ID}`, {
+            title, content,
+            word_count: words,
+            duration_seconds: elapsed,
+            preferences: currentPrefs,
+        });
+        document.getElementById('saveStatus').textContent = 'Saved';
+    } catch(e) {
+        document.getElementById('saveStatus').textContent = 'Save failed';
+    }
+}
+
+document.getElementById('noteTitle').addEventListener('input', scheduleSave);
+document.getElementById('noteContent').addEventListener('input', () => { updateCounts(); scheduleSave(); });
+
+// ── Word/char counts ────────────────────────────────────
+function updateCounts() {
+    const text = document.getElementById('noteContent').value;
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    document.getElementById('wordCount').textContent = words + ' words';
+    document.getElementById('charCount').textContent = text.length + ' chars';
+}
+
+// ── Timer ────────────────────────────────────────────────
+function startTimer() {
+    setInterval(() => {
+        const elapsed = Math.round((Date.now() - sessionStart) / 1000);
+        const m = Math.floor(elapsed / 60);
+        const s = elapsed % 60;
+        document.getElementById('timerBadge').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    }, 1000);
+}
+
+// ── Auto-hide toolbar ───────────────────────────────────
+function setupAutoHide() {
+    const toolbar = document.getElementById('toolbar');
+    const backBtn = document.getElementById('backBtn');
+    const timer = document.getElementById('timerBadge');
+    function showUI() {
+        toolbar.classList.add('visible');
+        backBtn.classList.add('visible');
+        timer.classList.add('visible');
+        clearTimeout(toolbarTimer);
+        toolbarTimer = setTimeout(hideUI, 3000);
+    }
+    function hideUI() {
+        toolbar.classList.remove('visible');
+        backBtn.classList.remove('visible');
+        timer.classList.remove('visible');
+    }
+    document.addEventListener('mousemove', showUI);
+    document.addEventListener('touchstart', showUI);
+    showUI(); // show initially
+}
+
+// ── Font ─────────────────────────────────────────────────
+function setFont(font) {
+    document.getElementById('noteContent').style.fontFamily = font;
+    document.getElementById('noteTitle').style.fontFamily = font;
+}
+function setFontSize(size) {
+    document.getElementById('noteContent').style.fontSize = size;
+}
+
+// ── Background ──────────────────────────────────────────
+function setBg(cls) {
+    const el = document.getElementById('editorBg');
+    el.className = 'editor-bg ' + cls;
+}
+
+// ── Ambient sound ───────────────────────────────────────
+function setAmbient(type) {
+    if (ambientAudio) { ambientAudio.pause(); ambientAudio = null; }
+    if (!type) return;
+    // Use free ambient audio from a public CDN or local files
+    const urls = {
+        rain: 'https://cdn.freesound.org/previews/531/531947_6142149-lq.mp3',
+        forest: 'https://cdn.freesound.org/previews/365/365252_6593480-lq.mp3',
+        ocean: 'https://cdn.freesound.org/previews/467/467539_5765895-lq.mp3',
+        fire: 'https://cdn.freesound.org/previews/366/366105_6593480-lq.mp3',
+        cafe: 'https://cdn.freesound.org/previews/443/443691_9104667-lq.mp3',
+    };
+    if (!urls[type]) return;
+    ambientAudio = new Audio(urls[type]);
+    ambientAudio.loop = true;
+    ambientAudio.volume = parseInt(document.getElementById('ambientVol').value) / 100;
+    ambientAudio.play().catch(() => {}); // browser may block autoplay
+}
+function setAmbientVol(v) {
+    if (ambientAudio) ambientAudio.volume = v / 100;
+}
+
+// ── Typing sounds ───────────────────────────────────────
+let keySoundType = '';
+function setupKeySounds() {
+    try { keySoundCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+}
+function setKeySounds(type) { keySoundType = type; }
+
+document.addEventListener('keydown', (e) => {
+    if (!keySoundType || !keySoundCtx) return;
+    if (e.target.id !== 'noteContent' && e.target.id !== 'noteTitle') return;
+    playKeySound(e.key);
+});
+
+function playKeySound(key) {
+    if (!keySoundCtx) return;
+    const osc = keySoundCtx.createOscillator();
+    const gain = keySoundCtx.createGain();
+    osc.connect(gain);
+    gain.connect(keySoundCtx.destination);
+
+    const t = keySoundCtx.currentTime;
+    const isSpecial = ['Enter','Backspace',' '].includes(key);
+
+    if (keySoundType === 'soft') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(isSpecial ? 300 : 600 + Math.random() * 200, t);
+        gain.gain.setValueAtTime(0.03, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+        osc.start(t); osc.stop(t + 0.06);
+    } else if (keySoundType === 'typewriter') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(isSpecial ? 180 : 800 + Math.random() * 400, t);
+        gain.gain.setValueAtTime(0.04, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+        osc.start(t); osc.stop(t + 0.08);
+    } else if (keySoundType === 'mechanical') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(isSpecial ? 150 : 1200 + Math.random() * 600, t);
+        gain.gain.setValueAtTime(0.02, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+        osc.start(t); osc.stop(t + 0.05);
+    }
+}
+
+// ── Fullscreen ──────────────────────────────────────────
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+// ── Export ───────────────────────────────────────────────
+function exportNote(fmt) {
+    const title = document.getElementById('noteTitle').value || 'note';
+    const content = document.getElementById('noteContent').value;
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title.replace(/[^a-zA-Z0-9_-]/g, '_')}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ── Warn on leave with unsaved changes ──────────────────
+window.addEventListener('beforeunload', (e) => {
+    if (saveTimer) { saveNote(); }
+});
+</script>
+</body>
+</html>

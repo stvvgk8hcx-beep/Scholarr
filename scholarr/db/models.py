@@ -203,6 +203,8 @@ class Course(Base):
     monitored: Mapped[bool] = mapped_column(Boolean, default=False)
     sort_name: Mapped[Optional[str]] = mapped_column(String(255))
     clean_name: Mapped[Optional[str]] = mapped_column(String(255))
+    location: Mapped[Optional[str]] = mapped_column(String(255))
+    schedule: Mapped[Optional[str]] = mapped_column(Text)  # JSON: [{day, start, end}]
     notes: Mapped[Optional[str]] = mapped_column(Text)
     grade_weights: Mapped[Optional[str]] = mapped_column(Text)  # JSON: {type: weight%}
     created_at: Mapped[datetime] = mapped_column(
@@ -675,4 +677,38 @@ class ScheduledTask(Base):
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,
+    )
+
+
+class Note(Base):
+    """Represents a class note / writing session."""
+    __tablename__ = "note"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    course_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("course.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    title: Mapped[str] = mapped_column(String(500), nullable=False)
+    content: Mapped[Optional[str]] = mapped_column(Text)
+    word_count: Mapped[int] = mapped_column(Integer, default=0)
+    duration_seconds: Mapped[int] = mapped_column(Integer, default=0)
+    preferences: Mapped[Optional[str]] = mapped_column(Text)  # JSON: bg, font, sounds
+    pinned: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.now(),
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+
+    course: Mapped[Optional["Course"]] = relationship("Course")
+
+    __table_args__ = (
+        Index("ix_note_course_id", "course_id"),
     )

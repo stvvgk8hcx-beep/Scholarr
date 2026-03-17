@@ -219,6 +219,14 @@ def create_app() -> FastAPI:
     async def settings_page(request: Request):
         return templates.TemplateResponse("pages/settings.html", {"request": request})
 
+    @app.get("/notes", include_in_schema=False)
+    async def notes_page(request: Request):
+        return templates.TemplateResponse("pages/notes.html", {"request": request})
+
+    @app.get("/notes/{note_id}", include_in_schema=False)
+    async def note_editor_page(request: Request, note_id: int):
+        return templates.TemplateResponse("pages/note_editor.html", {"request": request, "note_id": note_id})
+
     @app.get("/setup", include_in_schema=False)
     async def setup_page(request: Request):
         return templates.TemplateResponse("pages/first_run.html", {"request": request})

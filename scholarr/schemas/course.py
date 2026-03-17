@@ -2,7 +2,7 @@
 
 import json
 from datetime import datetime
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -19,6 +19,8 @@ class CourseCreate(BaseModel):
     monitored: bool = False
     sort_name: Optional[str] = Field(default=None, max_length=255)
     clean_name: Optional[str] = Field(default=None, max_length=255)
+    location: Optional[str] = Field(default=None, max_length=255)
+    schedule: Optional[List[Dict[str, Any]]] = None  # [{day, start, end}]
     notes: Optional[str] = None
     grade_weights: Optional[Dict[str, float]] = None  # {type: weight%}
 
@@ -35,6 +37,8 @@ class CourseUpdate(BaseModel):
     monitored: Optional[bool] = None
     sort_name: Optional[str] = Field(default=None, max_length=255)
     clean_name: Optional[str] = Field(default=None, max_length=255)
+    location: Optional[str] = Field(default=None, max_length=255)
+    schedule: Optional[List[Dict[str, Any]]] = None
     notes: Optional[str] = None
     grade_weights: Optional[Dict[str, float]] = None  # {type: weight%}
 
@@ -56,6 +60,8 @@ class CourseResponse(BaseModel):
     monitored: bool
     sort_name: Optional[str]
     clean_name: Optional[str]
+    location: Optional[str] = None
+    schedule: Optional[List[Dict[str, Any]]] = None
     notes: Optional[str]
     grade_weights: Optional[Dict[str, float]] = None
     created_at: datetime
@@ -64,6 +70,16 @@ class CourseResponse(BaseModel):
     @field_validator("grade_weights", mode="before")
     @classmethod
     def parse_grade_weights(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except Exception:
+                return None
+        return v
+
+    @field_validator("schedule", mode="before")
+    @classmethod
+    def parse_schedule(cls, v):
         if isinstance(v, str):
             try:
                 return json.loads(v)
