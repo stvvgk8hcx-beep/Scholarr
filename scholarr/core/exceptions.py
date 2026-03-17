@@ -47,7 +47,7 @@ class FileOperationError(ScholarrException):
     pass
 
 
-class ImportError(ScholarrException):
+class ImportOperationError(ScholarrException):
     """Raised when import fails."""
 
     pass

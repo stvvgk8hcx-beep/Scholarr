@@ -279,7 +279,9 @@ async function addRootFolder() {
     const path = prompt('Enter the full path to the root folder:');
     if (!path || !path.trim()) return;
     try {
-        await API.post('/api/v1/root-folders', { path: path.trim() });
+        const trimmed = path.trim().replace(/\/+$/, '');
+        const name = trimmed.split('/').filter(Boolean).pop() || trimmed;
+        await API.post('/api/v1/root-folders', { path: trimmed, name: name });
         showToast('Folder added', 'success');
         loadRootFolders();
     } catch(e) {
@@ -436,7 +438,8 @@ async function exportToCalendar(service) {
 }
 
 async function exportAndOpenCloud(provider) {
-    await exportDataBackup();
+    const btn = document.querySelector(`[onclick="exportAndOpenCloud('${provider}')"]`);
+    await exportDataBackup(btn);
     const urls = { google: 'https://drive.google.com', onedrive: 'https://onedrive.live.com', icloud: 'https://icloud.com/iclouddrive' };
     setTimeout(() => window.open(urls[provider], '_blank'), 1500);
 }

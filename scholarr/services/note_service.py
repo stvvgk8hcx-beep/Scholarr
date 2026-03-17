@@ -6,10 +6,12 @@ from typing import Optional
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from scholarr.db.models import Note, Course
+from scholarr.db.models import Note, NoteBackup, Course
 from scholarr.schemas.note import NoteCreate, NoteUpdate, NoteResponse, NoteListResponse
 
 logger = logging.getLogger(__name__)
+
+MAX_BACKUPS_PER_NOTE = 20
 
 
 async def _enrich_notes(notes: list[NoteResponse], db: AsyncSession) -> list[NoteResponse]:
@@ -88,6 +90,18 @@ class NoteService:
         obj = await self.db.get(Note, id)
         if not obj:
             return None
+
+        # Create backup of current content before overwriting
+        if obj.content is not None:
+            backup = NoteBackup(
+                note_id=obj.id,
+                content=obj.content,
+                word_count=obj.word_count or 0,
+            )
+            self.db.add(backup)
+            # Prune old backups beyond limit
+            await self._prune_backups(obj.id)
+
         update = data.model_dump(exclude_unset=True)
         if "preferences" in update and isinstance(update["preferences"], dict):
             update["preferences"] = json.dumps(update["preferences"])
@@ -106,3 +120,68 @@ class NoteService:
         await self.db.commit()
         logger.info(f"Deleted note id={id}")
         return True
+
+    async def list_backups(self, note_id: int) -> list[dict]:
+        """List backup snapshots for a note, newest first."""
+        result = await self.db.execute(
+            select(NoteBackup)
+            .where(NoteBackup.note_id == note_id)
+            .order_by(NoteBackup.created_at.desc())
+            .limit(MAX_BACKUPS_PER_NOTE)
+        )
+        rows = result.scalars().all()
+        return [
+            {
+                "id": r.id,
+                "note_id": r.note_id,
+                "word_count": r.word_count,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+                "preview": (r.content or "")[:200],
+            }
+            for r in rows
+        ]
+
+    async def restore_backup(self, note_id: int, backup_id: int) -> Optional[NoteResponse]:
+        """Restore a note's content from a backup snapshot."""
+        backup = await self.db.get(NoteBackup, backup_id)
+        if not backup or backup.note_id != note_id:
+            return None
+        note = await self.db.get(Note, note_id)
+        if not note:
+            return None
+        # Save current as a new backup before restoring
+        if note.content is not None:
+            save_current = NoteBackup(
+                note_id=note.id,
+                content=note.content,
+                word_count=note.word_count or 0,
+            )
+            self.db.add(save_current)
+        # Restore
+        note.content = backup.content
+        note.word_count = backup.word_count
+        await self.db.commit()
+        await self.db.refresh(note)
+        items = await _enrich_notes([NoteResponse.model_validate(note)], self.db)
+        return items[0]
+
+    async def _prune_backups(self, note_id: int):
+        """Keep only the most recent MAX_BACKUPS_PER_NOTE backups."""
+        count_result = await self.db.execute(
+            select(func.count()).select_from(NoteBackup).where(NoteBackup.note_id == note_id)
+        )
+        count = count_result.scalar_one()
+        if count >= MAX_BACKUPS_PER_NOTE:
+            # Find IDs to delete (oldest beyond the limit)
+            oldest = await self.db.execute(
+                select(NoteBackup.id)
+                .where(NoteBackup.note_id == note_id)
+                .order_by(NoteBackup.created_at.asc())
+                .limit(count - MAX_BACKUPS_PER_NOTE + 1)
+            )
+            ids_to_delete = [row.id for row in oldest]
+            if ids_to_delete:
+                for bid in ids_to_delete:
+                    obj = await self.db.get(NoteBackup, bid)
+                    if obj:
+                        await self.db.delete(obj)

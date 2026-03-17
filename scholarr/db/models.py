@@ -708,7 +708,31 @@ class Note(Base):
     )
 
     course: Mapped[Optional["Course"]] = relationship("Course")
+    backups: Mapped[List["NoteBackup"]] = relationship(
+        "NoteBackup", back_populates="note", cascade="all, delete-orphan",
+    )
 
     __table_args__ = (
         Index("ix_note_course_id", "course_id"),
+    )
+
+
+class NoteBackup(Base):
+    """Automatic backup snapshot of a note's content."""
+    __tablename__ = "note_backup"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    note_id: Mapped[int] = mapped_column(
+        ForeignKey("note.id", ondelete="CASCADE"), nullable=False,
+    )
+    content: Mapped[Optional[str]] = mapped_column(Text)
+    word_count: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False,
+    )
+
+    note: Mapped["Note"] = relationship("Note", back_populates="backups")
+
+    __table_args__ = (
+        Index("ix_note_backup_note_id", "note_id"),
     )

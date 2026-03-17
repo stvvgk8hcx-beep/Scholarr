@@ -1,7 +1,7 @@
 """Notes endpoint."""
 
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.security import verify_api_key
@@ -77,3 +77,46 @@ async def delete_note(
     if not await service.delete_note(id):
         raise HTTPException(status_code=404, detail="Note not found")
     return None
+
+
+@router.post("/{id}/beacon", status_code=204)
+async def beacon_save(
+    id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """Save note via sendBeacon (no API key required, POST with JSON body)."""
+    try:
+        body = await request.json()
+        data = NoteUpdate(**body)
+        service = NoteService(db)
+        await service.update_note(id, data)
+    except Exception:
+        pass  # beacon saves are best-effort
+    return None
+
+
+@router.get("/{id}/backups")
+async def list_note_backups(
+    id: int,
+    db: AsyncSession = Depends(get_db_session),
+    api_key: str = Depends(verify_api_key),
+):
+    """List backup snapshots for a note."""
+    service = NoteService(db)
+    return await service.list_backups(id)
+
+
+@router.post("/{id}/backups/{backup_id}/restore", response_model=NoteResponse)
+async def restore_note_backup(
+    id: int,
+    backup_id: int,
+    db: AsyncSession = Depends(get_db_session),
+    api_key: str = Depends(verify_api_key),
+):
+    """Restore a note from a backup snapshot."""
+    service = NoteService(db)
+    result = await service.restore_backup(id, backup_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Backup not found")
+    return result

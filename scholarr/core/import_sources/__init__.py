@@ -13,7 +13,7 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from scholarr.core.exceptions import FileOperationError, ImportError, ValidationException
+from scholarr.core.exceptions import FileOperationError, ImportOperationError, ValidationException
 from scholarr.core.import_sources.decision_engine import DecisionEngine, ImportAction
 from scholarr.core.parser import FileNameParser, ItemType
 from scholarr.db.models import AcademicItemStatusEnum, HistoryEventTypeEnum

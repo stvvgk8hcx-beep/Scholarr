@@ -428,7 +428,14 @@ body.dark-mode { --ed-text-current: #d8dae8; }
         </div>
         <button class="tool-btn" title="Colors"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="3"/><circle cx="10" cy="6" r="3"/><circle cx="8" cy="10" r="3"/></svg></button>
     </div>
-    <!-- Row 8: Save/Export -->
+    <!-- Row 8: Backups/History -->
+    <div class="tool-row">
+        <div class="tool-opts" style="flex-direction:column;min-width:200px;" id="backupOpts">
+            <div style="font-size:0.65em;color:var(--ed-muted);padding:2px 4px;">Loading...</div>
+        </div>
+        <button class="tool-btn" title="Backup History" onclick="loadBackups()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 2"/></svg></button>
+    </div>
+    <!-- Row 9: Save/Export -->
     <div class="tool-row">
         <div class="tool-opts">
             <button class="opt-pill" onclick="exportAs('txt')">TXT</button>
@@ -437,7 +444,7 @@ body.dark-mode { --ed-text-current: #d8dae8; }
         </div>
         <button class="tool-btn" title="Export"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10"/></svg></button>
     </div>
-    <!-- Row 9: Fullscreen -->
+    <!-- Row 10: Fullscreen -->
     <div class="tool-row">
         <button class="tool-btn" title="Fullscreen" onclick="toggleFS()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg></button>
     </div>
@@ -958,13 +965,57 @@ function copyToClipboard() {
     });
 }
 
-// ── Save on leave ─────────────────────────────────────────
-window.addEventListener('beforeunload', () => { if (saveTimer) doSave(); });
+// ── Save on leave (synchronous backup) ────────────────────
+window.addEventListener('beforeunload', (e) => {
+    // Fire synchronous save via sendBeacon
+    const title = document.getElementById('wTitle').value.trim() || 'Untitled';
+    const content = document.getElementById('wArea').value;
+    const words = content.trim() ? content.trim().split(/\s+/).length : 0;
+    const elapsed = Math.round((Date.now() - sessionStart) / 1000);
+    const payload = JSON.stringify({ title, content, word_count: words, duration_seconds: elapsed, preferences: prefs });
+    navigator.sendBeacon(
+        `/api/v1/notes/${NOTE_ID}/beacon`,
+        new Blob([payload], { type: 'application/json' })
+    );
+});
 
 // ── Keyboard shortcuts ────────────────────────────────────
 document.addEventListener('keydown', e => {
     if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); doSave(); }
 });
+
+// ── Backup history ────────────────────────────────────────
+async function loadBackups() {
+    const el = document.getElementById('backupOpts');
+    try {
+        const backups = await api('GET', `/api/v1/notes/${NOTE_ID}/backups`);
+        if (!backups.length) {
+            el.innerHTML = '<div style="font-size:0.65em;color:var(--ed-muted);padding:4px 6px;">No backups yet. Backups are created automatically on each save.</div>';
+            return;
+        }
+        el.innerHTML = backups.slice(0, 10).map(b => {
+            const d = new Date(b.created_at);
+            const when = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            return `<button class="opt-pill" style="justify-content:flex-start;text-align:left;padding:4px 8px;" onclick="restoreBackup(${b.id})" title="${(b.preview||'').slice(0,80)}">${when} (${b.word_count}w)</button>`;
+        }).join('');
+    } catch(e) {
+        el.innerHTML = '<div style="font-size:0.65em;color:var(--ed-muted);padding:4px;">Error loading backups</div>';
+    }
+}
+
+async function restoreBackup(backupId) {
+    if (!confirm('Restore this backup? Your current content will be saved as a backup first.')) return;
+    try {
+        const restored = await api('POST', `/api/v1/notes/${NOTE_ID}/backups/${backupId}/restore`);
+        document.getElementById('wArea').value = restored.content || '';
+        document.getElementById('wTitle').value = restored.title || '';
+        updateCounts();
+        document.getElementById('sSave').textContent = 'Restored';
+        setTimeout(() => document.getElementById('sSave').textContent = 'Saved', 2000);
+    } catch(e) {
+        alert('Restore failed: ' + e.message);
+    }
+}
 </script>
 </body>
 </html>

@@ -85,19 +85,7 @@ class ManualImportService:
                     counter += 1
                 shutil.copy2(src, dest)
 
-                mf = ManagedFile(
-                    path=str(dest),
-                    original_path=str(src),
-                    original_filename=src.name,
-                    size=len(data),
-                    format=src.suffix.lower().lstrip(".") or None,
-                    hash=file_hash,
-                )
-                self.db.add(mf)
-                await self.db.flush()
-
                 entry = HistoryEntry(
-                    managed_file_id=mf.id,
                     event_type=HistoryEventTypeEnum.IMPORT,
                     source_path=str(src),
                     destination_path=str(dest),
