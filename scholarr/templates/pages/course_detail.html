@@ -53,14 +53,20 @@
             <h2 id="hdr-name">—</h2>
             <div class="course-meta" id="hdr-meta"></div>
         </div>
-        <div id="hdr-badge"></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px;">
+            <div id="hdr-badge"></div>
+            <div id="hdr-study-time" style="display:none;text-align:right;">
+                <div style="font-size:1.4em;font-weight:700;color:var(--accent);" id="hdr-total-time">—</div>
+                <div style="font-size:0.72em;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;">Total Study Time</div>
+            </div>
+        </div>
     </div>
 
     <!-- Tabs -->
     <div class="course-tabs">
         <button class="course-tab active" onclick="switchTab('files')">📁 Files</button>
         <button class="course-tab" onclick="switchTab('items')">📝 Items</button>
-        <button class="course-tab" onclick="switchTab('activity')">⏱️ Activity</button>
+        <button class="course-tab" onclick="switchTab('activity')">📈 Study & Activity</button>
         <button class="course-tab" onclick="switchTab('edit')">⚙️ Edit</button>
     </div>
 
@@ -80,6 +86,31 @@
 
     <!-- Activity Tab -->
     <div class="tab-panel" id="tab-activity">
+        <!-- Study Time Panel -->
+        <div id="study-time-panel" style="background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:4px;padding:18px;margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <div style="font-weight:600;font-size:0.95em;">Study Time</div>
+                <a href="/study-timer?course={{ course_id }}" class="btn btn-secondary btn-small">+ Start Session</a>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;" id="study-stats-row">
+                <div style="text-align:center;background:var(--bg-tertiary);border-radius:4px;padding:12px;">
+                    <div style="font-size:1.5em;font-weight:700;color:var(--accent);" id="st-today">—</div>
+                    <div style="font-size:0.72em;color:var(--text-secondary);margin-top:4px;text-transform:uppercase;letter-spacing:.05em;">Today</div>
+                </div>
+                <div style="text-align:center;background:var(--bg-tertiary);border-radius:4px;padding:12px;">
+                    <div style="font-size:1.5em;font-weight:700;color:var(--accent);" id="st-week">—</div>
+                    <div style="font-size:0.72em;color:var(--text-secondary);margin-top:4px;text-transform:uppercase;letter-spacing:.05em;">This Week</div>
+                </div>
+                <div style="text-align:center;background:var(--bg-tertiary);border-radius:4px;padding:12px;">
+                    <div style="font-size:1.5em;font-weight:700;color:var(--accent);" id="st-total">—</div>
+                    <div style="font-size:0.72em;color:var(--text-secondary);margin-top:4px;text-transform:uppercase;letter-spacing:.05em;">All Time</div>
+                </div>
+            </div>
+            <div id="study-sessions-list">
+                <div style="color:var(--text-secondary);font-size:0.85em;text-align:center;padding:10px 0;">No study sessions for this course yet. <a href="/study-timer?course={{ course_id }}" style="color:var(--accent);">Start one →</a></div>
+            </div>
+        </div>
+        <!-- File/History Activity -->
         <div id="activity-list">
             <div class="loading">Loading activity...</div>
         </div>
@@ -146,6 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadCourse();
     loadItems();
     loadActivity();
+    loadStudyTime();
 });
 
 function switchTab(name) {
@@ -244,8 +276,8 @@ async function loadItems() {
             <thead><tr><th>Title</th><th>Type</th><th>Due</th><th>Status</th><th>Grade</th></tr></thead>
             <tbody>${items.map(it => `
                 <tr>
-                    <td style="font-weight:500;">${it.title || it.name || '—'}</td>
-                    <td style="color:var(--text-secondary);text-transform:capitalize;">${it.type || it.item_type || '—'}</td>
+                    <td style="font-weight:500;">${it.name || '—'}</td>
+                    <td style="color:var(--text-secondary);text-transform:capitalize;">${it.type || '—'}</td>
                     <td style="color:var(--text-secondary);">${formatDate(it.due_date)}</td>
                     <td><span class="badge ${statusCls[it.status]||'badge-notstarted'}">${it.status || 'NotStarted'}</span></td>
                     <td style="color:var(--accent-blue);">${it.grade !== null && it.grade !== undefined ? it.grade + '%' : '—'}</td>
@@ -257,6 +289,60 @@ async function loadItems() {
         const err = `<div style="padding:20px;color:#d9534f;">Error: ${e.message}</div>`;
         el.innerHTML = err;
         el2.innerHTML = err;
+    }
+}
+
+function fmtMins(mins) {
+    if (!mins) return '0m';
+    return mins >= 60 ? (mins / 60).toFixed(1) + 'h' : mins + 'm';
+}
+
+function loadStudyTime() {
+    try {
+        const sessions = JSON.parse(localStorage.getItem('scholarr_study_sessions') || '[]');
+        const forCourse = sessions.filter(s => s.courseId === courseId);
+
+        const today  = new Date().toDateString();
+        const weekMs = 7 * 86400000;
+        const now    = Date.now();
+
+        const todayMins = forCourse.filter(s => new Date(s.date).toDateString() === today)
+                                   .reduce((a, s) => a + s.duration, 0);
+        const weekMins  = forCourse.filter(s => now - new Date(s.date).getTime() < weekMs)
+                                   .reduce((a, s) => a + s.duration, 0);
+        const totalMins = forCourse.reduce((a, s) => a + s.duration, 0);
+
+        document.getElementById('st-today').textContent = fmtMins(todayMins);
+        document.getElementById('st-week').textContent  = fmtMins(weekMins);
+        document.getElementById('st-total').textContent = fmtMins(totalMins);
+
+        if (totalMins > 0) {
+            document.getElementById('hdr-study-time').style.display = 'block';
+            document.getElementById('hdr-total-time').textContent   = fmtMins(totalMins);
+        }
+
+        if (!forCourse.length) {
+            document.getElementById('study-sessions-list').innerHTML =
+                `<div style="color:var(--text-secondary);font-size:0.85em;text-align:center;padding:10px 0;">No study sessions for this course yet. <a href="/study-timer?course=${courseId}" style="color:var(--accent);">Start one →</a></div>`;
+            return;
+        }
+
+        document.getElementById('study-sessions-list').innerHTML = forCourse.slice(0, 10).map(s => {
+            const d = new Date(s.date);
+            const when = formatRelativeTime(s.date);
+            return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border-color);font-size:0.85em;">
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.task}</div>
+                    <div style="font-size:0.8em;color:var(--text-secondary);margin-top:2px;">${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})} · ${d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})}</div>
+                </div>
+                <div style="text-align:right;flex-shrink:0;">
+                    <div style="font-weight:600;color:var(--accent);">${s.duration} min</div>
+                    <div style="font-size:0.78em;color:var(--text-secondary);">${when}</div>
+                </div>
+            </div>`;
+        }).join('');
+    } catch(e) {
+        console.warn('Study time load error:', e);
     }
 }
 

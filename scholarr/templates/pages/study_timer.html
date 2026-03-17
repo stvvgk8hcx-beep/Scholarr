@@ -5,40 +5,73 @@
 
 {% block extra_css %}
 <style>
+/* ── Layout ─────────────────────────────────────── */
+.study-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+    align-items: start;
+}
+@media (max-width: 800px) {
+    .study-layout { grid-template-columns: 1fr; }
+}
+
+/* ── Course Selector Bar ──────────────────────── */
+.course-bar {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 14px 18px;
+    margin-bottom: 14px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+.course-bar label { font-weight: 600; font-size: 0.88em; color: var(--text-secondary); white-space: nowrap; }
+.course-bar select { flex: 1; }
+.course-bar input { flex: 1; }
+
+/* ── Timer Card ───────────────────────────────── */
 .timer-card {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    padding: 32px;
+    padding: 32px 28px 24px;
     text-align: center;
-    max-width: 480px;
-    margin: 0 auto;
 }
+.phase-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    border-radius: 20px;
+    padding: 4px 12px;
+    margin-bottom: 12px;
+}
+.phase-badge.break { color: #f0ad4e; }
 .timer-display {
-    font-size: 5em;
+    font-size: 5.5em;
     font-weight: 700;
     color: var(--accent);
-    letter-spacing: 0.05em;
-    margin: 16px 0;
-    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
     line-height: 1;
+    margin: 8px 0 16px;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.3s;
 }
 .timer-display.break { color: #f0ad4e; }
-.timer-display.paused { opacity: 0.6; }
-.timer-label {
-    font-size: 0.95em;
-    color: var(--text-secondary);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 8px;
-}
+.timer-display.paused { opacity: 0.5; }
 .timer-progress {
-    height: 6px;
+    height: 5px;
     background: var(--bg-tertiary);
     border-radius: 3px;
-    margin: 20px 0;
     overflow: hidden;
+    margin-bottom: 18px;
 }
 .timer-progress-bar {
     height: 100%;
@@ -47,251 +80,348 @@
     transition: width 1s linear;
 }
 .timer-progress-bar.break { background: #f0ad4e; }
-.timer-controls { display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
-.session-counter {
-    display: flex; gap: 6px; justify-content: center; margin: 16px 0;
-}
+.session-dots { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; }
 .session-dot {
-    width: 12px; height: 12px; border-radius: 50%;
+    width: 10px; height: 10px; border-radius: 50%;
     background: var(--bg-tertiary);
     border: 2px solid var(--border-color);
-    transition: background 0.3s;
+    transition: all 0.3s;
 }
 .session-dot.done { background: var(--accent); border-color: var(--accent); }
-.session-dot.current { background: transparent; border-color: var(--accent); box-shadow: 0 0 6px var(--accent); }
-
-.config-card {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 20px;
-    max-width: 480px;
-    margin: 16px auto 0;
+.session-dot.active { background: transparent; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(46,207,161,0.2); }
+.timer-controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.btn-start {
+    min-width: 120px;
+    font-size: 1em;
+    padding: 10px 24px;
 }
-.config-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 
-.history-card {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 20px;
-    margin-top: 16px;
-}
-.history-entry {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border-color);
-    font-size: 0.88em;
-}
-.history-entry:last-child { border-bottom: none; }
-
-.task-input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; }
-.task-input-row input { flex: 1; }
-
-.stats-row {
+/* ── Stat Boxes ───────────────────────────────── */
+.stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    max-width: 480px;
-    margin: 16px auto;
+    gap: 10px;
+    margin-top: 14px;
 }
 .stat-box {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    padding: 14px;
+    padding: 14px 10px;
     text-align: center;
 }
-.stat-box .val { font-size: 1.6em; font-weight: 700; color: var(--accent); }
-.stat-box .lbl { font-size: 0.78em; color: var(--text-secondary); margin-top: 4px; }
+.stat-box .val {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+}
+.stat-box .lbl {
+    font-size: 0.72em;
+    color: var(--text-secondary);
+    margin-top: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ── Settings ─────────────────────────────────── */
+.settings-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 18px;
+    margin-top: 14px;
+}
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.settings-grid .form-group { margin: 0; }
+.settings-grid label { font-size: 0.78em; }
+.toggle-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 10px; font-size: 0.85em; color: var(--text-secondary);
+}
+.toggle-row input[type=checkbox] { width: auto; margin: 0; }
+
+/* ── Right Panel ──────────────────────────────── */
+.panel-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 18px;
+    margin-bottom: 14px;
+}
+.panel-title {
+    font-weight: 600;
+    font-size: 0.9em;
+    color: var(--text-primary);
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ── Course Log ───────────────────────────────── */
+.course-log-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background 0.15s;
+    border-radius: 3px;
+    padding-left: 6px;
+    padding-right: 6px;
+}
+.course-log-row:last-child { border-bottom: none; }
+.course-log-row:hover { background: var(--bg-tertiary); }
+.course-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.course-log-info { flex: 1; min-width: 0; }
+.course-log-name { font-size: 0.88em; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.course-log-sub { font-size: 0.75em; color: var(--text-secondary); margin-top: 2px; }
+.course-log-time { font-size: 0.88em; font-weight: 600; color: var(--accent); white-space: nowrap; }
+
+/* ── Session History ──────────────────────────── */
+.session-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.85em;
+}
+.session-row:last-child { border-bottom: none; }
+.session-row .task-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.session-row .course-tag {
+    font-size: 0.78em;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+    padding: 1px 6px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.session-time { font-weight: 600; white-space: nowrap; text-align: right; }
+.session-when { color: var(--text-secondary); font-size: 0.78em; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div style="max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:0;">
+<div class="study-layout">
 
-    <!-- Task Row -->
-    <div class="task-input-row">
-        <input type="text" id="current-task" placeholder="What are you studying? (optional)" maxlength="120">
-        <select id="task-course" style="min-width:140px;">
-            <option value="">No Course</option>
-        </select>
-    </div>
+    <!-- Left Column: Timer -->
+    <div>
+        <!-- Course & Task Bar -->
+        <div class="course-bar">
+            <label>Studying</label>
+            <select id="task-course" style="max-width:220px;" onchange="onCourseChange()">
+                <option value="">— Select Course —</option>
+            </select>
+            <input type="text" id="current-task" placeholder="Topic / task (optional)" maxlength="100">
+        </div>
 
-    <!-- Timer Card -->
-    <div class="timer-card">
-        <div class="timer-label" id="phase-label">Focus Session</div>
-        <div class="timer-display" id="timer-display">25:00</div>
-        <div class="timer-progress">
-            <div class="timer-progress-bar" id="progress-bar" style="width:100%;"></div>
-        </div>
-        <!-- Session dots (up to 4 pomodoros) -->
-        <div class="session-counter" id="session-dots"></div>
-        <div class="timer-controls">
-            <button class="btn btn-secondary" onclick="resetTimer()">↺ Reset</button>
-            <button class="btn" id="start-btn" onclick="toggleTimer()">▶ Start</button>
-            <button class="btn btn-secondary" onclick="skipPhase()">Skip →</button>
-        </div>
-    </div>
-
-    <!-- Stats Row -->
-    <div class="stats-row">
-        <div class="stat-box">
-            <div class="val" id="stat-sessions">0</div>
-            <div class="lbl">Sessions Today</div>
-        </div>
-        <div class="stat-box">
-            <div class="val" id="stat-minutes">0</div>
-            <div class="lbl">Minutes Today</div>
-        </div>
-        <div class="stat-box">
-            <div class="val" id="stat-streak">0</div>
-            <div class="lbl">Day Streak</div>
-        </div>
-    </div>
-
-    <!-- Config Card -->
-    <div class="config-card">
-        <div style="font-weight:600;margin-bottom:14px;color:var(--text-primary);">Timer Settings</div>
-        <div class="config-row">
-            <div class="form-group" style="margin:0;">
-                <label style="font-size:0.82em;">Focus (min)</label>
-                <input type="number" id="cfg-focus" value="25" min="1" max="120" onchange="applyConfig()">
+        <!-- Timer -->
+        <div class="timer-card">
+            <div class="phase-badge" id="phase-badge">⏱ Focus Session</div>
+            <div class="timer-display" id="timer-display">25:00</div>
+            <div class="timer-progress">
+                <div class="timer-progress-bar" id="progress-bar" style="width:100%;"></div>
             </div>
-            <div class="form-group" style="margin:0;">
-                <label style="font-size:0.82em;">Short Break</label>
-                <input type="number" id="cfg-short" value="5" min="1" max="60" onchange="applyConfig()">
-            </div>
-            <div class="form-group" style="margin:0;">
-                <label style="font-size:0.82em;">Long Break</label>
-                <input type="number" id="cfg-long" value="15" min="1" max="60" onchange="applyConfig()">
+            <div class="session-dots" id="session-dots"></div>
+            <div class="timer-controls">
+                <button class="btn btn-secondary" onclick="resetTimer()">↺ Reset</button>
+                <button class="btn btn-start" id="start-btn" onclick="toggleTimer()">▶ Start</button>
+                <button class="btn btn-secondary" onclick="skipPhase()">Skip →</button>
             </div>
         </div>
-        <div class="form-group" style="margin-top:12px;margin-bottom:0;display:flex;align-items:center;gap:10px;">
-            <input type="checkbox" id="cfg-notify" style="width:auto;" checked>
-            <label for="cfg-notify" style="margin:0;cursor:pointer;font-size:0.88em;">Browser notifications when phase ends</label>
+
+        <!-- Stats for selected course -->
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="val" id="stat-today-mins">0</div>
+                <div class="lbl" id="stat-today-lbl">Today (min)</div>
+            </div>
+            <div class="stat-box">
+                <div class="val" id="stat-alltime">0h</div>
+                <div class="lbl" id="stat-alltime-lbl">All Time</div>
+            </div>
+            <div class="stat-box">
+                <div class="val" id="stat-streak">0</div>
+                <div class="lbl">Day Streak</div>
+            </div>
         </div>
-        <div class="form-group" style="margin-top:8px;margin-bottom:0;display:flex;align-items:center;gap:10px;">
-            <input type="checkbox" id="cfg-sound" style="width:auto;" checked>
-            <label for="cfg-sound" style="margin:0;cursor:pointer;font-size:0.88em;">Sound alert when phase ends</label>
+
+        <!-- Settings -->
+        <div class="settings-card">
+            <div style="font-weight:600;font-size:0.88em;margin-bottom:12px;color:var(--text-secondary);">TIMER SETTINGS</div>
+            <div class="settings-grid">
+                <div class="form-group">
+                    <label>Focus (min)</label>
+                    <input type="number" id="cfg-focus" value="25" min="1" max="120" onchange="applyConfig()">
+                </div>
+                <div class="form-group">
+                    <label>Short Break</label>
+                    <input type="number" id="cfg-short" value="5" min="1" max="60" onchange="applyConfig()">
+                </div>
+                <div class="form-group">
+                    <label>Long Break</label>
+                    <input type="number" id="cfg-long" value="15" min="1" max="60" onchange="applyConfig()">
+                </div>
+            </div>
+            <div class="toggle-row">
+                <input type="checkbox" id="cfg-notify" checked>
+                <label for="cfg-notify">Browser notifications</label>
+            </div>
+            <div class="toggle-row">
+                <input type="checkbox" id="cfg-sound" checked>
+                <label for="cfg-sound">Sound alert</label>
+            </div>
         </div>
     </div>
 
-    <!-- Session History -->
-    <div class="history-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <div style="font-weight:600;color:var(--text-primary);">Today's Sessions</div>
-            <button class="btn btn-secondary btn-small" onclick="clearHistory()">Clear</button>
+    <!-- Right Column: Course Log + Session History -->
+    <div>
+        <!-- Course Time Breakdown -->
+        <div class="panel-card">
+            <div class="panel-title">
+                <span>Course Study Log</span>
+                <button class="btn btn-secondary btn-small" onclick="clearAllHistory()">Clear All</button>
+            </div>
+            <div id="course-log">
+                <div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:0.85em;">No study sessions yet.</div>
+            </div>
         </div>
-        <div id="history-list">
-            <div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:0.88em;">No sessions yet. Start your first Pomodoro!</div>
+
+        <!-- Today's Sessions -->
+        <div class="panel-card">
+            <div class="panel-title">
+                <span>Today's Sessions</span>
+                <span id="today-total-badge" style="font-size:0.82em;color:var(--accent);font-weight:600;"></span>
+            </div>
+            <div id="session-history">
+                <div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:0.85em;">Start a session to see it here.</div>
+            </div>
         </div>
     </div>
+
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-// Pomodoro state
+// ── Storage key ──────────────────────────────────
+const SESSIONS_KEY = 'scholarr_study_sessions';
+const CONFIG_KEY   = 'scholarr_pomodoro_config';
+
+// ── Timer state ──────────────────────────────────
 let timerInterval = null;
-let secondsLeft = 25 * 60;
-let totalSeconds = 25 * 60;
-let isRunning = false;
-let phase = 'focus';  // 'focus' | 'short' | 'long'
+let secondsLeft   = 25 * 60;
+let totalSeconds  = 25 * 60;
+let isRunning     = false;
+let phase         = 'focus';      // 'focus' | 'short' | 'long'
 let completedPomodoros = 0;
-let sessionHistory = [];
+const POMODOROS_PER_LONG = 4;
 
-const PHASES_PER_LONG = 4;
+// ── Session data (from localStorage) ────────────
+// Each entry: { courseId, courseName, courseCode, courseColor, date (ISO), duration (mins), task }
+let allSessions = [];
 
-function cfg() {
-    return {
-        focus: parseInt(document.getElementById('cfg-focus').value) || 25,
-        short: parseInt(document.getElementById('cfg-short').value) || 5,
-        long: parseInt(document.getElementById('cfg-long').value) || 15,
-        notify: document.getElementById('cfg-notify').checked,
-        sound: document.getElementById('cfg-sound').checked,
-    };
-}
+// ── Courses cache ─────────────────────────────────
+let coursesCache = [];
 
+// ── Init ─────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     loadConfig();
-    loadStats();
-    loadHistory();
+    loadSessions();
     loadCourses();
     renderDots();
     applyConfig();
-    if (cfg().notify && Notification.permission === 'default') {
+    updateStats();
+    // Pre-select course from URL param
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('course')) {
+        const waitAndSet = setInterval(() => {
+            const sel = document.getElementById('task-course');
+            if (sel.options.length > 1) {
+                sel.value = params.get('course');
+                onCourseChange();
+                clearInterval(waitAndSet);
+            }
+        }, 100);
+    }
+    if (getCfg().notify && Notification.permission === 'default') {
         Notification.requestPermission();
     }
 });
 
-function loadCourses() {
-    API.get('/api/v1/courses?page=1&page_size=100').then(data => {
-        const courses = Array.isArray(data) ? data : (data.items || []);
-        const sel = document.getElementById('task-course');
-        courses.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c.id;
-            opt.textContent = c.code + ' — ' + c.name;
-            sel.appendChild(opt);
-        });
-    }).catch(() => {});
+// ── Config ────────────────────────────────────────
+function getCfg() {
+    return {
+        focus:  parseInt(document.getElementById('cfg-focus').value)  || 25,
+        short:  parseInt(document.getElementById('cfg-short').value)  || 5,
+        long:   parseInt(document.getElementById('cfg-long').value)   || 15,
+        notify: document.getElementById('cfg-notify').checked,
+        sound:  document.getElementById('cfg-sound').checked,
+    };
 }
 
 function loadConfig() {
     try {
-        const saved = JSON.parse(localStorage.getItem('pomodoro_config') || '{}');
-        if (saved.focus) document.getElementById('cfg-focus').value = saved.focus;
-        if (saved.short) document.getElementById('cfg-short').value = saved.short;
-        if (saved.long) document.getElementById('cfg-long').value = saved.long;
-        if (saved.notify !== undefined) document.getElementById('cfg-notify').checked = saved.notify;
-        if (saved.sound !== undefined) document.getElementById('cfg-sound').checked = saved.sound;
+        const s = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
+        if (s.focus)  document.getElementById('cfg-focus').value  = s.focus;
+        if (s.short)  document.getElementById('cfg-short').value  = s.short;
+        if (s.long)   document.getElementById('cfg-long').value   = s.long;
+        if (s.notify !== undefined) document.getElementById('cfg-notify').checked = s.notify;
+        if (s.sound  !== undefined) document.getElementById('cfg-sound').checked  = s.sound;
     } catch(e) {}
 }
 
-function saveConfig() {
-    localStorage.setItem('pomodoro_config', JSON.stringify(cfg()));
-}
-
 function applyConfig() {
-    saveConfig();
-    if (!isRunning) {
-        setPhase(phase, true);
-    }
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(getCfg()));
+    if (!isRunning) setPhase(phase, true);
 }
 
-function setPhase(p, reset) {
-    phase = p;
-    const c = cfg();
-    const mins = p === 'focus' ? c.focus : (p === 'short' ? c.short : c.long);
-    if (reset) {
-        secondsLeft = mins * 60;
-        totalSeconds = mins * 60;
-    }
-    const label = document.getElementById('phase-label');
-    const display = document.getElementById('timer-display');
-    const bar = document.getElementById('progress-bar');
-    label.textContent = p === 'focus' ? 'Focus Session' : (p === 'short' ? 'Short Break' : 'Long Break');
-    display.className = 'timer-display' + (p !== 'focus' ? ' break' : '') + (isRunning ? '' : ' paused');
-    bar.className = 'timer-progress-bar' + (p !== 'focus' ? ' break' : '');
-    renderTime();
-    renderProgress();
+// ── Courses ───────────────────────────────────────
+function loadCourses() {
+    API.get('/api/v1/courses').then(data => {
+        coursesCache = Array.isArray(data) ? data : (data.items || []);
+        const sel = document.getElementById('task-course');
+        coursesCache.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = String(c.id);
+            opt.textContent = c.code + ' — ' + c.name;
+            opt.dataset.color = c.color || '#2ecfa1';
+            opt.dataset.code  = c.code;
+            opt.dataset.name  = c.name;
+            sel.appendChild(opt);
+        });
+        renderCourseLog();
+    }).catch(() => {});
 }
 
+function onCourseChange() {
+    updateStats();
+}
+
+function getSelectedCourse() {
+    const sel = document.getElementById('task-course');
+    const opt = sel.selectedOptions[0];
+    if (!sel.value || !opt) return null;
+    return {
+        id: parseInt(sel.value),
+        name: opt.dataset.name || opt.textContent,
+        code: opt.dataset.code || '',
+        color: opt.dataset.color || '#2ecfa1',
+    };
+}
+
+// ── Timer controls ────────────────────────────────
 function toggleTimer() {
-    if (isRunning) {
-        pauseTimer();
-    } else {
-        startTimer();
-    }
+    isRunning ? pauseTimer() : startTimer();
 }
 
 function startTimer() {
-    if (cfg().notify && Notification.permission === 'default') {
-        Notification.requestPermission();
-    }
+    if (getCfg().notify && Notification.permission === 'default') Notification.requestPermission();
     isRunning = true;
     document.getElementById('start-btn').textContent = '⏸ Pause';
     document.getElementById('timer-display').classList.remove('paused');
@@ -300,9 +430,9 @@ function startTimer() {
 
 function pauseTimer() {
     isRunning = false;
+    clearInterval(timerInterval);
     document.getElementById('start-btn').textContent = '▶ Resume';
     document.getElementById('timer-display').classList.add('paused');
-    clearInterval(timerInterval);
 }
 
 function resetTimer() {
@@ -317,35 +447,41 @@ function skipPhase() {
 }
 
 function tick() {
-    if (secondsLeft <= 0) {
-        onPhaseComplete(true);
-        return;
-    }
+    if (secondsLeft <= 0) { onPhaseComplete(true); return; }
     secondsLeft--;
     renderTime();
     renderProgress();
 }
 
-function renderTime() {
-    const m = Math.floor(secondsLeft / 60).toString().padStart(2, '0');
-    const s = (secondsLeft % 60).toString().padStart(2, '0');
-    document.getElementById('timer-display').textContent = `${m}:${s}`;
-    document.title = `${m}:${s} — Scholarr Study Timer`;
-}
+function setPhase(p, reset) {
+    phase = p;
+    const c = getCfg();
+    const mins = p === 'focus' ? c.focus : (p === 'short' ? c.short : c.long);
+    if (reset) { secondsLeft = mins * 60; totalSeconds = mins * 60; }
 
-function renderProgress() {
-    const pct = totalSeconds > 0 ? (secondsLeft / totalSeconds) * 100 : 0;
-    document.getElementById('progress-bar').style.width = pct + '%';
-}
+    const badge = document.getElementById('phase-badge');
+    const display = document.getElementById('timer-display');
+    const bar = document.getElementById('progress-bar');
 
-function renderDots() {
-    const container = document.getElementById('session-dots');
-    container.innerHTML = '';
-    for (let i = 0; i < PHASES_PER_LONG; i++) {
-        const dot = document.createElement('div');
-        dot.className = 'session-dot' + (i < completedPomodoros % PHASES_PER_LONG ? ' done' : (i === completedPomodoros % PHASES_PER_LONG && phase === 'focus' ? ' current' : ''));
-        container.appendChild(dot);
+    if (p === 'focus') {
+        badge.textContent = '⏱ Focus Session';
+        badge.className = 'phase-badge';
+        display.className = 'timer-display' + (isRunning ? '' : ' paused');
+        bar.className = 'timer-progress-bar';
+    } else if (p === 'short') {
+        badge.textContent = '☕ Short Break';
+        badge.className = 'phase-badge break';
+        display.className = 'timer-display break' + (isRunning ? '' : ' paused');
+        bar.className = 'timer-progress-bar break';
+    } else {
+        badge.textContent = '🌿 Long Break';
+        badge.className = 'phase-badge break';
+        display.className = 'timer-display break' + (isRunning ? '' : ' paused');
+        bar.className = 'timer-progress-bar break';
     }
+
+    renderTime();
+    renderProgress();
 }
 
 function onPhaseComplete(natural) {
@@ -358,128 +494,205 @@ function onPhaseComplete(natural) {
         logSession();
         notify('Focus session complete! Time for a break.');
         playBeep();
-        // Determine next break
-        const nextPhase = (completedPomodoros % PHASES_PER_LONG === 0) ? 'long' : 'short';
-        setPhase(nextPhase, true);
+        setPhase(completedPomodoros % POMODOROS_PER_LONG === 0 ? 'long' : 'short', true);
     } else if (phase !== 'focus') {
-        notify('Break over! Back to work.');
+        notify('Break over! Time to focus.');
         playBeep();
         setPhase('focus', true);
     } else {
         setPhase('focus', true);
     }
-
     renderDots();
-    saveStats();
+    updateStats();
 }
 
+// ── Rendering ─────────────────────────────────────
+function renderTime() {
+    const m = Math.floor(secondsLeft / 60).toString().padStart(2, '0');
+    const s = (secondsLeft % 60).toString().padStart(2, '0');
+    document.getElementById('timer-display').textContent = `${m}:${s}`;
+    document.title = `${m}:${s} — Study Timer`;
+}
+
+function renderProgress() {
+    const pct = totalSeconds > 0 ? (secondsLeft / totalSeconds) * 100 : 0;
+    document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+function renderDots() {
+    const c = document.getElementById('session-dots');
+    c.innerHTML = '';
+    const pos = completedPomodoros % POMODOROS_PER_LONG;
+    for (let i = 0; i < POMODOROS_PER_LONG; i++) {
+        const d = document.createElement('div');
+        d.className = 'session-dot' + (i < pos ? ' done' : (i === pos && phase === 'focus' ? ' active' : ''));
+        c.appendChild(d);
+    }
+}
+
+// ── Session logging ───────────────────────────────
 function logSession() {
-    const task = document.getElementById('current-task').value.trim();
-    const courseId = document.getElementById('task-course').value;
-    const courseText = document.getElementById('task-course').selectedOptions[0]?.text || '';
-    const entry = {
-        time: new Date().toISOString(),
-        duration: cfg().focus,
-        task: task || 'Study Session',
-        course: courseId ? courseText : '',
+    const task   = document.getElementById('current-task').value.trim();
+    const course = getSelectedCourse();
+    const entry  = {
+        courseId:    course ? course.id   : null,
+        courseName:  course ? course.name : null,
+        courseCode:  course ? course.code : null,
+        courseColor: course ? course.color: '#888',
+        date:        new Date().toISOString(),
+        duration:    getCfg().focus,
+        task:        task || 'Study Session',
     };
-    sessionHistory.unshift(entry);
-    localStorage.setItem('pomodoro_history', JSON.stringify(sessionHistory.slice(0, 50)));
-    renderHistory();
+    allSessions.unshift(entry);
+    saveSessions();
+    renderCourseLog();
+    renderSessionHistory();
 }
 
-function loadHistory() {
-    try {
-        sessionHistory = JSON.parse(localStorage.getItem('pomodoro_history') || '[]');
-        renderHistory();
-    } catch(e) { sessionHistory = []; }
+function loadSessions() {
+    try { allSessions = JSON.parse(localStorage.getItem(SESSIONS_KEY) || '[]'); } catch(e) { allSessions = []; }
+    renderCourseLog();
+    renderSessionHistory();
 }
 
-function renderHistory() {
-    const el = document.getElementById('history-list');
-    const today = new Date().toDateString();
-    const todaySessions = sessionHistory.filter(s => new Date(s.time).toDateString() === today);
-    if (!todaySessions.length) {
-        el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:0.88em;">No sessions yet. Start your first Pomodoro!</div>';
+function saveSessions() {
+    localStorage.setItem(SESSIONS_KEY, JSON.stringify(allSessions.slice(0, 200)));
+}
+
+// ── Stats ─────────────────────────────────────────
+function updateStats() {
+    const course = getSelectedCourse();
+    const today  = new Date().toDateString();
+    const todaySessions   = allSessions.filter(s => new Date(s.date).toDateString() === today);
+    const forCourse       = course ? allSessions.filter(s => s.courseId === course.id) : allSessions;
+    const todayForCourse  = course ? todaySessions.filter(s => s.courseId === course.id) : todaySessions;
+
+    const todayMins   = todayForCourse.reduce((a, s) => a + s.duration, 0);
+    const totalMins   = forCourse.reduce((a, s) => a + s.duration, 0);
+    const totalHrs    = totalMins >= 60 ? (totalMins / 60).toFixed(1) + 'h' : totalMins + 'm';
+
+    document.getElementById('stat-today-mins').textContent = todayMins;
+    document.getElementById('stat-alltime').textContent    = totalHrs;
+    document.getElementById('stat-today-lbl').textContent  = course ? 'Today in ' + course.code : 'Today (min)';
+    document.getElementById('stat-alltime-lbl').textContent= course ? course.code + ' Total'   : 'All Time';
+
+    // Streak (consecutive days with any study session)
+    let streak = 0;
+    const d = new Date();
+    const daySet = new Set(allSessions.map(s => new Date(s.date).toDateString()));
+    while (daySet.has(d.toDateString())) {
+        streak++;
+        d.setDate(d.getDate() - 1);
+    }
+    document.getElementById('stat-streak').textContent = streak;
+}
+
+// ── Course Log ────────────────────────────────────
+function renderCourseLog() {
+    const el = document.getElementById('course-log');
+    if (!allSessions.length) {
+        el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:0.85em;">No study sessions yet.</div>';
         return;
     }
-    el.innerHTML = todaySessions.map(s => {
-        const t = new Date(s.time);
-        const timeStr = t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        return `<div class="history-entry">
-            <div>
-                <div style="font-weight:500;">${s.task}</div>
-                ${s.course ? `<div style="color:var(--text-secondary);margin-top:2px;">${s.course}</div>` : ''}
+
+    // Aggregate per course
+    const courseMap = {};
+    allSessions.forEach(s => {
+        const key = s.courseId ?? '__none__';
+        if (!courseMap[key]) {
+            courseMap[key] = {
+                id: s.courseId, name: s.courseName || 'No Course',
+                code: s.courseCode || '', color: s.courseColor || '#888',
+                totalMins: 0, sessions: 0,
+            };
+        }
+        courseMap[key].totalMins += s.duration;
+        courseMap[key].sessions++;
+    });
+
+    const sorted = Object.values(courseMap).sort((a, b) => b.totalMins - a.totalMins);
+    el.innerHTML = sorted.map(c => {
+        const hrs   = c.totalMins >= 60 ? (c.totalMins / 60).toFixed(1) + 'h' : c.totalMins + 'm';
+        const label = c.code ? `${c.code} — ${c.name}` : c.name;
+        const link  = c.id ? `href="/study-timer?course=${c.id}"` : '';
+        return `<div class="course-log-row" onclick="${c.id ? `selectCourse(${c.id})` : ''}">
+            <div class="course-dot" style="background:${c.color};"></div>
+            <div class="course-log-info">
+                <div class="course-log-name">${label}</div>
+                <div class="course-log-sub">${c.sessions} session${c.sessions !== 1 ? 's' : ''}</div>
             </div>
-            <div style="text-align:right;color:var(--text-secondary);">
-                <div>${s.duration} min</div>
-                <div style="font-size:0.8em;">${timeStr}</div>
+            <div class="course-log-time">${hrs}</div>
+        </div>`;
+    }).join('');
+}
+
+function selectCourse(id) {
+    const sel = document.getElementById('task-course');
+    sel.value = String(id);
+    onCourseChange();
+    sel.focus();
+}
+
+// ── Session History ───────────────────────────────
+function renderSessionHistory() {
+    const el    = document.getElementById('session-history');
+    const badge = document.getElementById('today-total-badge');
+    const today = new Date().toDateString();
+    const todaySessions = allSessions.filter(s => new Date(s.date).toDateString() === today);
+
+    const totalToday = todaySessions.reduce((a, s) => a + s.duration, 0);
+    badge.textContent = totalToday ? `${totalToday} min total` : '';
+
+    if (!todaySessions.length) {
+        el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:0.85em;">Start a session to see it here.</div>';
+        return;
+    }
+
+    el.innerHTML = todaySessions.map(s => {
+        const t = new Date(s.date);
+        const timeStr = t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        return `<div class="session-row">
+            <div style="flex:1;min-width:0;">
+                <div class="task-name">${s.task}</div>
+                ${s.courseCode ? `<div style="margin-top:3px;"><span class="course-tag" style="border-left:3px solid ${s.courseColor||'#888'};padding-left:5px;">${s.courseCode}</span></div>` : ''}
+            </div>
+            <div style="text-align:right;flex-shrink:0;padding-left:10px;">
+                <div class="session-time">${s.duration} min</div>
+                <div class="session-when">${timeStr}</div>
             </div>
         </div>`;
     }).join('');
 }
 
-function clearHistory() {
-    if (!confirm('Clear today\'s session history?')) return;
-    sessionHistory = sessionHistory.filter(s => new Date(s.time).toDateString() !== new Date().toDateString());
-    localStorage.setItem('pomodoro_history', JSON.stringify(sessionHistory));
-    renderHistory();
-    saveStats();
+function clearAllHistory() {
+    if (!confirm('Clear all study session history? This cannot be undone.')) return;
+    allSessions = [];
+    saveSessions();
+    renderCourseLog();
+    renderSessionHistory();
+    updateStats();
+    showToast('Study history cleared', 'info');
 }
 
-function saveStats() {
-    const today = new Date().toDateString();
-    const todaySessions = sessionHistory.filter(s => new Date(s.time).toDateString() === today);
-    const todayMins = todaySessions.reduce((sum, s) => sum + s.duration, 0);
-
-    // Streak calculation
-    let streak = 0;
-    const allDays = [...new Set(sessionHistory.map(s => new Date(s.time).toDateString()))];
-    const d = new Date();
-    while (true) {
-        if (allDays.includes(d.toDateString())) {
-            streak++;
-            d.setDate(d.getDate() - 1);
-        } else {
-            break;
-        }
-    }
-
-    document.getElementById('stat-sessions').textContent = todaySessions.length;
-    document.getElementById('stat-minutes').textContent = todayMins;
-    document.getElementById('stat-streak').textContent = streak;
-    localStorage.setItem('pomodoro_stats', JSON.stringify({ sessions: todaySessions.length, minutes: todayMins, streak }));
-}
-
-function loadStats() {
-    try {
-        // Recalculate from history
-        loadHistory();
-        saveStats();
-    } catch(e) {}
-}
-
+// ── Notifications & Sound ─────────────────────────
 function notify(msg) {
-    if (cfg().notify && Notification.permission === 'granted') {
-        new Notification('Scholarr Study Timer', { body: msg, icon: '/static/img/icon.svg' });
+    if (getCfg().notify && Notification.permission === 'granted') {
+        new Notification('Scholarr Study Timer', { body: msg });
     }
-    if (typeof showToast === 'function') showToast(msg, 'info');
+    showToast(msg, 'info');
 }
 
 function playBeep() {
-    if (!cfg().sound) return;
+    if (!getCfg().sound) return;
     try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
+        const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+        const osc  = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.value = 880;
-        osc.type = 'sine';
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine'; osc.frequency.value = 880;
         gain.gain.setValueAtTime(0.3, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.8);
+        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.8);
     } catch(e) {}
 }
 </script>
