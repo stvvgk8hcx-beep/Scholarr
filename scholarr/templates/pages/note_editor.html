@@ -1415,20 +1415,22 @@ function applyHighlight() {
     const text = el.innerText || '';
     if (!text.trim()) { el.innerHTML = ''; return; }
 
-    // Tokenize
-    let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const tokens = [];
-    let tid = 0;
-    for (const [re, cls] of rules) {
+    // Tokenize: replace matches with safe placeholders, then restore
+    let h = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const saved = [];
+    function protect(re, cls) {
         re.lastIndex = 0;
-        html = html.replace(re, (m) => {
-            const id = `\x00${tid++}\x00`;
-            tokens.push({ id, html: `<span class="${cls}">${m}</span>` });
-            return id;
+        h = h.replace(re, (m) => {
+            const idx = saved.length;
+            saved.push(`<span class="${cls}">${m}</span>`);
+            return `\uFFFD${idx}\uFFFE`;
         });
     }
-    for (const t of tokens) html = html.replace(t.id, t.html);
-    html = html.replace(/\n/g, '<br>');
+    // Order matters: comments/strings first to prevent keyword matching inside them
+    for (const [re, cls] of rules) protect(re, cls);
+    // Restore
+    h = h.replace(/\uFFFD(\d+)\uFFFE/g, (_, i) => saved[parseInt(i)]);
+    let html = h.replace(/\n/g, '<br>');
 
     el.innerHTML = html;
 
