@@ -211,6 +211,10 @@ def create_app() -> FastAPI:
     async def system_page(request: Request):
         return templates.TemplateResponse("pages/system.html", {"request": request})
 
+    @app.get("/study-timer", include_in_schema=False)
+    async def study_timer_page(request: Request):
+        return templates.TemplateResponse("pages/study_timer.html", {"request": request})
+
     @app.get("/settings", include_in_schema=False)
     async def settings_page(request: Request):
         return templates.TemplateResponse("pages/settings.html", {"request": request})

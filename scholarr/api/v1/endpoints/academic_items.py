@@ -22,14 +22,28 @@ async def list_academic_items(
     course_id: Optional[int] = Query(None),
     status: Optional[str] = Query(None),
     type: Optional[str] = Query(None),
+    item_type: Optional[str] = Query(None),
     overdue: Optional[bool] = Query(None),
+    search: Optional[str] = Query(None, description="Search by name/topic/notes"),
+    due_after: Optional[str] = Query(None, description="ISO date: only items due after this"),
+    due_before: Optional[str] = Query(None, description="ISO date: only items due before this"),
+    page: Optional[int] = Query(None, ge=1),
+    page_size: Optional[int] = Query(None, ge=1, le=500),
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):
     """List academic items with optional filtering."""
     service = AcademicItemService(db)
     items = await service.list_academic_items(
-        course_id=course_id, status=status, type=type, overdue=overdue
+        course_id=course_id,
+        status=status,
+        type=type or item_type,
+        overdue=overdue,
+        search=search,
+        due_after=due_after,
+        due_before=due_before,
+        page=page,
+        page_size=page_size,
     )
     return items
 

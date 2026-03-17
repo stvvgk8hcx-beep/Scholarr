@@ -272,28 +272,44 @@ async function importICS(input) {
     const file = input.files[0];
     if (!file) return;
     const text = await file.text();
-    // Parse VEVENT blocks
     const events = [];
     const vevents = text.match(/BEGIN:VEVENT[\s\S]*?END:VEVENT/g) || [];
     vevents.forEach(block => {
-        const get = (key) => { const m = block.match(new RegExp(`^${key}[;:][^\r\n]*`, 'm')); return m ? m[0].replace(/^[^:]+:/, '').trim() : null; };
+        // Extract property value — handles folded lines and property parameters
+        const get = (key) => {
+            const m = block.match(new RegExp(`^${key}[;:][^\r\n]*(?:\r?\n[ \t][^\r\n]*)*`, 'm'));
+            if (!m) return null;
+            return m[0].replace(/\r?\n[ \t]/g, '').replace(/^[^:]+:/, '').trim();
+        };
         const summary = get('SUMMARY');
         const dtstart = get('DTSTART');
         if (!summary || !dtstart) return;
-        // Parse date
-        const d = dtstart.replace(/[TZ]/g, '-').split('-');
-        const dueDate = d.length >= 3 ? `${d[0]}-${d[1]}-${d[2]}` : null;
+
+        // Parse iCal date: YYYYMMDD or YYYYMMDDTHHmmssZ or YYYYMMDDTHHMMSS
+        let dueDate = null;
+        const dateOnly = dtstart.match(/^(\d{4})(\d{2})(\d{2})/);
+        if (dateOnly) {
+            dueDate = `${dateOnly[1]}-${dateOnly[2]}-${dateOnly[3]}`;
+        }
         if (!dueDate) return;
-        events.push({ title: summary, due_date: dueDate, item_type: 'other', status: 'NotStarted' });
+
+        const descRaw = get('DESCRIPTION') || '';
+        events.push({
+            name: summary.replace(/\\[,;\\n]/g, (m) => m === '\\n' ? '\n' : m.slice(1)),
+            due_date: dueDate,
+            type: 'Other',
+            status: 'NotStarted',
+            notes: descRaw.replace(/\\[,;]/g, (m) => m.slice(1)).replace(/\\n/g, '\n').slice(0, 500) || null,
+        });
     });
-    if (!events.length) { showToast('No events found in ICS file', 'warning'); input.value = ''; return; }
-    showToast(`Importing ${events.length} event${events.length!==1?'s':''}...`, 'info');
+    if (!events.length) { showToast('No calendar events found in file', 'warning'); input.value = ''; return; }
+    showToast(`Importing ${events.length} event${events.length!==1?'s':''}…`, 'info');
     let created = 0, failed = 0;
     for (const ev of events) {
         try { await API.post('/api/v1/academic-items', ev); created++; } catch(e) { failed++; }
     }
     input.value = '';
-    showToast(`Imported ${created} item${created!==1?'s':''}${failed ? ` (${failed} failed)` : ''}`, created > 0 ? 'success' : 'error');
+    showToast(`Imported ${created} item${created!==1?'s':''}${failed ? ` (${failed} skipped)` : ''}`, created > 0 ? 'success' : 'error');
     loadCalendar();
 }
 </script>

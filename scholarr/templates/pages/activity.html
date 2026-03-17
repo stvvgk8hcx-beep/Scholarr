@@ -69,15 +69,18 @@
                 <option value="move">Move</option>
                 <option value="update">Update</option>
                 <option value="delete">Delete</option>
+                <option value="scan">Scan</option>
             </select>
         </div>
         <div class="form-group">
-            <label>From Date</label>
-            <input type="date" id="filter-from" onchange="loadActivity()">
-        </div>
-        <div class="form-group">
-            <label>To Date</label>
-            <input type="date" id="filter-to" onchange="loadActivity()">
+            <label>Entity Type</label>
+            <select id="filter-entity" onchange="loadActivity()">
+                <option value="">All Types</option>
+                <option value="course">Course</option>
+                <option value="academic_item">Academic Item</option>
+                <option value="file">File</option>
+                <option value="semester">Semester</option>
+            </select>
         </div>
     </div>
 
@@ -116,13 +119,11 @@ async function loadMore() {
 
 async function fetchActivity(reset) {
     const type = document.getElementById('filter-type').value;
-    const from = document.getElementById('filter-from').value;
-    const to = document.getElementById('filter-to').value;
+    const entity = document.getElementById('filter-entity').value;
 
     let url = `/api/v1/history?page=${actPage}&page_size=${ACT_PAGE_SIZE}`;
-    if (type) url += `&event_type=${type}`;
-    if (from) url += `&date_from=${from}`;
-    if (to) url += `&date_to=${to}`;
+    if (type) url += `&action_type=${encodeURIComponent(type)}`;
+    if (entity) url += `&entity_type=${encodeURIComponent(entity)}`;
 
     try {
         const data = await API.get(url);

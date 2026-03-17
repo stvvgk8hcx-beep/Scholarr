@@ -2,7 +2,7 @@
 
 import logging
 from datetime import datetime, timezone
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.db.models import AcademicItem, AcademicItemStatusEnum
@@ -27,6 +27,11 @@ class AcademicItemService:
         type: str | None = None,
         item_type: str | None = None,
         overdue: bool | None = None,
+        search: str | None = None,
+        due_after: str | None = None,
+        due_before: str | None = None,
+        page: int | None = None,
+        page_size: int | None = None,
     ) -> list[AcademicItemResponse]:
         query = select(AcademicItem)
         if course_id is not None:
@@ -47,7 +52,30 @@ class AcademicItemService:
                     AcademicItemStatusEnum.GRADED,
                 ]),
             )
+        if search:
+            pattern = f"%{search}%"
+            query = query.where(
+                or_(
+                    AcademicItem.name.ilike(pattern),
+                    AcademicItem.topic.ilike(pattern),
+                    AcademicItem.notes.ilike(pattern),
+                )
+            )
+        if due_after:
+            try:
+                after_dt = datetime.fromisoformat(due_after)
+                query = query.where(AcademicItem.due_date >= after_dt)
+            except ValueError:
+                pass
+        if due_before:
+            try:
+                before_dt = datetime.fromisoformat(due_before)
+                query = query.where(AcademicItem.due_date <= before_dt)
+            except ValueError:
+                pass
         query = query.order_by(AcademicItem.due_date.asc().nulls_last())
+        if page is not None and page_size is not None:
+            query = query.offset((page - 1) * page_size).limit(page_size)
         result = await self.db.execute(query)
         return [AcademicItemResponse.model_validate(row) for row in result.scalars().all()]
 
@@ -110,7 +138,19 @@ class AcademicItemService:
         return AcademicItemResponse.model_validate(obj) if obj else None
 
     async def create_academic_item(self, item: AcademicItemCreate) -> AcademicItemResponse:
-        obj = AcademicItem(**item.model_dump())
+        # Exclude front-end alias fields that don't exist on the DB model
+        data = item.model_dump(exclude={"title", "item_type"})
+        # If course_id is None, use a sentinel value or find the first course
+        if data.get("course_id") is None:
+            from sqlalchemy import select as sa_select
+            from scholarr.db.models import Course
+            result = await self.db.execute(sa_select(Course).limit(1))
+            first_course = result.scalar_one_or_none()
+            if first_course:
+                data["course_id"] = first_course.id
+            else:
+                data["course_id"] = 1  # Fallback — will fail FK if no courses
+        obj = AcademicItem(**data)
         self.db.add(obj)
         await self.db.commit()
         await self.db.refresh(obj)
@@ -123,7 +163,9 @@ class AcademicItemService:
         obj = await self.db.get(AcademicItem, id)
         if not obj:
             return None
-        for key, value in item_update.model_dump(exclude_unset=True).items():
+        # Exclude front-end alias fields that don't map to DB columns
+        update_data = item_update.model_dump(exclude_unset=True, exclude={"title", "item_type"})
+        for key, value in update_data.items():
             setattr(obj, key, value)
         await self.db.commit()
         await self.db.refresh(obj)

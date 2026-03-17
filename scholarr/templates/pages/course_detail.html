@@ -112,7 +112,7 @@
             </div>
             <div class="form-group">
                 <label>Color</label>
-                <input type="color" id="edit-color" value="#0d7dd8" style="height:38px;padding:4px;">
+                <input type="color" id="edit-color" value="#2ecfa1" style="height:38px;padding:4px;">
             </div>
             <div class="form-group">
                 <label>Notes</label>
@@ -173,7 +173,7 @@ async function loadCourse() {
         document.getElementById('edit-name').value = courseData.name || '';
         document.getElementById('edit-professor').value = courseData.professor || '';
         document.getElementById('edit-credits').value = courseData.credits || '';
-        document.getElementById('edit-color').value = courseData.color || '#0d7dd8';
+        document.getElementById('edit-color').value = courseData.color || '#2ecfa1';
         document.getElementById('edit-notes').value = courseData.notes || '';
         document.getElementById('edit-monitored').checked = courseData.monitored || false;
 
@@ -239,14 +239,16 @@ async function loadItems() {
             el2.innerHTML = msg;
             return;
         }
+        const statusCls = {NotStarted:'badge-notstarted',InProgress:'badge-inprogress',Submitted:'badge-submitted',Graded:'badge-graded',Late:'badge-late',Complete:'badge-complete'};
         const table = `<div class="table-container"><table>
-            <thead><tr><th>Title</th><th>Type</th><th>Due</th><th>Status</th></tr></thead>
+            <thead><tr><th>Title</th><th>Type</th><th>Due</th><th>Status</th><th>Grade</th></tr></thead>
             <tbody>${items.map(it => `
                 <tr>
                     <td style="font-weight:500;">${it.title || it.name || '—'}</td>
-                    <td style="color:var(--text-secondary);">${it.item_type || '—'}</td>
+                    <td style="color:var(--text-secondary);text-transform:capitalize;">${it.type || it.item_type || '—'}</td>
                     <td style="color:var(--text-secondary);">${formatDate(it.due_date)}</td>
-                    <td><span class="${it.status === 'completed' ? 'badge-active' : 'badge-inactive'}">${it.status || '—'}</span></td>
+                    <td><span class="badge ${statusCls[it.status]||'badge-notstarted'}">${it.status || 'NotStarted'}</span></td>
+                    <td style="color:var(--accent-blue);">${it.grade !== null && it.grade !== undefined ? it.grade + '%' : '—'}</td>
                 </tr>`).join('')}
             </tbody></table></div>`;
         el.innerHTML = table;

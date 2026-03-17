@@ -36,19 +36,21 @@
     <div class="filter-bar">
         <div class="form-group">
             <label>Search</label>
-            <input type="text" id="item-search" placeholder="Search by title..." oninput="debouncedLoad()">
+            <input type="text" id="item-search" placeholder="Search by name, topic, notes..." oninput="debouncedLoad()">
         </div>
         <div class="form-group">
             <label>Type</label>
             <select id="item-type" onchange="loadItems()">
                 <option value="">All Types</option>
-                <option value="assignment">Assignment</option>
-                <option value="exam">Exam</option>
-                <option value="project">Project</option>
-                <option value="quiz">Quiz</option>
-                <option value="presentation">Presentation</option>
-                <option value="lab">Lab</option>
-                <option value="other">Other</option>
+                <option value="Assignment">Assignment</option>
+                <option value="Exam">Exam</option>
+                <option value="Quiz">Quiz</option>
+                <option value="Project">Project</option>
+                <option value="Lab">Lab</option>
+                <option value="Lecture">Lecture</option>
+                <option value="Paper">Paper</option>
+                <option value="Notes">Notes</option>
+                <option value="Other">Other</option>
             </select>
         </div>
         <div class="form-group">
@@ -118,13 +120,13 @@
                 <div class="form-group">
                     <label>Type *</label>
                     <select id="new-type">
-                        <option value="assignment">Assignment</option>
-                        <option value="exam">Exam</option>
-                        <option value="project">Project</option>
-                        <option value="quiz">Quiz</option>
-                        <option value="presentation">Presentation</option>
-                        <option value="lab">Lab</option>
-                        <option value="other">Other</option>
+                        <option value="Assignment">Assignment</option>
+                        <option value="Exam">Exam</option>
+                        <option value="Project">Project</option>
+                        <option value="Quiz">Quiz</option>
+                        <option value="Lab">Lab</option>
+                        <option value="Paper">Paper</option>
+                        <option value="Other">Other</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -152,7 +154,7 @@
             </div>
             <div class="form-group">
                 <label>Grade (%)</label>
-                <input type="number" id="new-grade" placeholder="e.g., 85" min="0" max="100" step="0.1">
+                <input type="number" id="new-grade" placeholder="e.g., 85" min="0" step="0.1">
             </div>
             <div class="form-group">
                 <label>Notes</label>
@@ -183,13 +185,13 @@
                 <div class="form-group">
                     <label>Type *</label>
                     <select id="edit-item-type">
-                        <option value="assignment">Assignment</option>
-                        <option value="exam">Exam</option>
-                        <option value="project">Project</option>
-                        <option value="quiz">Quiz</option>
-                        <option value="presentation">Presentation</option>
-                        <option value="lab">Lab</option>
-                        <option value="other">Other</option>
+                        <option value="Assignment">Assignment</option>
+                        <option value="Exam">Exam</option>
+                        <option value="Project">Project</option>
+                        <option value="Quiz">Quiz</option>
+                        <option value="Lab">Lab</option>
+                        <option value="Paper">Paper</option>
+                        <option value="Other">Other</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -218,7 +220,7 @@
             </div>
             <div class="form-group">
                 <label>Grade (%)</label>
-                <input type="number" id="edit-item-grade" placeholder="e.g., 85" min="0" max="100" step="0.1">
+                <input type="number" id="edit-item-grade" placeholder="e.g., 85" min="0" step="0.1">
             </div>
             <div class="form-group">
                 <label>Notes</label>
@@ -276,8 +278,8 @@ async function loadItems() {
 
     let url = `/api/v1/academic-items?page=${itemPage}&page_size=${ITEM_PAGE_SIZE}`;
     if (search) url += `&search=${encodeURIComponent(search)}`;
-    if (type) url += `&item_type=${type}`;
-    if (status) url += `&status=${status}`;
+    if (type) url += `&type=${encodeURIComponent(type)}`;
+    if (status) url += `&status=${encodeURIComponent(status)}`;
     if (courseId) url += `&course_id=${courseId}`;
     if (from) url += `&due_after=${from}`;
     if (to) url += `&due_before=${to}`;
@@ -337,11 +339,11 @@ function openAddItemModal() {
 function closeAddItem() { document.getElementById('addItemModal').classList.remove('show'); }
 
 async function createItem() {
-    const title = document.getElementById('new-title').value.trim();
-    if (!title) { showToast('Title is required', 'warning'); return; }
+    const name = document.getElementById('new-title').value.trim();
+    if (!name) { showToast('Title is required', 'warning'); return; }
     const payload = {
-        title,
-        item_type: document.getElementById('new-type').value,
+        name,
+        type: document.getElementById('new-type').value,   // capitalized enum value
         status: document.getElementById('new-status').value,
     };
     const courseId = document.getElementById('new-course').value;
@@ -366,7 +368,7 @@ async function editItem(id) {
         const item = await API.get(`/api/v1/academic-items/${id}`);
         document.getElementById('edit-item-id').value = item.id;
         document.getElementById('edit-item-title').value = item.title || item.name || '';
-        document.getElementById('edit-item-type').value = item.item_type || item.type || 'assignment';
+        document.getElementById('edit-item-type').value = item.type || item.item_type || 'Other';
         document.getElementById('edit-item-status').value = item.status || 'NotStarted';
         document.getElementById('edit-item-due').value = item.due_date ? item.due_date.slice(0,10) : '';
         document.getElementById('edit-item-grade').value = (item.grade !== null && item.grade !== undefined) ? item.grade : '';
@@ -395,8 +397,8 @@ async function saveEditItem() {
     const title = document.getElementById('edit-item-title').value.trim();
     if (!title) { showToast('Title is required', 'warning'); return; }
     const payload = {
-        title,
-        item_type: document.getElementById('edit-item-type').value,
+        name: title,
+        type: document.getElementById('edit-item-type').value,
         status: document.getElementById('edit-item-status').value,
     };
     const courseId = document.getElementById('edit-item-course').value;
