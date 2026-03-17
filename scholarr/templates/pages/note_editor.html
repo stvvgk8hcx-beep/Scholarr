@@ -6,495 +6,964 @@
     <title>Writing — Scholarr</title>
     <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Inter:wght@300;400&family=Lora:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Inter:wght@300;400&family=Lora:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400&family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
+/* ── Reset & Base ────────────────────────────────────────── */
 :root {
-    --editor-bg: #13132b;
-    --editor-text: #d0d2e4;
-    --editor-muted: #5a5e80;
-    --editor-accent: #2ecfa1;
-    --editor-toolbar-bg: rgba(26,26,56,0.92);
+    --ed-text: #2a2a3a;
+    --ed-text-light: #d8dae8;
+    --ed-muted: #8888a0;
+    --ed-accent: #2ecfa1;
+    --ed-toolbar-bg: rgba(20, 20, 44, 0.88);
+    --ed-text-current: var(--ed-text-light);
 }
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-    background: var(--editor-bg);
-    color: var(--editor-text);
-    font-family: 'Lora', Georgia, serif;
     overflow: hidden;
-    height: 100vh;
-    width: 100vw;
+    height: 100vh; width: 100vw;
+    font-family: 'Lora', Georgia, serif;
     cursor: text;
+    background: #07051b;
+    color: var(--ed-text-current);
 }
 
-/* Background layer */
-.editor-bg {
+/* ── Background Layers ───────────────────────────────────── */
+.bg-layer {
     position: fixed; inset: 0; z-index: 0;
-    transition: opacity 1.5s ease;
+    transition: opacity 2s ease;
+    opacity: 0;
 }
-.bg-gradient { background: linear-gradient(135deg, #13132b 0%, #1a1a38 50%, #13132b 100%); }
-.bg-night { background: linear-gradient(180deg, #0a0a1a 0%, #151530 40%, #1a1a38 100%); }
-.bg-forest { background: linear-gradient(160deg, #0d1a0d 0%, #132013 40%, #0a150a 100%); }
-.bg-ocean { background: linear-gradient(160deg, #0a1520 0%, #0d1f30 40%, #081318 100%); }
-.bg-warmth { background: linear-gradient(160deg, #1a1510 0%, #201a12 40%, #151210 100%); }
-.bg-aurora {
-    background: linear-gradient(135deg, #13132b, #1a2040, #132030, #13132b);
-    background-size: 400% 400%;
-    animation: aurora 20s ease infinite;
+.bg-layer.active { opacity: 1; }
+
+/* Backgrounds — 9 options matching OmmWriter's set */
+.bg-snowscape { background: linear-gradient(180deg, #e8edf4 0%, #d4dce8 30%, #c8cdd8 60%, #f0f0f4 100%); }
+.bg-mountains { background: linear-gradient(180deg, #c5d0dc 0%, #8fa4b8 35%, #a0aab8 55%, #d8dce4 100%); }
+.bg-night { background: linear-gradient(180deg, #07051b 0%, #0e0c28 30%, #14123a 60%, #0a0820 100%); }
+.bg-sunrise { background: linear-gradient(180deg, #1a1030 0%, #3a2050 25%, #804060 45%, #d0a068 65%, #f0d8a0 100%); }
+.bg-grey { background: #b8b8c0; }
+.bg-window { background: linear-gradient(180deg, #e0dcd0 0%, #d0c8b8 40%, #c8c0b0 60%, #dcd8cc 100%); }
+.bg-boats { background: linear-gradient(180deg, #a0c0d0 0%, #88b0c8 30%, #78a0b8 50%, #90b4c4 80%, #c0ccd0 100%); }
+
+/* Chromatherapy — animated color cycling */
+.bg-chromo1 {
+    background: linear-gradient(135deg, #1a1040, #102840, #0a3028, #201040);
+    background-size: 800% 800%;
+    animation: chromo1 30s ease infinite;
 }
-@keyframes aurora {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
+@keyframes chromo1 {
+    0%   { background-position: 0% 50%; }
+    25%  { background-position: 50% 0%; }
+    50%  { background-position: 100% 50%; }
+    75%  { background-position: 50% 100%; }
+    100% { background-position: 0% 50%; }
+}
+.bg-chromo2 {
+    background: linear-gradient(135deg, #301828, #182838, #283018, #382018, #182838);
+    background-size: 800% 800%;
+    animation: chromo2 25s ease infinite;
+}
+@keyframes chromo2 {
+    0%   { background-position: 0% 0%; }
+    33%  { background-position: 100% 50%; }
+    66%  { background-position: 50% 100%; }
+    100% { background-position: 0% 0%; }
 }
 
-/* Writing area */
-.editor-container {
+/* ── Writing Container ───────────────────────────────────── */
+.write-wrap {
     position: relative; z-index: 1;
     height: 100vh;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 60px 20px 40px;
+    justify-content: center;
+    padding: 80px 24px 80px;
     overflow-y: auto;
 }
-
-.editor-title {
+.write-box {
     width: 100%;
-    max-width: 680px;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--editor-text);
-    font-family: inherit;
-    font-size: 1.8em;
-    font-weight: 600;
-    text-align: center;
-    margin-bottom: 24px;
-    opacity: 0.9;
+    max-width: 700px;
+    display: flex;
+    flex-direction: column;
+    min-height: 70vh;
 }
-.editor-title::placeholder { color: var(--editor-muted); }
-
-.editor-content {
-    width: 100%;
-    max-width: 680px;
-    min-height: 60vh;
+.write-title {
     background: transparent;
-    border: none;
-    outline: none;
-    color: var(--editor-text);
+    border: none; outline: none;
     font-family: inherit;
-    font-size: 1.15em;
-    line-height: 1.85;
+    font-size: 1.7em;
+    font-weight: 600;
+    color: var(--ed-text-current);
+    text-align: left;
+    margin-bottom: 20px;
+    opacity: 0.88;
+    caret-color: var(--ed-accent);
+}
+.write-title::placeholder { color: var(--ed-muted); opacity: 0.5; }
+
+.write-area {
+    background: transparent;
+    border: none; outline: none;
+    font-family: inherit;
+    font-size: 1.1em;
+    line-height: 1.9;
+    color: var(--ed-text-current);
     resize: none;
     flex: 1;
+    min-height: 50vh;
+    caret-color: var(--ed-accent);
 }
-.editor-content::placeholder { color: var(--editor-muted); }
+.write-area::placeholder { color: var(--ed-muted); opacity: 0.4; }
 
-/* Floating toolbar */
-.editor-toolbar {
+/* ── Right Toolbar (OmmWriter-style vertical circles) ──── */
+.tool-rail {
     position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: var(--editor-toolbar-bg);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid rgba(255,255,255,0.06);
-    padding: 10px 20px;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+.tool-rail.visible { opacity: 1; }
+
+.tool-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    z-index: 10;
-    opacity: 0;
-    transform: translateY(100%);
-    transition: opacity 0.4s, transform 0.4s;
+    gap: 4px;
+    position: relative;
 }
-.editor-toolbar.visible { opacity: 1; transform: translateY(0); }
-
-.toolbar-group { display: flex; align-items: center; gap: 8px; }
-
-.tb-btn {
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.1);
-    color: var(--editor-muted);
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-size: 0.78em;
+.tool-btn {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(20,20,44,0.5);
+    backdrop-filter: blur(8px);
+    color: var(--ed-muted);
+    font-size: 0.65em;
+    font-family: 'Inter', sans-serif;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+    padding: 0;
+}
+.tool-btn:hover { color: #e0e2f0; border-color: rgba(255,255,255,0.25); background: rgba(30,30,60,0.7); }
+.tool-btn.active { color: var(--ed-accent); border-color: var(--ed-accent); }
+.tool-btn svg { width: 14px; height: 14px; }
+
+/* Sub-option pills that appear on hover */
+.tool-opts {
+    position: absolute;
+    right: 40px;
+    display: flex;
+    gap: 3px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+.tool-row:hover .tool-opts { opacity: 1; pointer-events: auto; }
+
+.opt-pill {
+    min-width: 28px; height: 28px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: var(--ed-toolbar-bg);
+    backdrop-filter: blur(8px);
+    color: var(--ed-muted);
+    font-size: 0.6em;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    white-space: nowrap;
     transition: color 0.2s, border-color 0.2s;
-    font-family: 'Inter', sans-serif;
 }
-.tb-btn:hover { color: var(--editor-text); border-color: rgba(255,255,255,0.2); }
-.tb-btn.active { color: var(--editor-accent); border-color: var(--editor-accent); }
+.opt-pill:hover { color: #e0e2f0; border-color: rgba(255,255,255,0.25); }
+.opt-pill.active { color: var(--ed-accent); border-color: var(--ed-accent); }
 
-.tb-select {
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.1);
-    color: var(--editor-muted);
-    padding: 5px 8px;
-    border-radius: 4px;
-    font-size: 0.78em;
-    font-family: 'Inter', sans-serif;
+/* Volume slider in toolbar */
+.vol-wrap {
+    position: absolute;
+    right: 40px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+.tool-row:hover .vol-wrap { opacity: 1; pointer-events: auto; }
+.vol-s {
+    -webkit-appearance: none;
+    width: 70px; height: 3px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px; outline: none;
+}
+.vol-s::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--ed-accent);
     cursor: pointer;
 }
-.tb-select option { background: #1a1a38; color: #e0e2f0; }
 
-.tb-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.08); margin: 0 4px; }
-
-.status-bar {
-    color: var(--editor-muted);
-    font-size: 0.72em;
-    font-family: 'Inter', sans-serif;
-    display: flex; gap: 16px;
-}
-
-/* Timer badge */
-.timer-badge {
+/* ── Bottom Status ───────────────────────────────────────── */
+.status-strip {
     position: fixed;
-    top: 16px; right: 20px;
-    background: rgba(26,26,56,0.8);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-size: 0.82em;
+    bottom: 0; left: 0; right: 0;
+    padding: 8px 24px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.68em;
     font-family: 'Inter', sans-serif;
-    color: var(--editor-accent);
-    z-index: 10;
+    color: var(--ed-muted);
     opacity: 0;
-    transition: opacity 0.4s;
+    transition: opacity 0.5s;
+    z-index: 20;
 }
-.timer-badge.visible { opacity: 1; }
+.status-strip.visible { opacity: 0.7; }
 
-/* Back button */
-.back-btn {
+/* ── Back button ─────────────────────────────────────────── */
+.back-link {
     position: fixed;
     top: 16px; left: 20px;
-    background: rgba(26,26,56,0.8);
+    background: rgba(20,20,44,0.5);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 0.72em;
+    font-family: 'Inter', sans-serif;
+    color: var(--ed-muted);
+    cursor: pointer;
+    z-index: 20;
+    opacity: 0;
+    transition: opacity 0.5s;
+    text-decoration: none;
+}
+.back-link:hover { color: #e0e2f0; }
+.back-link.visible { opacity: 1; }
+
+/* ── Timer badge ─────────────────────────────────────────── */
+.timer {
+    position: fixed;
+    top: 16px; right: 60px;
+    background: rgba(20,20,44,0.5);
+    backdrop-filter: blur(8px);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 20px;
     padding: 6px 14px;
-    font-size: 0.78em;
-    font-family: 'Inter', sans-serif;
-    color: var(--editor-muted);
-    cursor: pointer;
-    z-index: 10;
+    font-size: 0.75em;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ed-accent);
+    z-index: 20;
     opacity: 0;
-    transition: opacity 0.4s;
-    text-decoration: none;
+    transition: opacity 0.5s;
 }
-.back-btn:hover { color: var(--editor-text); }
-.back-btn.visible { opacity: 1; }
+.timer.visible { opacity: 0.8; }
 
-/* Volume slider */
-.vol-slider {
-    -webkit-appearance: none;
-    width: 60px; height: 4px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 2px;
-    outline: none;
+/* ── Brightness overlay ──────────────────────────────────── */
+.brightness-overlay {
+    position: fixed; inset: 0; z-index: 0;
+    background: rgba(0,0,0,0);
+    pointer-events: none;
+    transition: background 0.8s;
 }
-.vol-slider::-webkit-slider-thumb {
+
+/* Light backgrounds need dark text */
+body.light-mode { --ed-text-current: #2a2a3a; }
+body.dark-mode { --ed-text-current: #d8dae8; }
+
+/* ── Color picker popover ────────────────────────────────── */
+.color-picker-pop {
+    position: absolute;
+    right: 40px;
+    background: var(--ed-toolbar-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 10px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 160px;
+}
+.tool-row:hover .color-picker-pop { opacity: 1; pointer-events: auto; }
+
+.color-row { display: flex; gap: 4px; align-items: center; }
+.color-row label { font-size: 0.6em; font-family: 'Inter', sans-serif; color: var(--ed-muted); min-width: 40px; }
+.color-row input[type=color] {
+    width: 24px; height: 24px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+}
+.color-row input[type=range] {
+    width: 70px; height: 3px;
     -webkit-appearance: none;
-    width: 12px; height: 12px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px; outline: none;
+}
+.color-row input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 10px; height: 10px;
     border-radius: 50%;
-    background: var(--editor-accent);
+    background: var(--ed-accent);
     cursor: pointer;
 }
 </style>
 </head>
-<body>
+<body class="dark-mode">
 
-<!-- Background -->
-<div class="editor-bg bg-gradient" id="editorBg"></div>
+<!-- Background layers (crossfade between them) -->
+<div class="bg-layer bg-night active" id="bg0"></div>
+<div class="bg-layer" id="bg1"></div>
+<div class="brightness-overlay" id="brightnessOverlay"></div>
 
-<!-- Back button & timer (auto-hide) -->
-<a href="/notes" class="back-btn" id="backBtn">Back to Notes</a>
-<div class="timer-badge" id="timerBadge">0:00</div>
+<!-- Back & timer -->
+<a href="/notes" class="back-link" id="backLink">Back</a>
+<div class="timer" id="timerEl">0:00</div>
 
 <!-- Writing area -->
-<div class="editor-container" id="editorContainer">
-    <input type="text" class="editor-title" id="noteTitle" placeholder="Untitled Note" autocomplete="off" spellcheck="false">
-    <textarea class="editor-content" id="noteContent" placeholder="Start writing..." spellcheck="false"></textarea>
+<div class="write-wrap" id="writeWrap">
+    <div class="write-box">
+        <input type="text" class="write-title" id="wTitle" placeholder="Untitled" autocomplete="off" spellcheck="false">
+        <textarea class="write-area" id="wArea" placeholder="Begin writing..." spellcheck="false"></textarea>
+    </div>
 </div>
 
-<!-- Toolbar (auto-hide) -->
-<div class="editor-toolbar" id="toolbar">
-    <div class="toolbar-group">
-        <select class="tb-select" id="selFont" onchange="setFont(this.value)" title="Font">
-            <option value="'Lora', Georgia, serif">Lora</option>
-            <option value="'Inter', sans-serif">Inter</option>
-            <option value="'JetBrains Mono', monospace">Mono</option>
-            <option value="'Caveat', cursive">Handwriting</option>
-        </select>
-        <select class="tb-select" id="selSize" onchange="setFontSize(this.value)" title="Size">
-            <option value="1em">Small</option>
-            <option value="1.15em" selected>Medium</option>
-            <option value="1.35em">Large</option>
-            <option value="1.6em">Extra Large</option>
-        </select>
-        <div class="tb-divider"></div>
-        <select class="tb-select" id="selBg" onchange="setBg(this.value)" title="Background">
-            <option value="bg-gradient">Default</option>
-            <option value="bg-night">Night Sky</option>
-            <option value="bg-forest">Forest</option>
-            <option value="bg-ocean">Ocean</option>
-            <option value="bg-warmth">Warmth</option>
-            <option value="bg-aurora">Aurora</option>
-        </select>
-        <div class="tb-divider"></div>
-        <select class="tb-select" id="selAmbient" onchange="setAmbient(this.value)" title="Ambient Sound">
-            <option value="">Silence</option>
-            <option value="rain">Rain</option>
-            <option value="forest">Forest</option>
-            <option value="ocean">Ocean Waves</option>
-            <option value="fire">Fireplace</option>
-            <option value="cafe">Coffee Shop</option>
-        </select>
-        <input type="range" class="vol-slider" id="ambientVol" min="0" max="100" value="30" oninput="setAmbientVol(this.value)" title="Volume">
-        <div class="tb-divider"></div>
-        <select class="tb-select" id="selKeys" onchange="setKeySounds(this.value)" title="Typing Sounds">
-            <option value="">Silent</option>
-            <option value="soft">Soft Clicks</option>
-            <option value="typewriter">Typewriter</option>
-            <option value="mechanical">Mechanical</option>
-        </select>
-    </div>
-    <div class="toolbar-group">
-        <div class="status-bar">
-            <span id="wordCount">0 words</span>
-            <span id="charCount">0 chars</span>
-            <span id="saveStatus">Saved</span>
+<!-- Right toolbar (vertical circles — OmmWriter style) -->
+<div class="tool-rail" id="toolRail">
+    <!-- Row 1: Font -->
+    <div class="tool-row">
+        <div class="tool-opts" id="fontOpts">
+            <button class="opt-pill active" data-font="'Lora', Georgia, serif" onclick="pickFont(this)">Aa</button>
+            <button class="opt-pill" data-font="'Noto Serif', serif" onclick="pickFont(this)" style="font-family:'Noto Serif',serif;">Aa</button>
+            <button class="opt-pill" data-font="'Inter', sans-serif" onclick="pickFont(this)" style="font-family:'Inter',sans-serif;">Aa</button>
+            <button class="opt-pill" data-font="'JetBrains Mono', monospace" onclick="pickFont(this)" style="font-family:'JetBrains Mono',monospace;">Aa</button>
+            <button class="opt-pill" data-font="'Caveat', cursive" onclick="pickFont(this)" style="font-family:'Caveat',cursive;">Aa</button>
         </div>
-        <div class="tb-divider"></div>
-        <button class="tb-btn" onclick="exportNote('txt')" title="Export as text">TXT</button>
-        <button class="tb-btn" onclick="toggleFullscreen()" title="Toggle fullscreen">Fullscreen</button>
+        <button class="tool-btn" title="Font"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13L8 3l5 10M4.5 10h7"/></svg></button>
     </div>
+    <!-- Row 2: Font size -->
+    <div class="tool-row">
+        <div class="tool-opts" id="sizeOpts">
+            <button class="opt-pill" data-size="0.95em" onclick="pickSize(this)">S</button>
+            <button class="opt-pill active" data-size="1.1em" onclick="pickSize(this)">M</button>
+            <button class="opt-pill" data-size="1.35em" onclick="pickSize(this)">L</button>
+            <button class="opt-pill" data-size="1.6em" onclick="pickSize(this)">XL</button>
+        </div>
+        <button class="tool-btn" title="Size"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 13l4-10M6 13l-4 0M10 13l3-7M13 13l-3 0"/></svg></button>
+    </div>
+    <!-- Row 3: Background -->
+    <div class="tool-row">
+        <div class="tool-opts" id="bgOpts">
+            <button class="opt-pill" data-bg="bg-snowscape" data-light="1" onclick="pickBg(this)">Snow</button>
+            <button class="opt-pill active" data-bg="bg-night" onclick="pickBg(this)">Night</button>
+            <button class="opt-pill" data-bg="bg-mountains" data-light="1" onclick="pickBg(this)">Mtn</button>
+            <button class="opt-pill" data-bg="bg-sunrise" onclick="pickBg(this)">Rise</button>
+            <button class="opt-pill" data-bg="bg-grey" data-light="1" onclick="pickBg(this)">Grey</button>
+            <button class="opt-pill" data-bg="bg-boats" data-light="1" onclick="pickBg(this)">Lake</button>
+            <button class="opt-pill" data-bg="bg-window" data-light="1" onclick="pickBg(this)">Win</button>
+            <button class="opt-pill" data-bg="bg-chromo1" onclick="pickBg(this)">C1</button>
+            <button class="opt-pill" data-bg="bg-chromo2" onclick="pickBg(this)">C2</button>
+        </div>
+        <button class="tool-btn" title="Background"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M2 10l4-4 3 3 2-2 3 3"/></svg></button>
+    </div>
+    <!-- Row 4: Brightness -->
+    <div class="tool-row">
+        <div class="tool-opts">
+            <button class="opt-pill" data-bright="0" onclick="pickBright(this)">Bright</button>
+            <button class="opt-pill active" data-bright="0.15" onclick="pickBright(this)">Normal</button>
+            <button class="opt-pill" data-bright="0.35" onclick="pickBright(this)">Dim</button>
+        </div>
+        <button class="tool-btn" title="Brightness"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="3"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M4 4l1.4 1.4M10.6 10.6L12 12M12 4l-1.4 1.4M5.4 10.6L4 12"/></svg></button>
+    </div>
+    <!-- Row 5: Ambient audio -->
+    <div class="tool-row">
+        <div class="vol-wrap">
+            <div style="display:flex;flex-direction:column;gap:3px;">
+                <button class="opt-pill" data-amb="" onclick="pickAmbient(this)">Off</button>
+                <button class="opt-pill" data-amb="rain" onclick="pickAmbient(this)">Rain</button>
+                <button class="opt-pill" data-amb="forest" onclick="pickAmbient(this)">Forest</button>
+                <button class="opt-pill" data-amb="waves" onclick="pickAmbient(this)">Waves</button>
+                <button class="opt-pill" data-amb="fire" onclick="pickAmbient(this)">Fire</button>
+                <button class="opt-pill" data-amb="wind" onclick="pickAmbient(this)">Wind</button>
+                <button class="opt-pill" data-amb="cafe" onclick="pickAmbient(this)">Cafe</button>
+                <button class="opt-pill" data-amb="piano" onclick="pickAmbient(this)">Piano</button>
+                <button class="opt-pill" data-amb="space" onclick="pickAmbient(this)">Space</button>
+            </div>
+            <input type="range" class="vol-s" id="ambVol" min="0" max="100" value="25" oninput="setAmbVol(this.value)">
+        </div>
+        <button class="tool-btn" title="Ambient Sound"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h2l3-3v10l-3-3H3z"/><path d="M10 5.5a3 3 0 0 1 0 5M11.5 3.5a6 6 0 0 1 0 9"/></svg></button>
+    </div>
+    <!-- Row 6: Typing sounds -->
+    <div class="tool-row">
+        <div class="tool-opts" id="keyOpts">
+            <button class="opt-pill active" data-keys="" onclick="pickKeys(this)">Off</button>
+            <button class="opt-pill" data-keys="bubble" onclick="pickKeys(this)">Bubble</button>
+            <button class="opt-pill" data-keys="click" onclick="pickKeys(this)">Click</button>
+            <button class="opt-pill" data-keys="typewriter" onclick="pickKeys(this)">Type</button>
+            <button class="opt-pill" data-keys="chime" onclick="pickKeys(this)">Chime</button>
+            <button class="opt-pill" data-keys="rain" onclick="pickKeys(this)">Rain</button>
+            <button class="opt-pill" data-keys="drum" onclick="pickKeys(this)">Drum</button>
+        </div>
+        <button class="tool-btn" title="Typing Sounds"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="7" width="14" height="7" rx="1"/><path d="M4 10h1M7 10h2M11 10h1M3 12h10"/></svg></button>
+    </div>
+    <!-- Row 7: Colors -->
+    <div class="tool-row">
+        <div class="color-picker-pop">
+            <div class="color-row"><label>Text</label><input type="color" id="cpText" value="#d8dae8" oninput="setCustomTextColor(this.value)"></div>
+            <div class="color-row"><label>Opacity</label><input type="range" id="cpOpacity" min="50" max="100" value="90" oninput="setTextOpacity(this.value)"></div>
+        </div>
+        <button class="tool-btn" title="Colors"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="3"/><circle cx="10" cy="6" r="3"/><circle cx="8" cy="10" r="3"/></svg></button>
+    </div>
+    <!-- Row 8: Save/Export -->
+    <div class="tool-row">
+        <div class="tool-opts">
+            <button class="opt-pill" onclick="exportAs('txt')">TXT</button>
+            <button class="opt-pill" onclick="exportAs('md')">MD</button>
+            <button class="opt-pill" onclick="copyToClipboard()">Copy</button>
+        </div>
+        <button class="tool-btn" title="Export"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10"/></svg></button>
+    </div>
+    <!-- Row 9: Fullscreen -->
+    <div class="tool-row">
+        <button class="tool-btn" title="Fullscreen" onclick="toggleFS()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg></button>
+    </div>
+</div>
+
+<!-- Bottom status strip -->
+<div class="status-strip" id="statusStrip">
+    <span id="sWords">0 words</span>
+    <span id="sSave">Saved</span>
+    <span id="sChars">0 characters</span>
 </div>
 
 <script>
-window.SCHOLARR_API_KEY = "{{ api_key }}";
+/* ══════════════════════════════════════════════════════════
+   Scholarr Note Editor — OmmWriter-inspired
+   ══════════════════════════════════════════════════════════ */
+const API_KEY = "{{ api_key }}";
 const NOTE_ID = {{ note_id }};
-let saveTimer = null;
-let sessionStart = Date.now();
-let keySoundCtx = null;
-let ambientAudio = null;
-let toolbarTimer = null;
-let currentPrefs = {};
 
-// ── API helper ──────────────────────────────────────────
-async function api(method, url, data) {
-    const opts = { method, headers: { 'X-API-Key': window.SCHOLARR_API_KEY, 'Content-Type': 'application/json' } };
-    if (data) opts.body = JSON.stringify(data);
-    const r = await fetch(url, opts);
-    if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.detail || r.status); }
+// ── State ─────────────────────────────────────────────────
+let saveTimer = null;
+let hideTimer = null;
+let sessionStart = Date.now();
+let audioCtx = null;
+let ambNodes = {};  // current ambient oscillators/sources
+let keyType = '';
+let keySoundSeq = 0;  // sequence counter to vary sounds
+let prefs = {};
+
+// ── API ───────────────────────────────────────────────────
+async function api(m, u, d) {
+    const o = { method: m, headers: { 'X-API-Key': API_KEY, 'Content-Type': 'application/json' } };
+    if (d) o.body = JSON.stringify(d);
+    const r = await fetch(u, o);
+    if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.detail||r.status); }
     return r.status === 204 ? null : r.json();
 }
 
-// ── Load note ───────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        const note = await api('GET', `/api/v1/notes/${NOTE_ID}`);
-        document.getElementById('noteTitle').value = note.title || '';
-        document.getElementById('noteContent').value = note.content || '';
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e) {}
+
+    try {
+        const n = await api('GET', `/api/v1/notes/${NOTE_ID}`);
+        document.getElementById('wTitle').value = n.title || '';
+        document.getElementById('wArea').value = n.content || '';
+        document.title = (n.title || 'Untitled') + ' — Scholarr';
         updateCounts();
-        if (note.preferences) {
-            currentPrefs = note.preferences;
-            if (currentPrefs.font) { document.getElementById('selFont').value = currentPrefs.font; setFont(currentPrefs.font); }
-            if (currentPrefs.fontSize) { document.getElementById('selSize').value = currentPrefs.fontSize; setFontSize(currentPrefs.fontSize); }
-            if (currentPrefs.bg) { document.getElementById('selBg').value = currentPrefs.bg; setBg(currentPrefs.bg); }
-            if (currentPrefs.ambient) { document.getElementById('selAmbient').value = currentPrefs.ambient; setAmbient(currentPrefs.ambient); }
-            if (currentPrefs.keySounds) { document.getElementById('selKeys').value = currentPrefs.keySounds; setKeySounds(currentPrefs.keySounds); }
-            if (currentPrefs.ambientVol !== undefined) { document.getElementById('ambientVol').value = currentPrefs.ambientVol; }
+        if (n.preferences) {
+            prefs = n.preferences;
+            if (prefs.font) applyOpt('fontOpts', 'data-font', prefs.font, el => { pickFont(el, true); });
+            if (prefs.fontSize) applyOpt('sizeOpts', 'data-size', prefs.fontSize, el => { pickSize(el, true); });
+            if (prefs.bg) applyOpt('bgOpts', 'data-bg', prefs.bg, el => { pickBg(el, true); });
+            if (prefs.keys) applyOpt('keyOpts', 'data-keys', prefs.keys, el => { pickKeys(el, true); });
+            if (prefs.bright !== undefined) pickBrightVal(prefs.bright);
+            if (prefs.ambVol !== undefined) document.getElementById('ambVol').value = prefs.ambVol;
+            if (prefs.textColor) { document.getElementById('cpText').value = prefs.textColor; setCustomTextColor(prefs.textColor); }
+            if (prefs.textOpacity) { document.getElementById('cpOpacity').value = prefs.textOpacity; setTextOpacity(prefs.textOpacity); }
         }
-        document.title = `${note.title || 'Untitled'} — Scholarr`;
-    } catch(e) {
-        console.error('Load error:', e);
-    }
+    } catch(e) { console.error('Load error:', e); }
+
     setupAutoHide();
-    setupKeySounds();
     startTimer();
+    document.getElementById('wArea').focus();
 });
 
-// ── Auto-save ───────────────────────────────────────────
-function scheduleSave() {
-    clearTimeout(saveTimer);
-    document.getElementById('saveStatus').textContent = 'Saving...';
-    saveTimer = setTimeout(saveNote, 1500);
+function applyOpt(containerId, attr, val, fn) {
+    const el = document.querySelector(`#${containerId} [${attr}="${val}"]`);
+    if (el) fn(el);
 }
 
-async function saveNote() {
-    const title = document.getElementById('noteTitle').value.trim() || 'Untitled';
-    const content = document.getElementById('noteContent').value;
-    const elapsed = Math.round((Date.now() - sessionStart) / 1000);
+// ── Auto-save ─────────────────────────────────────────────
+function scheduleSave() {
+    clearTimeout(saveTimer);
+    document.getElementById('sSave').textContent = 'Saving...';
+    saveTimer = setTimeout(doSave, 1200);
+}
+
+async function doSave() {
+    const title = document.getElementById('wTitle').value.trim() || 'Untitled';
+    const content = document.getElementById('wArea').value;
     const words = content.trim() ? content.trim().split(/\s+/).length : 0;
-    currentPrefs = {
-        font: document.getElementById('selFont').value,
-        fontSize: document.getElementById('selSize').value,
-        bg: document.getElementById('selBg').value,
-        ambient: document.getElementById('selAmbient').value,
-        keySounds: document.getElementById('selKeys').value,
-        ambientVol: parseInt(document.getElementById('ambientVol').value),
+    const elapsed = Math.round((Date.now() - sessionStart) / 1000);
+
+    prefs = {
+        font: getActive('fontOpts', 'data-font'),
+        fontSize: getActive('sizeOpts', 'data-size'),
+        bg: getActive('bgOpts', 'data-bg'),
+        keys: getActive('keyOpts', 'data-keys'),
+        bright: parseFloat(document.getElementById('brightnessOverlay').style.background?.match(/[\d.]+\)$/)?.[0] || '0'),
+        ambVol: parseInt(document.getElementById('ambVol').value),
+        textColor: document.getElementById('cpText').value,
+        textOpacity: parseInt(document.getElementById('cpOpacity').value),
     };
+
     try {
-        await api('PUT', `/api/v1/notes/${NOTE_ID}`, {
-            title, content,
-            word_count: words,
-            duration_seconds: elapsed,
-            preferences: currentPrefs,
-        });
-        document.getElementById('saveStatus').textContent = 'Saved';
+        await api('PUT', `/api/v1/notes/${NOTE_ID}`, { title, content, word_count: words, duration_seconds: elapsed, preferences: prefs });
+        document.getElementById('sSave').textContent = 'Saved';
     } catch(e) {
-        document.getElementById('saveStatus').textContent = 'Save failed';
+        document.getElementById('sSave').textContent = 'Error';
     }
 }
 
-document.getElementById('noteTitle').addEventListener('input', scheduleSave);
-document.getElementById('noteContent').addEventListener('input', () => { updateCounts(); scheduleSave(); });
-
-// ── Word/char counts ────────────────────────────────────
-function updateCounts() {
-    const text = document.getElementById('noteContent').value;
-    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-    document.getElementById('wordCount').textContent = words + ' words';
-    document.getElementById('charCount').textContent = text.length + ' chars';
+function getActive(id, attr) {
+    const el = document.querySelector(`#${id} .opt-pill.active`);
+    return el ? el.getAttribute(attr) : '';
 }
 
-// ── Timer ────────────────────────────────────────────────
+document.getElementById('wTitle').addEventListener('input', scheduleSave);
+document.getElementById('wArea').addEventListener('input', () => { updateCounts(); scheduleSave(); });
+
+// ── Counts ────────────────────────────────────────────────
+function updateCounts() {
+    const t = document.getElementById('wArea').value;
+    const w = t.trim() ? t.trim().split(/\s+/).length : 0;
+    document.getElementById('sWords').textContent = w + ' words';
+    document.getElementById('sChars').textContent = t.length + ' characters';
+}
+
+// ── Timer ─────────────────────────────────────────────────
 function startTimer() {
     setInterval(() => {
-        const elapsed = Math.round((Date.now() - sessionStart) / 1000);
-        const m = Math.floor(elapsed / 60);
-        const s = elapsed % 60;
-        document.getElementById('timerBadge').textContent = `${m}:${s.toString().padStart(2,'0')}`;
+        const s = Math.round((Date.now() - sessionStart) / 1000);
+        const m = Math.floor(s / 60), sec = s % 60;
+        document.getElementById('timerEl').textContent = m + ':' + String(sec).padStart(2, '0');
     }, 1000);
 }
 
-// ── Auto-hide toolbar ───────────────────────────────────
+// ── Auto-hide UI (OmmWriter behavior) ─────────────────────
 function setupAutoHide() {
-    const toolbar = document.getElementById('toolbar');
-    const backBtn = document.getElementById('backBtn');
-    const timer = document.getElementById('timerBadge');
-    function showUI() {
-        toolbar.classList.add('visible');
-        backBtn.classList.add('visible');
-        timer.classList.add('visible');
-        clearTimeout(toolbarTimer);
-        toolbarTimer = setTimeout(hideUI, 3000);
+    const els = ['toolRail', 'backLink', 'timerEl', 'statusStrip'];
+    function show() {
+        els.forEach(id => document.getElementById(id)?.classList.add('visible'));
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(hide, 2500);
     }
-    function hideUI() {
-        toolbar.classList.remove('visible');
-        backBtn.classList.remove('visible');
-        timer.classList.remove('visible');
+    function hide() {
+        els.forEach(id => document.getElementById(id)?.classList.remove('visible'));
     }
-    document.addEventListener('mousemove', showUI);
-    document.addEventListener('touchstart', showUI);
-    showUI(); // show initially
+    document.addEventListener('mousemove', show);
+    document.addEventListener('touchstart', show);
+    show();
 }
 
-// ── Font ─────────────────────────────────────────────────
-function setFont(font) {
-    document.getElementById('noteContent').style.fontFamily = font;
-    document.getElementById('noteTitle').style.fontFamily = font;
-}
-function setFontSize(size) {
-    document.getElementById('noteContent').style.fontSize = size;
+// ── Helpers to set active pill ────────────────────────────
+function setActivePill(container, pill) {
+    container.querySelectorAll('.opt-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
 }
 
-// ── Background ──────────────────────────────────────────
-function setBg(cls) {
-    const el = document.getElementById('editorBg');
-    el.className = 'editor-bg ' + cls;
+// ── Font ──────────────────────────────────────────────────
+function pickFont(el, silent) {
+    setActivePill(el.parentElement, el);
+    const f = el.getAttribute('data-font');
+    document.getElementById('wArea').style.fontFamily = f;
+    document.getElementById('wTitle').style.fontFamily = f;
+    if (!silent) scheduleSave();
 }
 
-// ── Ambient sound ───────────────────────────────────────
-function setAmbient(type) {
-    if (ambientAudio) { ambientAudio.pause(); ambientAudio = null; }
-    if (!type) return;
-    // Use free ambient audio from a public CDN or local files
-    const urls = {
-        rain: 'https://cdn.freesound.org/previews/531/531947_6142149-lq.mp3',
-        forest: 'https://cdn.freesound.org/previews/365/365252_6593480-lq.mp3',
-        ocean: 'https://cdn.freesound.org/previews/467/467539_5765895-lq.mp3',
-        fire: 'https://cdn.freesound.org/previews/366/366105_6593480-lq.mp3',
-        cafe: 'https://cdn.freesound.org/previews/443/443691_9104667-lq.mp3',
-    };
-    if (!urls[type]) return;
-    ambientAudio = new Audio(urls[type]);
-    ambientAudio.loop = true;
-    ambientAudio.volume = parseInt(document.getElementById('ambientVol').value) / 100;
-    ambientAudio.play().catch(() => {}); // browser may block autoplay
-}
-function setAmbientVol(v) {
-    if (ambientAudio) ambientAudio.volume = v / 100;
+// ── Size ──────────────────────────────────────────────────
+function pickSize(el, silent) {
+    setActivePill(el.parentElement, el);
+    document.getElementById('wArea').style.fontSize = el.getAttribute('data-size');
+    if (!silent) scheduleSave();
 }
 
-// ── Typing sounds ───────────────────────────────────────
-let keySoundType = '';
-function setupKeySounds() {
-    try { keySoundCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+// ── Background (crossfade between two layers) ─────────────
+let activeBgIdx = 0;
+function pickBg(el, silent) {
+    setActivePill(el.parentElement, el);
+    const cls = el.getAttribute('data-bg');
+    const isLight = el.hasAttribute('data-light');
+    const nextIdx = activeBgIdx === 0 ? 1 : 0;
+    const nextEl = document.getElementById('bg' + nextIdx);
+    const curEl = document.getElementById('bg' + activeBgIdx);
+    nextEl.className = 'bg-layer ' + cls;
+    nextEl.classList.add('active');
+    curEl.classList.remove('active');
+    activeBgIdx = nextIdx;
+    // Switch text color mode
+    document.body.className = isLight ? 'light-mode' : 'dark-mode';
+    if (!silent) scheduleSave();
 }
-function setKeySounds(type) { keySoundType = type; }
 
-document.addEventListener('keydown', (e) => {
-    if (!keySoundType || !keySoundCtx) return;
-    if (e.target.id !== 'noteContent' && e.target.id !== 'noteTitle') return;
-    playKeySound(e.key);
+// ── Brightness ────────────────────────────────────────────
+function pickBright(el) {
+    setActivePill(el.parentElement, el);
+    const v = parseFloat(el.getAttribute('data-bright'));
+    document.getElementById('brightnessOverlay').style.background = `rgba(0,0,0,${v})`;
+    scheduleSave();
+}
+function pickBrightVal(v) {
+    document.getElementById('brightnessOverlay').style.background = `rgba(0,0,0,${v})`;
+}
+
+// ── Color customization ───────────────────────────────────
+function setCustomTextColor(c) {
+    document.documentElement.style.setProperty('--ed-text-current', c);
+    scheduleSave();
+}
+function setTextOpacity(v) {
+    const o = v / 100;
+    document.getElementById('wArea').style.opacity = o;
+    document.getElementById('wTitle').style.opacity = o;
+    scheduleSave();
+}
+
+// ══════════════════════════════════════════════════════════
+// AMBIENT SOUND ENGINE — fully synthesized, no external files
+// ══════════════════════════════════════════════════════════
+let ambRunning = false;
+let ambType = '';
+
+function pickAmbient(el) {
+    setActivePill(el.parentElement, el);
+    const t = el.getAttribute('data-amb');
+    stopAmbient();
+    if (t) startAmbient(t);
+    scheduleSave();
+}
+
+function setAmbVol(v) {
+    if (ambNodes.gain) ambNodes.gain.gain.value = v / 100;
+}
+
+function stopAmbient() {
+    ambRunning = false;
+    ambType = '';
+    Object.values(ambNodes).forEach(n => { try { if (n.stop) n.stop(); if (n.disconnect) n.disconnect(); } catch(e) {} });
+    ambNodes = {};
+}
+
+function startAmbient(type) {
+    if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    ambRunning = true;
+    ambType = type;
+
+    const master = audioCtx.createGain();
+    master.gain.value = parseInt(document.getElementById('ambVol').value) / 100;
+    master.connect(audioCtx.destination);
+    ambNodes.gain = master;
+
+    if (type === 'rain') synthRain(master);
+    else if (type === 'forest') synthForest(master);
+    else if (type === 'waves') synthWaves(master);
+    else if (type === 'fire') synthFire(master);
+    else if (type === 'wind') synthWind(master);
+    else if (type === 'cafe') synthCafe(master);
+    else if (type === 'piano') synthPiano(master);
+    else if (type === 'space') synthSpace(master);
+}
+
+// Brown noise base for natural sounds
+function brownNoise(dest, vol) {
+    const bufSize = audioCtx.sampleRate * 2;
+    const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+    const d = buf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < bufSize; i++) {
+        const white = Math.random() * 2 - 1;
+        d[i] = (last + 0.02 * white) / 1.02;
+        last = d[i];
+        d[i] *= 3.5;
+    }
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const g = audioCtx.createGain(); g.gain.value = vol;
+    const lp = audioCtx.createBiquadFilter(); lp.type = 'lowpass';
+    src.connect(lp); lp.connect(g); g.connect(dest);
+    src.start();
+    return { src, gain: g, filter: lp };
+}
+
+function synthRain(dest) {
+    const n = brownNoise(dest, 0.6);
+    n.filter.frequency.value = 3000;
+    ambNodes.rain = n.src;
+    // High-frequency patter
+    const buf2 = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate);
+    const d2 = buf2.getChannelData(0);
+    for (let i = 0; i < d2.length; i++) d2[i] = (Math.random() * 2 - 1) * 0.15;
+    const s2 = audioCtx.createBufferSource(); s2.buffer = buf2; s2.loop = true;
+    const hp = audioCtx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 4000;
+    const g2 = audioCtx.createGain(); g2.gain.value = 0.3;
+    s2.connect(hp); hp.connect(g2); g2.connect(dest);
+    s2.start(); ambNodes.rain2 = s2;
+}
+
+function synthForest(dest) {
+    const n = brownNoise(dest, 0.25);
+    n.filter.frequency.value = 800;
+    ambNodes.for1 = n.src;
+    // Birds: periodic sine chirps
+    function chirp() {
+        if (!ambRunning || ambType !== 'forest') return;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sine';
+        const baseF = 2000 + Math.random() * 3000;
+        o.frequency.setValueAtTime(baseF, audioCtx.currentTime);
+        o.frequency.exponentialRampToValueAtTime(baseF * 1.3, audioCtx.currentTime + 0.1);
+        o.frequency.exponentialRampToValueAtTime(baseF * 0.8, audioCtx.currentTime + 0.2);
+        g.gain.setValueAtTime(0.03, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+        o.connect(g); g.connect(dest);
+        o.start(); o.stop(audioCtx.currentTime + 0.3);
+        setTimeout(chirp, 1500 + Math.random() * 4000);
+    }
+    setTimeout(chirp, 500);
+}
+
+function synthWaves(dest) {
+    // Low rumble base
+    const n = brownNoise(dest, 0.4);
+    n.filter.frequency.value = 400;
+    ambNodes.wav1 = n.src;
+    // LFO modulation for wave cycle
+    const lfo = audioCtx.createOscillator();
+    lfo.type = 'sine'; lfo.frequency.value = 0.08;
+    const lfoG = audioCtx.createGain(); lfoG.gain.value = 0.3;
+    lfo.connect(lfoG); lfoG.connect(n.gain.gain);
+    lfo.start(); ambNodes.wavLfo = lfo;
+}
+
+function synthFire(dest) {
+    const n = brownNoise(dest, 0.5);
+    n.filter.frequency.value = 1200;
+    ambNodes.fire1 = n.src;
+    // Crackle
+    function crackle() {
+        if (!ambRunning || ambType !== 'fire') return;
+        const buf = audioCtx.createBuffer(1, 1200, audioCtx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < 1200; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / 1200);
+        const s = audioCtx.createBufferSource(); s.buffer = buf;
+        const g = audioCtx.createGain(); g.gain.value = 0.08 + Math.random() * 0.06;
+        const bp = audioCtx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2000 + Math.random() * 3000;
+        s.connect(bp); bp.connect(g); g.connect(dest);
+        s.start();
+        setTimeout(crackle, 100 + Math.random() * 300);
+    }
+    setTimeout(crackle, 200);
+}
+
+function synthWind(dest) {
+    const n = brownNoise(dest, 0.4);
+    n.filter.frequency.value = 600;
+    ambNodes.wind1 = n.src;
+    const lfo = audioCtx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.05;
+    const lG = audioCtx.createGain(); lG.gain.value = 400;
+    lfo.connect(lG); lG.connect(n.filter.frequency);
+    lfo.start(); ambNodes.windLfo = lfo;
+}
+
+function synthCafe(dest) {
+    const n = brownNoise(dest, 0.2);
+    n.filter.frequency.value = 2000;
+    ambNodes.cafe1 = n.src;
+    // Murmur — filtered noise bursts
+    function murmur() {
+        if (!ambRunning || ambType !== 'cafe') return;
+        const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.3, audioCtx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.04 * (1 - i/d.length);
+        const s = audioCtx.createBufferSource(); s.buffer = buf;
+        const bp = audioCtx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 800 + Math.random() * 1200;
+        const g = audioCtx.createGain(); g.gain.value = 0.3;
+        s.connect(bp); bp.connect(g); g.connect(dest);
+        s.start();
+        setTimeout(murmur, 600 + Math.random() * 2000);
+    }
+    setTimeout(murmur, 300);
+}
+
+function synthPiano(dest) {
+    function playNote() {
+        if (!ambRunning || ambType !== 'piano') return;
+        const notes = [261.6, 293.7, 329.6, 349.2, 392, 440, 493.9, 523.3];
+        const freq = notes[Math.floor(Math.random() * notes.length)];
+        const o = audioCtx.createOscillator();
+        o.type = 'sine';
+        o.frequency.value = freq;
+        const g = audioCtx.createGain();
+        g.gain.setValueAtTime(0.06, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 3);
+        // Add harmonics
+        const o2 = audioCtx.createOscillator(); o2.type = 'sine'; o2.frequency.value = freq * 2;
+        const g2 = audioCtx.createGain(); g2.gain.setValueAtTime(0.02, audioCtx.currentTime);
+        g2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 2);
+        o.connect(g); g.connect(dest);
+        o2.connect(g2); g2.connect(dest);
+        o.start(); o.stop(audioCtx.currentTime + 3);
+        o2.start(); o2.stop(audioCtx.currentTime + 2);
+        setTimeout(playNote, 2000 + Math.random() * 4000);
+    }
+    setTimeout(playNote, 500);
+}
+
+function synthSpace(dest) {
+    // Deep drone
+    const o1 = audioCtx.createOscillator(); o1.type = 'sine'; o1.frequency.value = 55;
+    const g1 = audioCtx.createGain(); g1.gain.value = 0.1;
+    o1.connect(g1); g1.connect(dest); o1.start(); ambNodes.sp1 = o1;
+    const o2 = audioCtx.createOscillator(); o2.type = 'sine'; o2.frequency.value = 82.4;
+    const g2 = audioCtx.createGain(); g2.gain.value = 0.06;
+    o2.connect(g2); g2.connect(dest); o2.start(); ambNodes.sp2 = o2;
+    // Slow pad
+    const n = brownNoise(dest, 0.08);
+    n.filter.frequency.value = 200;
+    ambNodes.sp3 = n.src;
+}
+
+// ══════════════════════════════════════════════════════════
+// TYPING SOUNDS — 7 types with sequenced variations
+// ══════════════════════════════════════════════════════════
+function pickKeys(el, silent) {
+    setActivePill(el.parentElement, el);
+    keyType = el.getAttribute('data-keys');
+    keySoundSeq = 0;
+    if (!silent) scheduleSave();
+}
+
+document.addEventListener('keydown', e => {
+    if (!keyType || !audioCtx || e.repeat) return;
+    if (e.target.id !== 'wArea' && e.target.id !== 'wTitle') return;
+    // OmmWriter: backspace = silence
+    if (e.key === 'Backspace' || e.key === 'Delete') return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    playKeySound();
 });
 
-function playKeySound(key) {
-    if (!keySoundCtx) return;
-    const osc = keySoundCtx.createOscillator();
-    const gain = keySoundCtx.createGain();
-    osc.connect(gain);
-    gain.connect(keySoundCtx.destination);
+function playKeySound() {
+    keySoundSeq++;
+    const t = audioCtx.currentTime;
+    const vary = (keySoundSeq % 7) / 7; // 0-1 variation cycle
 
-    const t = keySoundCtx.currentTime;
-    const isSpecial = ['Enter','Backspace',' '].includes(key);
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
 
-    if (keySoundType === 'soft') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(isSpecial ? 300 : 600 + Math.random() * 200, t);
-        gain.gain.setValueAtTime(0.03, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-        osc.start(t); osc.stop(t + 0.06);
-    } else if (keySoundType === 'typewriter') {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(isSpecial ? 180 : 800 + Math.random() * 400, t);
-        gain.gain.setValueAtTime(0.04, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-        osc.start(t); osc.stop(t + 0.08);
-    } else if (keySoundType === 'mechanical') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(isSpecial ? 150 : 1200 + Math.random() * 600, t);
-        gain.gain.setValueAtTime(0.02, t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-        osc.start(t); osc.stop(t + 0.05);
+    if (keyType === 'bubble') {
+        o.type = 'sine';
+        o.frequency.setValueAtTime(400 + vary * 300, t);
+        o.frequency.exponentialRampToValueAtTime(200 + vary * 100, t + 0.12);
+        g.gain.setValueAtTime(0.06, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+        o.start(t); o.stop(t + 0.12);
+    } else if (keyType === 'click') {
+        o.type = 'square';
+        o.frequency.setValueAtTime(800 + vary * 400, t);
+        g.gain.setValueAtTime(0.025, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+        o.start(t); o.stop(t + 0.04);
+    } else if (keyType === 'typewriter') {
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(600 + vary * 600, t);
+        g.gain.setValueAtTime(0.035, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+        o.start(t); o.stop(t + 0.06);
+        // Second click
+        const o2 = audioCtx.createOscillator(); const g2 = audioCtx.createGain();
+        o2.type = 'square'; o2.frequency.value = 2000 + vary * 1000;
+        g2.gain.setValueAtTime(0.015, t + 0.01);
+        g2.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+        o2.connect(g2); g2.connect(audioCtx.destination);
+        o2.start(t + 0.01); o2.stop(t + 0.04);
+    } else if (keyType === 'chime') {
+        o.type = 'sine';
+        const notes = [523, 587, 659, 698, 784, 880, 988];
+        o.frequency.value = notes[keySoundSeq % notes.length];
+        g.gain.setValueAtTime(0.04, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+        o.start(t); o.stop(t + 0.4);
+    } else if (keyType === 'rain') {
+        // Raindrop plop
+        o.type = 'sine';
+        o.frequency.setValueAtTime(1200 + vary * 800, t);
+        o.frequency.exponentialRampToValueAtTime(300 + vary * 200, t + 0.08);
+        g.gain.setValueAtTime(0.04, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        o.start(t); o.stop(t + 0.1);
+    } else if (keyType === 'drum') {
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(200 + vary * 150, t);
+        o.frequency.exponentialRampToValueAtTime(80, t + 0.08);
+        g.gain.setValueAtTime(0.06, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        o.start(t); o.stop(t + 0.1);
     }
 }
 
-// ── Fullscreen ──────────────────────────────────────────
-function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
-    } else {
-        document.exitFullscreen();
-    }
+// ── Fullscreen ────────────────────────────────────────────
+function toggleFS() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
+    else document.exitFullscreen();
 }
 
-// ── Export ───────────────────────────────────────────────
-function exportNote(fmt) {
-    const title = document.getElementById('noteTitle').value || 'note';
-    const content = document.getElementById('noteContent').value;
+// ── Export ─────────────────────────────────────────────────
+function exportAs(fmt) {
+    const title = document.getElementById('wTitle').value || 'note';
+    const content = document.getElementById('wArea').value;
+    const name = title.replace(/[^a-zA-Z0-9_\- ]/g, '_');
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `${title.replace(/[^a-zA-Z0-9_-]/g, '_')}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    a.href = URL.createObjectURL(blob);
+    a.download = `${name}.${fmt}`;
+    a.click(); URL.revokeObjectURL(a.href);
 }
 
-// ── Warn on leave with unsaved changes ──────────────────
-window.addEventListener('beforeunload', (e) => {
-    if (saveTimer) { saveNote(); }
+function copyToClipboard() {
+    const content = document.getElementById('wArea').value;
+    navigator.clipboard.writeText(content).then(() => {
+        document.getElementById('sSave').textContent = 'Copied!';
+        setTimeout(() => document.getElementById('sSave').textContent = 'Saved', 1500);
+    });
+}
+
+// ── Save on leave ─────────────────────────────────────────
+window.addEventListener('beforeunload', () => { if (saveTimer) doSave(); });
+
+// ── Keyboard shortcuts ────────────────────────────────────
+document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); doSave(); }
 });
 </script>
 </body>
