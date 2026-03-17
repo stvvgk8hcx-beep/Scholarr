@@ -202,8 +202,8 @@ body {
 .tool-row:hover .tool-opts { opacity: 1; pointer-events: auto; }
 
 .opt-pill {
-    width: 26px; height: 26px;
-    border-radius: 50%;
+    min-width: 26px; height: 26px;
+    border-radius: 13px;
     border: none;
     background: rgba(60,60,70,0.7);
     color: rgba(200,200,210,0.8);
@@ -211,6 +211,7 @@ body {
     font-family: 'Inter', sans-serif;
     cursor: pointer;
     display: flex;
+    padding: 0 6px;
     align-items: center;
     justify-content: center;
     padding: 0;
@@ -422,8 +423,9 @@ body.dark-mode { --ed-text-current: #d8dae8; }
 .code-edit {
     flex: 1;
     min-width: 0;
+    overflow: auto;
 }
-.code-edit textarea {
+.code-ce {
     width: 100%;
     min-height: 100px;
     background: transparent;
@@ -434,13 +436,24 @@ body.dark-mode { --ed-text-current: #d8dae8; }
     font-size: 0.82em;
     line-height: 1.7;
     padding: 10px 14px;
-    resize: vertical;
     tab-size: 4;
-    white-space: pre;
-    overflow-wrap: normal;
+    white-space: pre-wrap;
+    word-break: break-word;
     caret-color: var(--ed-accent);
 }
-.code-edit textarea::placeholder { color: rgba(255,255,255,0.15); }
+.code-ce:empty::before {
+    content: 'Write code here...';
+    color: rgba(255,255,255,0.15);
+    font-style: italic;
+}
+/* Syntax colors */
+.code-ce .kw { color: #c792ea; }
+.code-ce .bi { color: #ffcb6b; }
+.code-ce .fn { color: #82aaff; }
+.code-ce .st { color: #c3e88d; }
+.code-ce .cm { color: #546e7a; font-style: italic; }
+.code-ce .nu { color: #f78c6c; }
+.code-ce .op { color: #89ddff; }
 
 /* Resizable divider */
 .code-divider {
@@ -505,7 +518,7 @@ body.dark-mode { --ed-text-current: #d8dae8; }
             </div>
             <div class="code-split">
                 <div class="code-edit">
-                    <textarea id="codeInput" placeholder="Write code here..." spellcheck="false" onkeydown="handleTab(event)"></textarea>
+                    <div class="code-ce" id="codeInput" contenteditable="true" spellcheck="false" onkeydown="handleTab(event)" oninput="debouncedHighlight()"></div>
                 </div>
                 <div class="code-divider" id="codeDivider"></div>
                 <div class="code-out" id="codeOutWrap">
@@ -623,7 +636,17 @@ body.dark-mode { --ed-text-current: #d8dae8; }
         </div>
         <button class="tool-btn" title="Export"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v8M5 7l3 3 3-3M3 12h10"/></svg></button>
     </div>
-    <!-- Row 10: Fullscreen -->
+    <!-- Row 11: View/Size -->
+    <div class="tool-row">
+        <div class="tool-opts">
+            <button class="opt-pill" onclick="setView('narrow')">Narrow</button>
+            <button class="opt-pill active" onclick="setView('default')">Default</button>
+            <button class="opt-pill" onclick="setView('wide')">Wide</button>
+            <button class="opt-pill" onclick="setView('full')">Full</button>
+        </div>
+        <button class="tool-btn" title="View Size"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="8" rx="1"/><path d="M5 8h6M8 5v6"/></svg></button>
+    </div>
+    <!-- Row 12: Fullscreen -->
     <div class="tool-row">
         <button class="tool-btn" title="Fullscreen" onclick="toggleFS()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg></button>
     </div>
@@ -1177,6 +1200,20 @@ function playKeySound() {
     }
 }
 
+// ── View modes ───────────────────────────────────────────
+function setView(mode) {
+    const box = document.querySelector('.write-box');
+    const views = { narrow: '40%', default: '55%', wide: '75%', full: '95%' };
+    box.style.width = views[mode] || '55%';
+    // Update active pill
+    const parent = event.target.parentElement;
+    if (parent) {
+        parent.querySelectorAll('.opt-pill').forEach(p => p.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+    scheduleSave();
+}
+
 // ── Fullscreen ────────────────────────────────────────────
 function toggleFS() {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(()=>{});
@@ -1314,14 +1351,9 @@ function toggleCodePanel() {
 function handleTab(e) {
     if (e.key === 'Tab') {
         e.preventDefault();
-        const ta = e.target;
-        const start = ta.selectionStart;
-        const end = ta.selectionEnd;
-        ta.value = ta.value.substring(0, start) + '    ' + ta.value.substring(end);
-        ta.selectionStart = ta.selectionEnd = start + 4;
-        highlightCode();
+        document.execCommand('insertText', false, '    ');
+        debouncedHighlight();
     }
-    // Ctrl/Cmd+Enter runs code
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         runCode();
@@ -1332,15 +1364,101 @@ function syncScroll() {
     // no-op: overlay removed
 }
 
-// ── Syntax Highlighting ──────────────────────────────────
-function highlightCode() {
-    // no-op: overlay removed, clean textarea input
+// ── Syntax Highlighting (contenteditable) ─────────────────
+let hlTimer = null;
+function debouncedHighlight() {
+    clearTimeout(hlTimer);
+    hlTimer = setTimeout(applyHighlight, 150);
 }
 
+const HL = {
+    python: [
+        [/(#.*$)/gm, 'cm'],
+        [/("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/g, 'st'],
+        [/\b(def|class|if|elif|else|for|while|try|except|finally|with|as|import|from|return|yield|raise|break|continue|pass|and|or|not|in|is|lambda|global|nonlocal|assert|del|True|False|None|async|await)\b/g, 'kw'],
+        [/\b(print|len|range|int|str|float|list|dict|set|tuple|type|isinstance|enumerate|zip|map|filter|sorted|reversed|open|input|format|abs|max|min|sum|any|all|round|pow|super)\b/g, 'bi'],
+        [/\b(\d+\.?\d*(?:e[+-]?\d+)?)\b/g, 'nu'],
+    ],
+    javascript: [
+        [/(\/\/.*$|\/\*[\s\S]*?\*\/)/gm, 'cm'],
+        [/(`(?:\\.|[^`\\])*`|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/g, 'st'],
+        [/\b(const|let|var|function|class|if|else|for|while|do|switch|case|break|continue|return|try|catch|finally|throw|new|typeof|instanceof|this|import|export|from|async|await|true|false|null|undefined)\b/g, 'kw'],
+        [/\b(console|document|window|Math|JSON|Array|Object|Promise|Date|fetch|setTimeout|parseInt)\b/g, 'bi'],
+        [/\b(\d+\.?\d*)\b/g, 'nu'],
+    ],
+    bash: [
+        [/(#.*$)/gm, 'cm'],
+        [/("(?:\\.|[^"\\])*"|'[^']*')/g, 'st'],
+        [/\b(if|then|else|elif|fi|for|while|do|done|case|esac|function|return|exit|local|export)\b/g, 'kw'],
+        [/\b(echo|printf|cd|ls|cat|grep|sed|awk|find|mkdir|rm|cp|mv|curl|wget|git|pip|python|node)\b/g, 'bi'],
+        [/\b(\d+)\b/g, 'nu'],
+    ],
+    zsh: null, // falls back to bash
+};
+
+function applyHighlight() {
+    const el = document.getElementById('codeInput');
+    const lang = document.getElementById('codeLang').value;
+    const rules = HL[lang] || HL[lang === 'zsh' ? 'bash' : 'python'] || HL.python;
+
+    // Get plain text and cursor position
+    const sel = window.getSelection();
+    let cursorOffset = 0;
+    if (sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        const preRange = range.cloneRange();
+        preRange.selectNodeContents(el);
+        preRange.setEnd(range.startContainer, range.startOffset);
+        cursorOffset = preRange.toString().length;
+    }
+
+    const text = el.innerText || '';
+    if (!text.trim()) { el.innerHTML = ''; return; }
+
+    // Tokenize
+    let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const tokens = [];
+    let tid = 0;
+    for (const [re, cls] of rules) {
+        re.lastIndex = 0;
+        html = html.replace(re, (m) => {
+            const id = `\x00${tid++}\x00`;
+            tokens.push({ id, html: `<span class="${cls}">${m}</span>` });
+            return id;
+        });
+    }
+    for (const t of tokens) html = html.replace(t.id, t.html);
+    html = html.replace(/\n/g, '<br>');
+
+    el.innerHTML = html;
+
+    // Restore cursor
+    try {
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+        let charCount = 0;
+        let node;
+        while (node = walker.nextNode()) {
+            const len = node.textContent.length;
+            if (charCount + len >= cursorOffset) {
+                const range = document.createRange();
+                range.setStart(node, cursorOffset - charCount);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+                break;
+            }
+            charCount += len;
+        }
+    } catch(e) {}
+}
+
+function getCodeText() {
+    return document.getElementById('codeInput').innerText || '';
+}
 
 // ── Run Code ─────────────────────────────────────────────
 async function runCode() {
-    const code = document.getElementById('codeInput').value.trim();
+    const code = getCodeText().trim();
     const lang = document.getElementById('codeLang').value;
     const outEl = document.getElementById('codeOutput');
     const btn = document.getElementById('runBtn');
