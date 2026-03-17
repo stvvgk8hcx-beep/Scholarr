@@ -135,7 +135,7 @@
             <h3>Local Backup</h3>
             <p style="color:var(--text-secondary);font-size:0.88em;margin-bottom:16px;">Export all your academic data as a JSON file that you can store anywhere.</p>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                <button class="btn" onclick="exportDataBackup()">💾 Export All Data</button>
+                <button class="btn" onclick="exportDataBackup(this)">💾 Export All Data</button>
                 <label class="btn btn-secondary" style="cursor:pointer;">
                     📥 Restore from File <input type="file" accept=".json" style="display:none;" onchange="restoreFromFile(this)">
                 </label>
@@ -350,8 +350,8 @@ function copyApiKey() {
 }
 
 // ── Backup & Cloud ──────────────────────────────────────────
-async function exportDataBackup() {
-    const btn = event.target;
+async function exportDataBackup(btn) {
+    if (!btn) btn = document.querySelector('[onclick^="exportDataBackup"]');
     btn.disabled = true;
     btn.textContent = 'Exporting...';
     try {

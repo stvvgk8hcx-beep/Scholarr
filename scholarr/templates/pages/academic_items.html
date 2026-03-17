@@ -242,6 +242,8 @@ const ITEM_PAGE_SIZE = 25;
 let debounceTimer = null;
 
 document.addEventListener('DOMContentLoaded', function() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('search')) document.getElementById('item-search').value = params.get('search');
     loadCourseFilter();
     loadItems();
 });

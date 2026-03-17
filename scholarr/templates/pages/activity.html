@@ -63,23 +63,15 @@
             <label>Event Type</label>
             <select id="filter-type" onchange="loadActivity()">
                 <option value="">All Events</option>
-                <option value="import">Import</option>
-                <option value="create">Create</option>
-                <option value="rename">Rename</option>
-                <option value="move">Move</option>
-                <option value="update">Update</option>
-                <option value="delete">Delete</option>
-                <option value="scan">Scan</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Entity Type</label>
-            <select id="filter-entity" onchange="loadActivity()">
-                <option value="">All Types</option>
-                <option value="course">Course</option>
-                <option value="academic_item">Academic Item</option>
-                <option value="file">File</option>
-                <option value="semester">Semester</option>
+                <option value="Import">Import</option>
+                <option value="Rename">Rename</option>
+                <option value="Move">Move</option>
+                <option value="Delete">Delete</option>
+                <option value="GradeChange">Grade Change</option>
+                <option value="StatusChange">Status Change</option>
+                <option value="Archive">Archive</option>
+                <option value="Extract">Extract</option>
+                <option value="Duplicate">Duplicate</option>
             </select>
         </div>
     </div>
@@ -142,15 +134,18 @@ async function fetchActivity(reset) {
         events.forEach(ev => {
             const entry = document.createElement('div');
             entry.className = 'activity-entry';
-            const icon = getEventIcon(ev.event_type || ev.action || '');
+            const icon = getEventIcon(ev.event_type || '');
             const iconClass = (ev.event_type || '').toLowerCase();
+            const detail = ev.destination_path
+                ? `${(ev.source_path||'').split('/').pop()} → ${ev.destination_path.split('/').pop()}`
+                : ev.source_path ? ev.source_path.split('/').pop() : '';
             entry.innerHTML = `
                 <div class="activity-icon ${iconClass}">${icon}</div>
                 <div class="activity-header">
-                    <div class="activity-title">${ev.description || ev.action || 'Event'}</div>
-                    <div class="activity-time">${formatRelativeTime(ev.timestamp || ev.created_at || new Date())}</div>
+                    <div class="activity-title">${ev.event_type || 'Event'}</div>
+                    <div class="activity-time">${formatRelativeTime(ev.date || new Date())}</div>
                 </div>
-                <div class="activity-entity">${ev.entity_type ? `${ev.entity_type}: ` : ''}${ev.entity_name || ''}</div>
+                <div class="activity-entity">${detail}</div>
             `;
             container.appendChild(entry);
         });
@@ -171,7 +166,7 @@ async function fetchActivity(reset) {
 }
 
 function getEventIcon(type) {
-    const m = { import:'📥', create:'✨', rename:'✏️', move:'📁', update:'🔄', delete:'🗑️' };
+    const m = { import:'📥', rename:'✏️', move:'📁', delete:'🗑️', gradechange:'📊', statuschange:'🔄', archive:'📦', extract:'📤', duplicate:'📋' };
     return m[(type||'').toLowerCase()] || '◆';
 }
 </script>

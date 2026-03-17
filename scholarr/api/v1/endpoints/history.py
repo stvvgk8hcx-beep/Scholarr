@@ -18,6 +18,7 @@ async def get_history(
     page_size: int = Query(20, ge=1, le=100),
     action_type: Optional[str] = Query(None),
     entity_type: Optional[str] = Query(None),
+    course_id: Optional[int] = Query(None),
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):
@@ -28,5 +29,6 @@ async def get_history(
         page_size=page_size,
         action_type=action_type,
         entity_type=entity_type,
+        course_id=course_id,
     )
     return result

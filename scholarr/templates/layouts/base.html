@@ -145,6 +145,16 @@
             });
         });
 
+        // ── Global search ─────────────────────────────────────────
+        let _globalSearchTimer = null;
+        window.handleGlobalSearch = function(val) {
+            clearTimeout(_globalSearchTimer);
+            if (!val.trim()) return;
+            _globalSearchTimer = setTimeout(() => {
+                window.location.href = `/academic-items?search=${encodeURIComponent(val.trim())}`;
+            }, 600);
+        };
+
         // ── Global date formatter ─────────────────────────────────
         window.formatDate = function(dateString) {
             if (!dateString) return 'N/A';
