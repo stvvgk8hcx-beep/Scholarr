@@ -1396,12 +1396,22 @@ const HL = {
     zsh: null, // falls back to bash
 };
 
+// Keep a clean copy of the code text (avoids reading back markers)
+let _codeText = '';
+
 function applyHighlight() {
     const el = document.getElementById('codeInput');
     const lang = document.getElementById('codeLang').value;
     const rules = HL[lang] || HL[lang === 'zsh' ? 'bash' : 'python'] || HL.python;
 
-    // Get plain text and cursor position
+    // Read raw text and clean any leftover markers
+    let raw = el.innerText || '';
+    raw = raw.replace(/[\uFFFD\uFFFE]/g, '');
+    _codeText = raw;
+
+    if (!raw.trim()) { el.innerHTML = ''; return; }
+
+    // Save cursor position
     const sel = window.getSelection();
     let cursorOffset = 0;
     if (sel.rangeCount > 0) {
@@ -1409,53 +1419,53 @@ function applyHighlight() {
         const preRange = range.cloneRange();
         preRange.selectNodeContents(el);
         preRange.setEnd(range.startContainer, range.startOffset);
-        cursorOffset = preRange.toString().length;
+        // Clean markers from the measured text too
+        cursorOffset = preRange.toString().replace(/[\uFFFD\uFFFE]/g, '').length;
     }
 
-    const text = el.innerText || '';
-    if (!text.trim()) { el.innerHTML = ''; return; }
+    // Escape HTML
+    let h = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-    // Tokenize: replace matches with safe placeholders, then restore
-    let h = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    // Tokenize with safe placeholders
     const saved = [];
-    function protect(re, cls) {
+    for (const [re, cls] of rules) {
         re.lastIndex = 0;
         h = h.replace(re, (m) => {
+            // Skip if already inside a placeholder
+            if (m.includes('\uFFFD')) return m;
             const idx = saved.length;
             saved.push(`<span class="${cls}">${m}</span>`);
             return `\uFFFD${idx}\uFFFE`;
         });
     }
-    // Order matters: comments/strings first to prevent keyword matching inside them
-    for (const [re, cls] of rules) protect(re, cls);
-    // Restore
-    h = h.replace(/\uFFFD(\d+)\uFFFE/g, (_, i) => saved[parseInt(i)]);
-    let html = h.replace(/\n/g, '<br>');
-
-    el.innerHTML = html;
+    // Restore all placeholders
+    for (let i = 0; i < saved.length; i++) {
+        h = h.replace(`\uFFFD${i}\uFFFE`, saved[i]);
+    }
+    el.innerHTML = h.replace(/\n/g, '<br>');
 
     // Restore cursor
     try {
         const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
-        let charCount = 0;
+        let count = 0;
         let node;
         while (node = walker.nextNode()) {
             const len = node.textContent.length;
-            if (charCount + len >= cursorOffset) {
-                const range = document.createRange();
-                range.setStart(node, cursorOffset - charCount);
-                range.collapse(true);
+            if (count + len >= cursorOffset) {
+                const r2 = document.createRange();
+                r2.setStart(node, Math.min(cursorOffset - count, len));
+                r2.collapse(true);
                 sel.removeAllRanges();
-                sel.addRange(range);
+                sel.addRange(r2);
                 break;
             }
-            charCount += len;
+            count += len;
         }
     } catch(e) {}
 }
 
 function getCodeText() {
-    return document.getElementById('codeInput').innerText || '';
+    return _codeText || (document.getElementById('codeInput').innerText || '').replace(/[\uFFFD\uFFFE]/g, '');
 }
 
 // ── Run Code ─────────────────────────────────────────────
