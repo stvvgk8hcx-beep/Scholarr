@@ -324,110 +324,118 @@ body.dark-mode { --ed-text-current: #d8dae8; }
     cursor: pointer;
 }
 
-/* ── Code Panel ──────────────────────────────────────────── */
-.code-panel {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    max-height: 50vh;
-    background: #0d0d1e;
-    border-top: 1px solid rgba(255,255,255,0.08);
-    z-index: 30;
-    display: flex;
-    flex-direction: column;
-    transform: translateY(100%);
-    transition: transform 0.35s ease;
+/* ── Inline Code Block (embedded in writing flow) ──────── */
+.code-block {
+    max-width: 700px;
+    width: 100%;
+    margin: 20px auto;
+    background: rgba(8,8,22,0.85);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    overflow: hidden;
+    display: none;
 }
-.code-panel.open { transform: translateY(0); }
+.code-block.open { display: block; }
 
-.code-header {
+.code-bar {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
     font-family: 'Inter', sans-serif;
-    font-size: 0.75em;
+    font-size: 0.7em;
 }
-.code-header select {
+.code-bar select {
     background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #c0c4d8;
-    padding: 4px 8px;
-    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #a0a4b8;
+    padding: 3px 6px;
+    border-radius: 3px;
     font-size: 1em;
     font-family: 'Inter', sans-serif;
 }
-.code-header select option { background: #1a1a38; }
-.code-header .run-btn {
+.code-bar select option { background: #12122a; }
+.code-bar .run-btn {
     background: var(--ed-accent);
     color: #0a0a18;
     border: none;
-    padding: 4px 14px;
-    border-radius: 4px;
+    padding: 3px 12px;
+    border-radius: 3px;
     font-size: 1em;
     font-weight: 600;
     cursor: pointer;
     font-family: 'Inter', sans-serif;
 }
-.code-header .run-btn:hover { opacity: 0.9; }
-.code-header .run-btn:disabled { opacity: 0.5; cursor: default; }
-.code-header .close-code {
+.code-bar .run-btn:hover { opacity: 0.85; }
+.code-bar .run-btn:disabled { opacity: 0.4; }
+.code-bar .close-code {
     margin-left: auto;
     background: transparent;
     border: none;
     color: var(--ed-muted);
     cursor: pointer;
-    font-size: 1.2em;
-    padding: 2px 6px;
+    font-size: 1.1em;
+    padding: 0 4px;
 }
 
-.code-body {
+.code-split {
     display: flex;
-    flex: 1;
-    overflow: hidden;
+    min-height: 100px;
 }
-.code-input-wrap {
+.code-edit {
     flex: 1;
-    overflow: auto;
+    min-width: 0;
 }
-.code-input {
+.code-edit textarea {
     width: 100%;
-    min-height: 120px;
-    background: #0a0a1a;
+    min-height: 100px;
+    background: transparent;
     border: none;
     outline: none;
     color: #c8cce0;
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    font-size: 0.85em;
+    font-size: 0.82em;
     line-height: 1.7;
-    padding: 12px 16px;
-    resize: none;
+    padding: 10px 14px;
+    resize: vertical;
     tab-size: 4;
     white-space: pre;
     overflow-wrap: normal;
     caret-color: var(--ed-accent);
 }
-.code-input::placeholder { color: rgba(255,255,255,0.2); }
+.code-edit textarea::placeholder { color: rgba(255,255,255,0.15); }
 
-.code-output-wrap {
-    flex: 1;
-    border-left: 1px solid rgba(255,255,255,0.06);
-    overflow: auto;
-    background: #080816;
+/* Resizable divider */
+.code-divider {
+    width: 4px;
+    background: rgba(255,255,255,0.04);
+    cursor: col-resize;
+    flex-shrink: 0;
+    transition: background 0.2s;
 }
-.code-output {
-    padding: 12px 16px;
+.code-divider:hover, .code-divider.dragging { background: var(--ed-accent); }
+
+.code-out {
+    flex: 1;
+    min-width: 80px;
+    overflow: auto;
+    background: rgba(0,0,0,0.2);
+}
+.code-out-content {
+    padding: 10px 14px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.82em;
+    font-size: 0.78em;
     line-height: 1.6;
-    color: #a0a4b8;
+    color: #8a8ea0;
     white-space: pre-wrap;
     word-break: break-word;
-    min-height: 120px;
+    min-height: 100px;
 }
-.code-output.error { color: #f07178; }
-.code-output.success { color: #c3e88d; }
-.code-output .placeholder { color: rgba(255,255,255,0.15); font-style: italic; }
+.code-out-content.err { color: #f07178; }
+.code-out-content.ok { color: #c3e88d; }
+.code-out-content .ph { color: rgba(255,255,255,0.12); font-style: italic; }
 </style>
 </head>
 <body class="dark-mode">
@@ -446,6 +454,29 @@ body.dark-mode { --ed-text-current: #d8dae8; }
     <div class="write-box">
         <input type="text" class="write-title" id="wTitle" placeholder="Untitled" autocomplete="off" spellcheck="false">
         <textarea class="write-area" id="wArea" placeholder="Begin writing..." spellcheck="false"></textarea>
+
+        <!-- Inline code block (appears inside the writing flow) -->
+        <div class="code-block" id="codeBlock">
+            <div class="code-bar">
+                <select id="codeLang">
+                    <option value="python">Python</option>
+                    <option value="javascript">JavaScript</option>
+                    <option value="bash">Bash</option>
+                </select>
+                <button class="run-btn" id="runBtn" onclick="runCode()">Run</button>
+                <span id="codeStatus" style="color:var(--ed-muted);"></span>
+                <button class="close-code" onclick="toggleCodePanel()" title="Close code block">&times;</button>
+            </div>
+            <div class="code-split">
+                <div class="code-edit">
+                    <textarea id="codeInput" placeholder="Write code here..." spellcheck="false" onkeydown="handleTab(event)"></textarea>
+                </div>
+                <div class="code-divider" id="codeDivider"></div>
+                <div class="code-out" id="codeOutWrap">
+                    <div class="code-out-content" id="codeOutput"><span class="ph">Output appears here</span></div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -568,29 +599,7 @@ body.dark-mode { --ed-text-current: #d8dae8; }
     <span id="sChars">0 characters</span>
 </div>
 
-<!-- Code execution panel -->
-<div class="code-panel" id="codePanel">
-    <div class="code-header">
-        <span style="color:var(--ed-muted);">Code</span>
-        <select id="codeLang">
-            <option value="python">Python</option>
-            <option value="javascript">JavaScript</option>
-            <option value="bash">Bash</option>
-        </select>
-        <button class="run-btn" id="runBtn" onclick="runCode()">Run</button>
-        <span id="codeStatus" style="color:var(--ed-muted);font-size:0.9em;"></span>
-        <button class="close-code" onclick="toggleCodePanel()" title="Close">&times;</button>
-    </div>
-    <div class="code-body">
-        <div class="code-input-wrap">
-            <textarea class="code-input" id="codeInput" placeholder="Write code here..." spellcheck="false"
-                onkeydown="handleTab(event)"></textarea>
-        </div>
-        <div class="code-output-wrap">
-            <div class="code-output" id="codeOutput"><span class="placeholder">Output will appear here after running...</span></div>
-        </div>
-    </div>
-</div>
+<!-- no separate code panel: code block is inline in write-box -->
 
 <script>
 /* ══════════════════════════════════════════════════════════
@@ -1007,70 +1016,126 @@ function pickKeys(el, silent) {
 
 document.addEventListener('keydown', e => {
     if (!keyType || !audioCtx || e.repeat) return;
-    if (e.target.id !== 'wArea' && e.target.id !== 'wTitle') return;
-    // OmmWriter: backspace = silence
+    const validTargets = ['wArea', 'wTitle', 'codeInput'];
+    if (!validTargets.includes(e.target.id)) return;
     if (e.key === 'Backspace' || e.key === 'Delete') return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
     playKeySound();
 });
 
+/* ── Beautiful Typing Sounds ──────────────────────────────
+   Each sound uses multiple layered oscillators with reverb-like
+   decay envelopes, detuning, and harmonic richness for a warm,
+   satisfying, study-friendly feel. 7 variations per type cycle
+   through a pentatonic scale to create a musical texture.
+   ──────────────────────────────────────────────────────────── */
+const PENTA = [261.6, 293.7, 329.6, 392, 440, 523.3, 587.3]; // C major pentatonic
+
 function playKeySound() {
     keySoundSeq++;
     const t = audioCtx.currentTime;
-    const vary = (keySoundSeq % 7) / 7; // 0-1 variation cycle
-
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.connect(g); g.connect(audioCtx.destination);
+    const idx = keySoundSeq % 7;
+    const baseNote = PENTA[idx];
 
     if (keyType === 'bubble') {
+        // Warm water droplet — sine with pitch bend down, soft and round
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
         o.type = 'sine';
-        o.frequency.setValueAtTime(400 + vary * 300, t);
-        o.frequency.exponentialRampToValueAtTime(200 + vary * 100, t + 0.12);
-        g.gain.setValueAtTime(0.06, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-        o.start(t); o.stop(t + 0.12);
+        o.frequency.setValueAtTime(baseNote * 2, t);
+        o.frequency.exponentialRampToValueAtTime(baseNote * 0.8, t + 0.15);
+        g.gain.setValueAtTime(0.045, t);
+        g.gain.setValueAtTime(0.04, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(t); o.stop(t + 0.18);
     } else if (keyType === 'click') {
-        o.type = 'square';
-        o.frequency.setValueAtTime(800 + vary * 400, t);
-        g.gain.setValueAtTime(0.025, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-        o.start(t); o.stop(t + 0.04);
+        // Soft mechanical click — very short, warm, like a good keyboard
+        const buf = audioCtx.createBuffer(1, 600, audioCtx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < 600; i++) {
+            d[i] = (Math.random() * 2 - 1) * Math.exp(-i / 60) * 0.3;
+        }
+        const s = audioCtx.createBufferSource(); s.buffer = buf;
+        const bp = audioCtx.createBiquadFilter();
+        bp.type = 'bandpass'; bp.frequency.value = 3000 + idx * 300; bp.Q.value = 2;
+        const g = audioCtx.createGain(); g.gain.value = 0.12;
+        s.connect(bp); bp.connect(g); g.connect(audioCtx.destination);
+        s.start(t);
     } else if (keyType === 'typewriter') {
-        o.type = 'sawtooth';
-        o.frequency.setValueAtTime(600 + vary * 600, t);
-        g.gain.setValueAtTime(0.035, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-        o.start(t); o.stop(t + 0.06);
-        // Second click
+        // Rich typewriter — impact + bell ring, warm and nostalgic
+        const buf = audioCtx.createBuffer(1, 1200, audioCtx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < 1200; i++) {
+            d[i] = (Math.random() * 2 - 1) * Math.exp(-i / 80) * 0.25;
+        }
+        const s = audioCtx.createBufferSource(); s.buffer = buf;
+        const bp = audioCtx.createBiquadFilter();
+        bp.type = 'bandpass'; bp.frequency.value = 1800 + idx * 200; bp.Q.value = 3;
+        const g = audioCtx.createGain(); g.gain.value = 0.15;
+        s.connect(bp); bp.connect(g); g.connect(audioCtx.destination);
+        s.start(t);
+        // Subtle bell overtone
         const o2 = audioCtx.createOscillator(); const g2 = audioCtx.createGain();
-        o2.type = 'square'; o2.frequency.value = 2000 + vary * 1000;
-        g2.gain.setValueAtTime(0.015, t + 0.01);
-        g2.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+        o2.type = 'sine'; o2.frequency.value = 2800 + idx * 100;
+        g2.gain.setValueAtTime(0.008, t + 0.01);
+        g2.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
         o2.connect(g2); g2.connect(audioCtx.destination);
-        o2.start(t + 0.01); o2.stop(t + 0.04);
+        o2.start(t + 0.01); o2.stop(t + 0.12);
     } else if (keyType === 'chime') {
-        o.type = 'sine';
-        const notes = [523, 587, 659, 698, 784, 880, 988];
-        o.frequency.value = notes[keySoundSeq % notes.length];
-        g.gain.setValueAtTime(0.04, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-        o.start(t); o.stop(t + 0.4);
+        // Wind chime — pure sine with harmonics, long gentle decay
+        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+        o.type = 'sine'; o.frequency.value = baseNote * 2;
+        g.gain.setValueAtTime(0.03, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(t); o.stop(t + 0.8);
+        // Harmonic
+        const o2 = audioCtx.createOscillator(); const g2 = audioCtx.createGain();
+        o2.type = 'sine'; o2.frequency.value = baseNote * 3;
+        g2.gain.setValueAtTime(0.012, t);
+        g2.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+        o2.connect(g2); g2.connect(audioCtx.destination);
+        o2.start(t); o2.stop(t + 0.6);
     } else if (keyType === 'rain') {
-        // Raindrop plop
+        // Gentle raindrop — filtered noise burst with pitch bend
+        const buf = audioCtx.createBuffer(1, 2000, audioCtx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < 2000; i++) {
+            d[i] = (Math.random() * 2 - 1) * Math.exp(-i / 200) * 0.15;
+        }
+        const s = audioCtx.createBufferSource(); s.buffer = buf;
+        const lp = audioCtx.createBiquadFilter();
+        lp.type = 'lowpass'; lp.frequency.value = 4000 + idx * 500;
+        const g = audioCtx.createGain(); g.gain.value = 0.2;
+        s.connect(lp); lp.connect(g); g.connect(audioCtx.destination);
+        s.start(t);
+        // Tiny sine plop
+        const o = audioCtx.createOscillator(); const g2 = audioCtx.createGain();
         o.type = 'sine';
-        o.frequency.setValueAtTime(1200 + vary * 800, t);
-        o.frequency.exponentialRampToValueAtTime(300 + vary * 200, t + 0.08);
-        g.gain.setValueAtTime(0.04, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-        o.start(t); o.stop(t + 0.1);
+        o.frequency.setValueAtTime(800 + idx * 100, t);
+        o.frequency.exponentialRampToValueAtTime(200, t + 0.06);
+        g2.gain.setValueAtTime(0.025, t);
+        g2.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+        o.connect(g2); g2.connect(audioCtx.destination);
+        o.start(t); o.stop(t + 0.08);
     } else if (keyType === 'drum') {
+        // Soft wooden tap — like bamboo or wood block, warm and grounding
+        const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
         o.type = 'triangle';
-        o.frequency.setValueAtTime(200 + vary * 150, t);
-        o.frequency.exponentialRampToValueAtTime(80, t + 0.08);
+        o.frequency.setValueAtTime(300 + idx * 30, t);
+        o.frequency.exponentialRampToValueAtTime(120, t + 0.05);
         g.gain.setValueAtTime(0.06, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-        o.start(t); o.stop(t + 0.1);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(t); o.stop(t + 0.08);
+        // Body resonance
+        const o2 = audioCtx.createOscillator(); const g2 = audioCtx.createGain();
+        o2.type = 'sine'; o2.frequency.value = 180 + idx * 15;
+        g2.gain.setValueAtTime(0.03, t);
+        g2.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+        o2.connect(g2); g2.connect(audioCtx.destination);
+        o2.start(t); o2.stop(t + 0.12);
     }
 }
 
@@ -1159,15 +1224,53 @@ let codePanelOpen = false;
 
 function toggleCodePanel() {
     codePanelOpen = !codePanelOpen;
-    document.getElementById('codePanel').classList.toggle('open', codePanelOpen);
+    document.getElementById('codeBlock').classList.toggle('open', codePanelOpen);
     if (codePanelOpen) {
-        // Shrink writing area to make room
-        document.getElementById('writeWrap').style.paddingBottom = '52vh';
-        setTimeout(() => document.getElementById('codeInput').focus(), 100);
-    } else {
-        document.getElementById('writeWrap').style.paddingBottom = '80px';
+        setTimeout(() => {
+            document.getElementById('codeInput').focus();
+            document.getElementById('codeBlock').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
     }
 }
+
+// ── Resizable divider ────────────────────────────────────
+(function() {
+    const divider = document.getElementById('codeDivider');
+    if (!divider) return;
+    let dragging = false;
+    let startX = 0;
+    let startLeftW = 0;
+
+    divider.addEventListener('mousedown', e => {
+        dragging = true;
+        startX = e.clientX;
+        const editEl = divider.previousElementSibling;
+        startLeftW = editEl.getBoundingClientRect().width;
+        divider.classList.add('dragging');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const diff = e.clientX - startX;
+        const editEl = divider.previousElementSibling;
+        const parent = divider.parentElement;
+        const parentW = parent.getBoundingClientRect().width;
+        const newW = Math.max(120, Math.min(parentW - 120, startLeftW + diff));
+        editEl.style.flex = 'none';
+        editEl.style.width = newW + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (!dragging) return;
+        dragging = false;
+        divider.classList.remove('dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+    });
+})();
 
 // Tab key inserts spaces instead of switching focus
 function handleTab(e) {
@@ -1206,25 +1309,25 @@ async function runCode() {
     const status = document.getElementById('codeStatus');
 
     if (!code) {
-        outEl.className = 'code-output';
-        outEl.innerHTML = '<span class="placeholder">Write some code first...</span>';
+        outEl.className = 'code-out-content';
+        outEl.innerHTML = '<span class="ph">Write some code first...</span>';
         return;
     }
 
     btn.disabled = true;
     btn.textContent = 'Running...';
     status.textContent = '';
-    outEl.className = 'code-output';
+    outEl.className = 'code-out-content';
     outEl.textContent = 'Executing...';
 
     try {
         const result = await api('POST', '/api/v1/code/run', { language: lang, code });
-        outEl.className = 'code-output ' + (result.error ? 'error' : 'success');
+        outEl.className = 'code-out-content ' + (result.error ? 'err' : 'ok');
         outEl.textContent = result.output || '(no output)';
         status.textContent = result.error ? 'Exit: ' + (result.exit_code ?? '?') : 'OK';
         status.style.color = result.error ? '#f07178' : '#c3e88d';
     } catch(e) {
-        outEl.className = 'code-output error';
+        outEl.className = 'code-out-content err';
         outEl.textContent = 'Error: ' + e.message;
     } finally {
         btn.disabled = false;
