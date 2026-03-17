@@ -1,231 +1,133 @@
-#Requires -RunAsAdministrator
+# Scholarr Windows Installer
+# Installs to C:\Scholarr with optional Windows Service
+# Uses SQLite — no database server needed
 
-# Scholarr Windows Installer Script
-# Installation path: C:\ProgramData\Scholarr
-# Data path: C:\Users\[User]\AppData\Local\Scholarr
+$Version = "0.2.0"
+$InstallPath = "C:\Scholarr"
+$DataPath = "$env:LOCALAPPDATA\Scholarr"
 
-param(
-    [switch]$SkipPythonCheck = $false
-)
+Write-Host ""
+Write-Host "  Scholarr v$Version - Windows Installer" -ForegroundColor Cyan
+Write-Host "  ----------------------------------------" -ForegroundColor Cyan
+Write-Host ""
 
-function Write-Header {
-    param([string]$Text)
-    Write-Host "`n========================================" -ForegroundColor Cyan
-    Write-Host $Text -ForegroundColor Cyan
-    Write-Host "========================================`n" -ForegroundColor Cyan
-}
-
-function Write-Status {
-    param([string]$Text)
-    Write-Host "➜ $Text" -ForegroundColor Green
-}
-
-function Write-Error-Custom {
-    param([string]$Text)
-    Write-Host "✗ ERROR: $Text" -ForegroundColor Red
-}
-
-function Write-Warning-Custom {
-    param([string]$Text)
-    Write-Host "! WARNING: $Text" -ForegroundColor Yellow
-}
-
-# Verify admin privileges
-$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-if (-not $isAdmin) {
-    Write-Error-Custom "This installer must be run as Administrator"
-    exit 1
-}
-
-Write-Header "Scholarr v0.1.0 - Windows Installer"
-
-# Check Python 3.11+ is installed
-Write-Status "Checking Python 3.11+ installation..."
-$pythonPath = $null
-$pythonVersion = $null
-
-# Try to find Python
-$pythonExe = Get-Command python -ErrorAction SilentlyContinue
-if ($pythonExe) {
-    $pythonPath = $pythonExe.Source
-    $pythonVersion = & $pythonPath --version 2>&1
-    Write-Status "Found Python at: $pythonPath"
-    Write-Status "Version: $pythonVersion"
-} else {
-    if ($SkipPythonCheck) {
-        Write-Warning-Custom "Python not found in PATH. Please install Python 3.11+ manually."
-        $pythonPath = Read-Host "Enter full path to python.exe"
-    } else {
-        Write-Error-Custom "Python 3.11+ is required but not found"
-        Write-Host "`nPlease install Python from: https://www.python.org/downloads/"
-        exit 1
+# Find Python
+$Python = $null
+foreach ($p in @("python3", "python")) {
+    $cmd = Get-Command $p -ErrorAction SilentlyContinue
+    if ($cmd) {
+        $ver = & $cmd.Source -c "import sys;print(sys.version_info.minor)" 2>$null
+        if ([int]$ver -ge 11) {
+            $Python = $cmd.Source
+            break
+        }
     }
 }
 
-# Verify Python version is 3.11+
-$pythonVersion -match "(\d+)\.(\d+)" | Out-Null
-if ($Matches[1] -lt 3 -or ($Matches[1] -eq 3 -and $Matches[2] -lt 11)) {
-    Write-Error-Custom "Python 3.11 or later is required. Found: $pythonVersion"
-    exit 1
-}
-Write-Status "Python version OK ($($Matches[1]).$($Matches[2]))"
-
-# Create installation directory
-Write-Status "Creating installation directory..."
-$installPath = "C:\ProgramData\Scholarr"
-if (-not (Test-Path $installPath)) {
-    New-Item -ItemType Directory -Path $installPath | Out-Null
-}
-
-$dataPath = "$env:LOCALAPPDATA\Scholarr"
-if (-not (Test-Path $dataPath)) {
-    New-Item -ItemType Directory -Path "$dataPath\config" | Out-Null
-    New-Item -ItemType Directory -Path "$dataPath\library" | Out-Null
-    New-Item -ItemType Directory -Path "$dataPath\inbox" | Out-Null
-}
-
-Write-Status "Installation path: $installPath"
-Write-Status "Data path: $dataPath"
-
-# Create virtual environment
-Write-Status "Creating Python virtual environment..."
-& $pythonPath -m venv "$installPath\venv"
-if ($LASTEXITCODE -ne 0) {
-    Write-Error-Custom "Failed to create virtual environment"
+if (-not $Python) {
+    Write-Host "  ERROR: Python 3.11+ required. Download from python.org" -ForegroundColor Red
     exit 1
 }
 
-# Activate virtualenv
-$activateScript = "$installPath\venv\Scripts\Activate.ps1"
-& $activateScript
+$PyVer = & $Python --version
+Write-Host "  Python: $PyVer"
 
-# Upgrade pip
-Write-Status "Upgrading pip..."
-& "$installPath\venv\Scripts\python.exe" -m pip install --upgrade pip setuptools wheel | Out-Null
+# Create directories
+Write-Host "  Creating directories..."
+New-Item -ItemType Directory -Path $InstallPath -Force | Out-Null
+New-Item -ItemType Directory -Path "$DataPath\data" -Force | Out-Null
+New-Item -ItemType Directory -Path "$DataPath\uploads" -Force | Out-Null
+New-Item -ItemType Directory -Path "$DataPath\backups" -Force | Out-Null
+New-Item -ItemType Directory -Path "$DataPath\config" -Force | Out-Null
+
+# Virtual environment
+Write-Host "  Creating virtual environment..."
+& $Python -m venv "$InstallPath\venv"
+& "$InstallPath\venv\Scripts\python.exe" -m pip install --upgrade pip -q
 
 # Install Scholarr
-Write-Status "Installing Scholarr..."
-if (Test-Path "pyproject.toml") {
-    & "$installPath\venv\Scripts\pip.exe" install -e . 2>&1 | Select-Object -Last 5
+Write-Host "  Installing Scholarr..."
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot = Split-Path -Parent (Split-Path -Parent $ScriptDir)
+if (Test-Path "$RepoRoot\pyproject.toml") {
+    & "$InstallPath\venv\Scripts\pip.exe" install -e $RepoRoot -q
 } else {
-    & "$installPath\venv\Scripts\pip.exe" install scholarr==0.1.0 2>&1 | Select-Object -Last 5
+    & "$InstallPath\venv\Scripts\pip.exe" install scholarr -q
 }
 
-if ($LASTEXITCODE -ne 0) {
-    Write-Error-Custom "Failed to install Scholarr"
-    exit 1
-}
-
-# Create environment file
-Write-Status "Creating configuration file..."
-$envFile = "$dataPath\config\scholarr.env"
-$secretKey = (New-Object System.Guid).Guid
-
+# Generate config
+$ApiKey = & "$InstallPath\venv\Scripts\python.exe" -c "import secrets;print(secrets.token_urlsafe(32))"
+$DbPath = "$DataPath\data\scholarr.db" -replace '\\', '/'
+$ConfigFile = "$DataPath\config\scholarr.env"
 @"
-# Scholarr Environment Configuration
-# Generated during installation: $(Get-Date)
-
-SCHOLARR_ENVIRONMENT=production
+SCHOLARR_API_KEY=$ApiKey
+SCHOLARR_DATABASE_URL=sqlite+aiosqlite:///$DbPath
+SCHOLARR_DATA_DIR=$DataPath\data
+SCHOLARR_UPLOAD_DIR=$DataPath\uploads
+SCHOLARR_BACKUP_DIR=$DataPath\backups
 SCHOLARR_LOG_LEVEL=info
-SCHOLARR_DATABASE_URL=mysql+aiomysql://scholarr:scholarr_password@localhost:3306/scholarr
-SCHOLARR_SECRET_KEY=$secretKey
-"@ | Set-Content $envFile
+SCHOLARR_PORT=8787
+"@ | Set-Content $ConfigFile
 
-# Create batch wrapper script for running Scholarr
-Write-Status "Creating launcher script..."
-$launcherScript = "$installPath\scholarr.bat"
+# Launcher batch file
 @"
 @echo off
-cd /d "$installPath"
-venv\Scripts\activate.bat
-uvicorn scholarr.app:app --host 0.0.0.0 --port 8787 --log-level info
-"@ | Set-Content $launcherScript
+title Scholarr
+cd /d "$InstallPath"
+for /f "tokens=*" %%a in ($ConfigFile) do set %%a
+venv\Scripts\uvicorn.exe scholarr.app:create_app --factory --host 127.0.0.1 --port 8787
+"@ | Set-Content "$InstallPath\scholarr.bat"
 
-# Create Windows service using NSSM if available, otherwise create scheduled task
-Write-Status "Setting up Scholarr service..."
-
-$nssmPath = "C:\ProgramData\NSSM\nssm.exe"
-$useNssm = $false
-
-if (Test-Path $nssmPath) {
-    $useNssm = $true
-    Write-Status "Using NSSM to create Windows service..."
-
-    & $nssmPath install Scholarr "$installPath\venv\Scripts\python.exe" "-m uvicorn scholarr.app:app --host 0.0.0.0 --port 8787"
-    & $nssmPath set Scholarr AppDirectory "$installPath"
-    & $nssmPath set Scholarr AppEnvironmentExtra "SCHOLARR_DATABASE_URL=mysql+aiomysql://scholarr:scholarr_password@localhost:3306/scholarr"
-    & $nssmPath start Scholarr
-} else {
-    Write-Warning-Custom "NSSM not installed. Creating startup shortcut instead."
-    Write-Host "`nTo create a Windows service, download and install NSSM from: https://nssm.cc/"
-
-    # Create Start Menu shortcut
-    $startMenuPath = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Scholarr.lnk"
-    $shell = New-Object -ComObject WScript.Shell
-    $shortcut = $shell.CreateShortcut($startMenuPath)
-    $shortcut.TargetPath = "$installPath\scholarr.bat"
-    $shortcut.WorkingDirectory = $installPath
-    $shortcut.IconLocation = "C:\Windows\System32\cmd.exe,0"
-    $shortcut.Save()
-
-    Write-Status "Created Start Menu shortcut"
-}
-
-# Create Start Menu shortcut for launching application
-Write-Status "Creating application shortcuts..."
-$appShortcut = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Scholarr App.lnk"
-$shell = New-Object -ComObject WScript.Shell
-$shortcut = $shell.CreateShortcut($appShortcut)
-$shortcut.TargetPath = "http://localhost:8787"
-$shortcut.Save()
-
-# Create uninstaller script
-Write-Status "Creating uninstaller..."
-$uninstallerScript = "$installPath\uninstall.ps1"
+# Launcher PowerShell script
 @"
-#Requires -RunAsAdministrator
-
-`$nssmPath = "C:\ProgramData\NSSM\nssm.exe"
-if (Test-Path `$nssmPath) {
-    & `$nssmPath stop Scholarr
-    & `$nssmPath remove Scholarr confirm
-}
-
-Remove-Item -Path "$installPath" -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item -Path "$appShortcut" -ErrorAction SilentlyContinue
-Remove-Item -Path "$startMenuPath" -ErrorAction SilentlyContinue
-
-Write-Host "Scholarr has been uninstalled."
-"@ | Set-Content $uninstallerScript
-
-Write-Header "Installation Complete!"
-
-Write-Host "Installation path: $installPath"
-Write-Host "Data path: $dataPath"
-Write-Host "Configuration file: $envFile"
-Write-Host ""
-Write-Host "Next steps:" -ForegroundColor Cyan
-Write-Host "1. Set up MySQL database (or update credentials in: $envFile)"
-Write-Host "2. Review configuration at: $envFile"
-Write-Host "3. Start Scholarr:"
-Write-Host "   - If using NSSM: Service should be running"
-Write-Host "   - Otherwise: Double-click 'Scholarr' in Start Menu"
-Write-Host "4. Open browser to: http://localhost:8787"
-Write-Host ""
-
-# Option to start immediately
-$startNow = Read-Host "Start Scholarr now? (Y/n)"
-if ($startNow -eq "" -or $startNow.ToLower() -eq "y") {
-    if ($useNssm) {
-        Write-Status "Service is running"
-    } else {
-        Write-Status "Starting Scholarr..."
-        Start-Process -FilePath $launcherScript
+`$env:Path = "$InstallPath\venv\Scripts;" + `$env:Path
+Get-Content "$ConfigFile" | ForEach-Object {
+    if (`$_ -match '^([^#]\S+?)=(.*)$') {
+        [Environment]::SetEnvironmentVariable(`$Matches[1], `$Matches[2], 'Process')
     }
+}
+& "$InstallPath\venv\Scripts\uvicorn.exe" scholarr.app:create_app --factory --host 127.0.0.1 --port 8787
+"@ | Set-Content "$InstallPath\Start-Scholarr.ps1"
 
-    Write-Status "Opening browser..."
-    Start-Sleep -Seconds 2
+# Start Menu shortcut
+Write-Host "  Creating shortcuts..."
+$Shell = New-Object -ComObject WScript.Shell
+$Shortcut = $Shell.CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Scholarr.lnk")
+$Shortcut.TargetPath = "$InstallPath\scholarr.bat"
+$Shortcut.WorkingDirectory = $InstallPath
+$Shortcut.Description = "Scholarr Academic Manager"
+$Shortcut.Save()
+
+# Desktop shortcut
+$Desktop = $Shell.CreateShortcut("$env:USERPROFILE\Desktop\Scholarr.lnk")
+$Desktop.TargetPath = "$InstallPath\scholarr.bat"
+$Desktop.WorkingDirectory = $InstallPath
+$Desktop.Description = "Scholarr Academic Manager"
+$Desktop.Save()
+
+# Uninstaller
+@"
+Write-Host "Uninstalling Scholarr..."
+Remove-Item -Path "$InstallPath" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Scholarr.lnk" -ErrorAction SilentlyContinue
+Remove-Item -Path "$env:USERPROFILE\Desktop\Scholarr.lnk" -ErrorAction SilentlyContinue
+Write-Host "Scholarr uninstalled. Data preserved at: $DataPath"
+"@ | Set-Content "$InstallPath\Uninstall-Scholarr.ps1"
+
+Write-Host ""
+Write-Host "  Installation complete!" -ForegroundColor Green
+Write-Host ""
+Write-Host "  API Key: $ApiKey"
+Write-Host "  Config:  $ConfigFile"
+Write-Host "  Data:    $DataPath"
+Write-Host ""
+Write-Host "  Start: Double-click 'Scholarr' on Desktop or Start Menu"
+Write-Host "  Open:  http://localhost:8787"
+Write-Host ""
+
+$Start = Read-Host "  Start Scholarr now? (Y/n)"
+if ($Start -eq "" -or $Start.ToLower() -eq "y") {
+    Start-Process "$InstallPath\scholarr.bat"
+    Start-Sleep -Seconds 3
     Start-Process "http://localhost:8787"
 }
-
-Write-Host "`nTo uninstall, run: PowerShell -File `"$uninstallerScript`""

@@ -1,48 +1,18 @@
 [Unit]
-Description=Scholarr - Self-hosted academic file management
-Documentation=https://github.com/scholarr/scholarr
-After=network.target mysql.service
-Wants=mysql.service
+Description=Scholarr Academic Manager
+After=network.target
 
 [Service]
-Type=notify
+Type=simple
 User=scholarr
 Group=scholarr
-WorkingDirectory=/opt/scholarr
-
-EnvironmentFile=-/etc/scholarr/scholarr.env
-Environment="PATH=/opt/scholarr/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
-
-ExecStart=/opt/scholarr/venv/bin/uvicorn scholarr.app:app \
-    --host 0.0.0.0 \
-    --port 8787 \
-    --log-level info
-
-Restart=on-failure
-RestartSec=10
+EnvironmentFile=/etc/scholarr/scholarr.env
+WorkingDirectory=/var/lib/scholarr
+ExecStart=/opt/scholarr/venv/bin/uvicorn scholarr.app:create_app --factory --host 0.0.0.0 --port 8787
+Restart=always
+RestartSec=5
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=scholarr
-
-# Security hardening
-NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=yes
-ReadWritePaths=/home/scholarr/.config/scholarr \
-    /home/scholarr/.local/share/scholarr/library \
-    /home/scholarr/.local/share/scholarr/inbox
-
-PrivateTmp=yes
-ProtectKernelTunables=yes
-ProtectKernelModules=yes
-ProtectControlGroups=yes
-RestrictRealtime=yes
-RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
-LockPersonality=yes
-MemoryDenyWriteExecute=yes
-RestrictNamespaces=yes
-SystemCallFilter=@system-service
-SystemCallErrorNumber=EPERM
 
 [Install]
 WantedBy=multi-user.target
