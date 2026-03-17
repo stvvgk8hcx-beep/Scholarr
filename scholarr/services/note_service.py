@@ -103,6 +103,8 @@ class NoteService:
             await self._prune_backups(obj.id)
 
         update = data.model_dump(exclude_unset=True)
+        # Don't allow setting required fields to None
+        update = {k: v for k, v in update.items() if v is not None or k in ("content", "course_id", "preferences")}
         if "preferences" in update and isinstance(update["preferences"], dict):
             update["preferences"] = json.dumps(update["preferences"])
         for key, val in update.items():

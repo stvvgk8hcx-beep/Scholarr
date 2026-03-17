@@ -115,6 +115,8 @@ class ManualImportService:
 
         try:
             data = await file.read()
+            if len(data) == 0:
+                return {"success": False, "message": "Empty file", "imported_count": 0, "failed_count": 1, "errors": ["File is empty"]}
             file_hash = _sha256(data)
 
             # Check duplicate

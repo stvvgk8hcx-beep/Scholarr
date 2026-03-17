@@ -20,9 +20,18 @@ class CourseCreate(BaseModel):
     sort_name: Optional[str] = Field(default=None, max_length=255)
     clean_name: Optional[str] = Field(default=None, max_length=255)
     location: Optional[str] = Field(default=None, max_length=255)
-    schedule: Optional[List[Dict[str, Any]]] = None  # [{day, start, end}]
+    schedule: Optional[List[Dict[str, Any]]] = None
     notes: Optional[str] = None
-    grade_weights: Optional[Dict[str, float]] = None  # {type: weight%}
+    grade_weights: Optional[Dict[str, float]] = None
+
+    @field_validator("grade_weights")
+    @classmethod
+    def validate_weights(cls, v):
+        if v is not None:
+            for key, val in v.items():
+                if val < 0 or val > 100:
+                    raise ValueError(f"Weight for '{key}' must be between 0 and 100, got {val}")
+        return v
 
 
 class CourseUpdate(BaseModel):
@@ -40,7 +49,16 @@ class CourseUpdate(BaseModel):
     location: Optional[str] = Field(default=None, max_length=255)
     schedule: Optional[List[Dict[str, Any]]] = None
     notes: Optional[str] = None
-    grade_weights: Optional[Dict[str, float]] = None  # {type: weight%}
+    grade_weights: Optional[Dict[str, float]] = None
+
+    @field_validator("grade_weights")
+    @classmethod
+    def validate_weights(cls, v):
+        if v is not None:
+            for key, val in v.items():
+                if val < 0 or val > 100:
+                    raise ValueError(f"Weight for '{key}' must be between 0 and 100, got {val}")
+        return v
 
 
 class CourseResponse(BaseModel):
