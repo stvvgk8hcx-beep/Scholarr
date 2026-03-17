@@ -200,6 +200,7 @@ body {
 .tool-row:hover .vol-wrap { opacity: 1; pointer-events: auto; }
 .vol-s {
     -webkit-appearance: none;
+    appearance: none;
     width: 70px; height: 3px;
     background: rgba(255,255,255,0.1);
     border-radius: 2px; outline: none;
@@ -311,6 +312,7 @@ body.dark-mode { --ed-text-current: #d8dae8; }
 .color-row input[type=range] {
     width: 70px; height: 3px;
     -webkit-appearance: none;
+    appearance: none;
     background: rgba(255,255,255,0.1);
     border-radius: 2px; outline: none;
 }
@@ -618,7 +620,7 @@ body.dark-mode { --ed-text-current: #d8dae8; }
    Scholarr Note Editor — OmmWriter-inspired
    ══════════════════════════════════════════════════════════ */
 const API_KEY = "{{ api_key }}";
-const NOTE_ID = {{ note_id }};
+const NOTE_ID = parseInt("{{ note_id }}");
 
 // ── State ─────────────────────────────────────────────────
 let saveTimer = null;
