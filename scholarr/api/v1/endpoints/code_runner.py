@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 class RunCodeRequest(BaseModel):
-    language: str = Field(..., pattern="^(python|javascript|bash)$")
+    language: str = Field(..., pattern="^(python|javascript|bash|zsh)$")
     code: str = Field(..., max_length=50000)
 
 
