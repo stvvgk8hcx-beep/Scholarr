@@ -134,13 +134,13 @@ async function loadSemesters() {
                 </div>
                 <div class="semester-actions">
                     <button class="btn btn-secondary btn-small" onclick="openEditModal(${s.id})">Edit</button>
-                    ${!s.active ? `<button class="btn btn-small" style="background:#27ae60;border-color:#27ae60;" onclick="setActive(${s.id})">Set Active</button>` : ''}
-                    <button class="btn btn-small" style="background:#d9534f;border-color:#d9534f;margin-left:auto;" onclick="deleteSemester(${s.id})">Delete</button>
+                    ${!s.active ? `<button class="btn btn-small" style="background:var(--success);border-color:var(--success);" onclick="setActive(${s.id})">Set Active</button>` : ''}
+                    <button class="btn btn-small" style="background:var(--danger);border-color:var(--danger);margin-left:auto;" onclick="deleteSemester(${s.id})">Delete</button>
                 </div>
             </div>
         `).join('');
     } catch(e) {
-        container.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#d9534f;">Error loading semesters: ${e.message}</div>`;
+        container.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--danger);">Error loading semesters: ${e.message}</div>`;
     }
 }
 

@@ -158,7 +158,7 @@ async function fetchActivity(reset) {
     } catch(e) {
         if (actPage === 1) {
             document.getElementById('activityTimeline').innerHTML =
-                `<div style="text-align:center;padding:40px;color:#d9534f;">Could not load activity: ${e.message}</div>`;
+                `<div style="text-align:center;padding:40px;color:var(--danger);">Could not load activity: ${e.message}</div>`;
         }
     }
 }

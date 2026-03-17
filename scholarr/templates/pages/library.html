@@ -313,8 +313,7 @@ function renderFiles() {
         `;
     }).join('');
 
-    renderPagination(total, FILE_PAGE_SIZE, filePage,
-        (p) => { filePage = p; renderFiles(); }, 'files-pagination');
+    window.renderPagination(total, FILE_PAGE_SIZE, filePage, 'goToFilePage', 'files-pagination');
 }
 
 function selectFile(id) {
@@ -521,16 +520,7 @@ function formatBytes(bytes) {
 
 function goToFilePage(p) { filePage = p; renderFiles(); }
 
-function renderPagination(total, pageSize, current, onPage, containerId) {
-    const pages = Math.ceil(total / pageSize);
-    const el = document.getElementById(containerId);
-    if (pages <= 1) { el.innerHTML = ''; return; }
-    let html = '';
-    if (current > 1) html += `<button class="btn btn-secondary btn-small" onclick="goToFilePage(${current-1})">Prev</button>`;
-    html += `<span style="padding:6px 12px;color:var(--text-secondary);font-size:0.9em;">Page ${current} of ${pages}</span>`;
-    if (current < pages) html += `<button class="btn btn-secondary btn-small" onclick="goToFilePage(${current+1})">Next</button>`;
-    el.innerHTML = html;
-}
+// uses global renderPagination from base.html
 
 // API key already in window.SCHOLARR_API_KEY from base template
 </script>

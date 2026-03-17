@@ -139,14 +139,14 @@ async function loadCourses() {
                 </td>
                 <td onclick="event.stopPropagation()" style="display:flex;gap:6px;">
                     <a href="/courses/${c.id}" class="btn btn-secondary btn-small">View</a>
-                    <button class="btn btn-small" style="background:#d9534f;border-color:#d9534f;" onclick="deleteCourse(${c.id}, this)">Del</button>
+                    <button class="btn btn-small" style="background:var(--danger);border-color:var(--danger);" onclick="deleteCourse(${c.id}, this)">Del</button>
                 </td>
             </tr>
         `).join('');
 
-        renderPagination(total, PAGE_SIZE, coursePage, (p) => { coursePage = p; loadCourses(); }, 'courses-pagination');
+        window.renderPagination(total, PAGE_SIZE, coursePage, 'goToCoursePage', 'courses-pagination');
     } catch(e) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:#d9534f;">Error: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--danger);">Error: ${e.message}</td></tr>`;
     }
 }
 
@@ -163,15 +163,7 @@ async function deleteCourse(id, btn) {
     }
 }
 
-function renderPagination(total, pageSize, current, onPage, containerId) {
-    const pages = Math.ceil(total / pageSize);
-    const el = document.getElementById(containerId);
-    if (pages <= 1) { el.innerHTML = ''; return; }
-    let html = '';
-    if (current > 1) html += `<button class="btn btn-secondary btn-small" onclick="(${onPage})(${current-1})">← Prev</button>`;
-    html += `<span style="padding:6px 12px;color:var(--text-secondary);font-size:0.9em;">Page ${current} of ${pages}</span>`;
-    if (current < pages) html += `<button class="btn btn-secondary btn-small" onclick="(${onPage})(${current+1})">Next →</button>`;
-    el.innerHTML = html;
-}
+function goToCoursePage(p) { coursePage = p; loadCourses(); }
+// uses global renderPagination from base.html
 </script>
 {% endblock %}

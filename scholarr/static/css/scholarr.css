@@ -848,7 +848,17 @@ button:disabled {
 @media (max-width: 1200px) { .grid-3 { grid-template-columns: repeat(2,1fr); } }
 @media (max-width: 768px)  { .grid, .grid-2, .grid-3 { grid-template-columns: 1fr; } }
 
-/* ── Responsive ──────────────────────────────────────────────── */
+/* ── Responsive: tablet ──────────────────────────────────────── */
+@media (max-width: 960px) {
+  /* Stack two-column grids */
+  [style*="grid-template-columns:1fr 340px"],
+  [style*="grid-template-columns:1fr 320px"] {
+    grid-template-columns: 1fr !important;
+  }
+  .lib-layout { grid-template-columns: 1fr !important; }
+}
+
+/* ── Responsive: mobile ─────────────────────────────────────── */
 @media (max-width: 768px) {
   .app-container { flex-direction: column; }
 

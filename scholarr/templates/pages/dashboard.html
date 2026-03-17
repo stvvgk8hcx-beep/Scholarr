@@ -18,7 +18,7 @@
             <div class="stat-value" id="dash-items-count">—</div>
             <div style="font-size:0.8em;color:var(--text-secondary);margin-top:6px;">Total academic items</div>
         </div>
-        <div class="stat-card" style="border-left:3px solid #f0ad4e;">
+        <div class="stat-card" style="border-left:3px solid var(--warning);">
             <div class="stat-label">Due This Week</div>
             <div class="stat-value" id="dash-upcoming-count">—</div>
             <div style="font-size:0.8em;color:var(--text-secondary);margin-top:6px;">Deadlines in 7 days</div>
@@ -200,8 +200,8 @@ async function loadGradeSummary() {
         const total = allItems.length || 1;
         const statuses = [
             { key: 'Complete', label: 'Complete', color: 'var(--accent)' },
-            { key: 'Graded', label: 'Graded', color: '#5bc0de' },
-            { key: 'Submitted', label: 'Submitted', color: '#5cb85c' },
+            { key: 'Graded', label: 'Graded', color: 'var(--info)' },
+            { key: 'Submitted', label: 'Submitted', color: 'var(--success)' },
             { key: 'InProgress', label: 'In Progress', color: 'var(--warning)' },
             { key: 'NotStarted', label: 'Not Started', color: 'var(--text-muted)' },
             { key: 'Late', label: 'Late', color: 'var(--danger)' },

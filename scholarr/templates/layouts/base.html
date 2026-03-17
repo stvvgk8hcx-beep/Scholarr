@@ -175,6 +175,47 @@
             if (diffDays < 7) return `${diffDays}d ago`;
             return date.toLocaleDateString();
         };
+
+        // ── Global pagination renderer ─────────────────────────────
+        window.renderPagination = function(total, pageSize, current, onPageFnName, containerId) {
+            const pages = Math.ceil(total / pageSize);
+            const el = document.getElementById(containerId);
+            if (!el) return;
+            if (pages <= 1) { el.innerHTML = ''; return; }
+            let html = '';
+            if (current > 1) html += `<button class="btn btn-secondary btn-small" onclick="${onPageFnName}(${current-1})">Prev</button>`;
+            html += `<span style="padding:6px 12px;color:var(--text-secondary);font-size:0.9em;">Page ${current} of ${pages}</span>`;
+            if (current < pages) html += `<button class="btn btn-secondary btn-small" onclick="${onPageFnName}(${current+1})">Next</button>`;
+            el.innerHTML = html;
+        };
+
+        // ── Global keyboard helpers ────────────────────────────────
+        document.addEventListener('keydown', function(e) {
+            // Escape closes any visible modal
+            if (e.key === 'Escape') {
+                document.querySelectorAll('[id$="Modal"],[id$="-modal"]').forEach(m => {
+                    if (m.style.display === 'flex' || m.classList.contains('show')) {
+                        m.style.display = 'none';
+                        m.classList.remove('show');
+                    }
+                });
+            }
+        });
+
+        // ── Async button helper (disable during operation) ─────────
+        window.asyncBtn = async function(btn, fn) {
+            if (!btn || btn.disabled) return;
+            const origText = btn.textContent;
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            try {
+                await fn();
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '';
+                btn.textContent = origText;
+            }
+        };
     </script>
 </body>
 </html>

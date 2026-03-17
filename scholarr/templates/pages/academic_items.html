@@ -270,6 +270,8 @@ async function loadCourseFilter() {
     } catch(e) { /* ignore */ }
 }
 
+function goToItemPage(p) { itemPage = p; loadItems(); }
+
 async function loadItems() {
     const search = document.getElementById('item-search').value.trim();
     const type = document.getElementById('item-type').value;
@@ -310,15 +312,14 @@ async function loadItems() {
                 <td class="grade-cell">${item.grade !== null && item.grade !== undefined ? item.grade + '%' : '—'}</td>
                 <td style="display:flex;gap:6px;">
                     <button class="btn btn-secondary btn-small" onclick="editItem(${item.id})">Edit</button>
-                    <button class="btn btn-small" style="background:#d9534f;border-color:#d9534f;" onclick="deleteItem(${item.id}, this)">Del</button>
+                    <button class="btn btn-small" style="background:var(--danger);border-color:var(--danger);" onclick="deleteItem(${item.id}, this)">Del</button>
                 </td>
             </tr>
         `).join('');
 
-        renderPagination(total, ITEM_PAGE_SIZE, itemPage,
-            (p) => { itemPage = p; loadItems(); }, 'items-pagination');
+        window.renderPagination(total, ITEM_PAGE_SIZE, itemPage, 'goToItemPage', 'items-pagination');
     } catch(e) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:#d9534f;">Error: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--danger);">Error: ${e.message}</td></tr>`;
     }
 }
 
@@ -432,16 +433,7 @@ async function deleteItem(id, btn) {
     }
 }
 
-function renderPagination(total, pageSize, current, onPage, containerId) {
-    const pages = Math.ceil(total / pageSize);
-    const el = document.getElementById(containerId);
-    if (pages <= 1) { el.innerHTML = ''; return; }
-    let html = '';
-    if (current > 1) html += `<button class="btn btn-secondary btn-small" onclick="(${onPage})(${current-1})">← Prev</button>`;
-    html += `<span style="padding:6px 12px;color:var(--text-secondary);font-size:0.9em;">Page ${current} of ${pages} (${total} total)</span>`;
-    if (current < pages) html += `<button class="btn btn-secondary btn-small" onclick="(${onPage})(${current+1})">Next →</button>`;
-    el.innerHTML = html;
-}
+// uses global renderPagination from base.html
 
 async function exportItemsCSV() {
     try {

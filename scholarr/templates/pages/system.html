@@ -12,9 +12,9 @@
 .srow:last-child { border-bottom: none; }
 .slabel { color: var(--text-secondary); }
 .sval { color: var(--text-primary); font-weight: 600; }
-.badge-ok { background: rgba(92,184,92,0.2); color: #5cb85c; padding: 3px 10px; border-radius: 3px; font-size: 0.8em; font-weight: 600; }
-.badge-warn { background: rgba(240,173,78,0.2); color: #f0ad4e; padding: 3px 10px; border-radius: 3px; font-size: 0.8em; font-weight: 600; }
-.badge-err { background: rgba(217,83,79,0.2); color: #d9534f; padding: 3px 10px; border-radius: 3px; font-size: 0.8em; font-weight: 600; }
+.badge-ok { background: rgba(92,184,92,0.2); color: var(--success); padding: 3px 10px; border-radius: 3px; font-size: 0.8em; font-weight: 600; }
+.badge-warn { background: rgba(240,173,78,0.2); color: var(--warning); padding: 3px 10px; border-radius: 3px; font-size: 0.8em; font-weight: 600; }
+.badge-err { background: rgba(217,83,79,0.2); color: var(--danger); padding: 3px 10px; border-radius: 3px; font-size: 0.8em; font-weight: 600; }
 .progress-bar { background: var(--bg-tertiary); border-radius: 3px; height: 8px; margin: 8px 0; overflow: hidden; }
 .progress-fill { background: var(--accent-blue); height: 100%; border-radius: 3px; transition: width 0.4s; }
 .log-viewer { background: #0a0a0a; border: 1px solid var(--border-color); border-radius: 4px; padding: 14px; font-family: monospace; font-size: 0.83em; max-height: 380px; overflow-y: auto; color: #6bcf7f; line-height: 1.5; }
@@ -126,7 +126,7 @@ async function loadSystemStatus() {
             document.getElementById('disk-label').textContent = pct.toFixed(1) + '% used';
             document.getElementById('disk-bar').style.width = pct + '%';
             document.getElementById('disk-bar').style.background =
-                pct > 90 ? '#d9534f' : pct > 75 ? '#f0ad4e' : 'var(--accent-blue)';
+                pct > 90 ? 'var(--danger)' : pct > 75 ? 'var(--warning)' : 'var(--accent-blue)';
             document.getElementById('disk-total').textContent = (disk.total_gb || 0).toFixed(1) + ' GB';
             document.getElementById('disk-used').textContent = (disk.used_gb || 0).toFixed(1) + ' GB';
             document.getElementById('disk-free').textContent = (disk.available_gb || 0).toFixed(1) + ' GB';
@@ -171,7 +171,7 @@ async function loadHealth() {
                 </div>`;
             }).join('') + '</div>';
     } catch(e) {
-        el.innerHTML = `<div style="color:#d9534f;">Could not load health checks: ${e.message}</div>`;
+        el.innerHTML = `<div style="color:var(--danger);">Could not load health checks: ${e.message}</div>`;
     }
 }
 

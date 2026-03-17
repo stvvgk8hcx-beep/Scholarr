@@ -40,7 +40,7 @@
     padding-top: 20px;
     border-top: 1px solid var(--border-color);
 }
-.danger-zone h4 { color: #d9534f; margin-bottom: 12px; }
+.danger-zone h4 { color: var(--danger); margin-bottom: 12px; }
 </style>
 {% endblock %}
 
@@ -181,7 +181,7 @@
             <div class="danger-zone">
                 <h4>Danger Zone</h4>
                 <p style="color:var(--text-secondary);font-size:0.88em;margin-bottom:12px;">Delete this course and all its data. This cannot be undone.</p>
-                <button class="btn" style="background:#d9534f;border-color:#d9534f;" onclick="deleteCourse()">Delete Course</button>
+                <button class="btn" style="background:var(--danger);border-color:var(--danger);" onclick="deleteCourse()">Delete Course</button>
             </div>
         </div>
     </div>
@@ -304,7 +304,7 @@ async function loadItems() {
                 </tr>`).join('')}
             </tbody></table></div>`;
     } catch(e) {
-        el.innerHTML = `<div style="padding:20px;color:#d9534f;">Error: ${e.message}</div>`;
+        el.innerHTML = `<div style="padding:20px;color:var(--danger);">Error: ${e.message}</div>`;
     }
 }
 
@@ -351,7 +351,7 @@ async function loadFiles() {
             }).join('')}
             </tbody></table></div>`;
     } catch(e) {
-        el.innerHTML = `<div style="padding:20px;color:#d9534f;">Error: ${e.message}</div>`;
+        el.innerHTML = `<div style="padding:20px;color:var(--danger);">Error: ${e.message}</div>`;
     }
 }
 
@@ -500,7 +500,7 @@ async function loadActivity() {
             </div>
         `).join('');
     } catch(e) {
-        el.innerHTML = `<div style="padding:20px;color:#d9534f;">Error: ${e.message}</div>`;
+        el.innerHTML = `<div style="padding:20px;color:var(--danger);">Error: ${e.message}</div>`;
     }
 }
 </script>
