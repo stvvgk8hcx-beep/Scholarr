@@ -1,9 +1,10 @@
 """Course schemas."""
 
+import json
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class CourseCreate(BaseModel):
@@ -19,6 +20,7 @@ class CourseCreate(BaseModel):
     sort_name: Optional[str] = Field(default=None, max_length=255)
     clean_name: Optional[str] = Field(default=None, max_length=255)
     notes: Optional[str] = None
+    grade_weights: Optional[Dict[str, float]] = None  # {type: weight%}
 
 
 class CourseUpdate(BaseModel):
@@ -34,6 +36,7 @@ class CourseUpdate(BaseModel):
     sort_name: Optional[str] = Field(default=None, max_length=255)
     clean_name: Optional[str] = Field(default=None, max_length=255)
     notes: Optional[str] = None
+    grade_weights: Optional[Dict[str, float]] = None  # {type: weight%}
 
 
 class CourseResponse(BaseModel):
@@ -54,8 +57,19 @@ class CourseResponse(BaseModel):
     sort_name: Optional[str]
     clean_name: Optional[str]
     notes: Optional[str]
+    grade_weights: Optional[Dict[str, float]] = None
     created_at: datetime
     updated_at: datetime
+
+    @field_validator("grade_weights", mode="before")
+    @classmethod
+    def parse_grade_weights(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except Exception:
+                return None
+        return v
 
 
 class CourseListResponse(BaseModel):

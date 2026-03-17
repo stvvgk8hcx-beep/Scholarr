@@ -5,153 +5,310 @@
 
 {% block extra_css %}
 <style>
+.lib-layout { display: grid; grid-template-columns: 1fr 320px; gap: 16px; align-items: start; }
+@media (max-width: 900px) { .lib-layout { grid-template-columns: 1fr; } }
+
 .file-filters {
     background: var(--bg-secondary);
-    padding: 16px;
+    padding: 14px 16px;
     border-radius: 4px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     border: 1px solid var(--border-color);
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    align-items: flex-end;
+    display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
 }
-.file-filters .form-group { margin-bottom: 0; flex: 1; min-width: 140px; }
+.file-filters .form-group { margin-bottom: 0; flex: 1; min-width: 130px; }
+
 .file-ext {
     display: inline-block;
     background: var(--bg-tertiary);
-    padding: 2px 7px;
+    padding: 2px 6px;
     border-radius: 2px;
-    font-size: 0.75em;
-    font-weight: 600;
+    font-size: 0.72em;
+    font-weight: 700;
     color: var(--accent-blue);
     font-family: monospace;
+    letter-spacing: 0.5px;
 }
+.file-row { cursor: pointer; transition: background 0.1s; }
+.file-row:hover { background: var(--bg-tertiary) !important; }
+.file-row.selected { background: rgba(var(--accent-rgb, 46,207,161), 0.08) !important; }
+
+.meta-panel {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+    position: sticky;
+    top: 16px;
+}
+.meta-panel-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    font-size: 0.92em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.meta-field { padding: 10px 16px; border-bottom: 1px solid var(--border-color); }
+.meta-field:last-child { border-bottom: none; }
+.meta-label { font-size: 0.75em; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+.meta-value { font-size: 0.88em; color: var(--text-primary); word-break: break-all; }
+.meta-actions { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+
+.upload-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: 6px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    margin-bottom: 14px;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(var(--accent-rgb, 46,207,161), 0.05);
+}
+.upload-zone input[type=file] { display: none; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div style="display:flex;flex-direction:column;gap:0;">
 
-    <!-- Filters -->
-    <div class="file-filters">
-        <div class="form-group">
-            <label>Search Files</label>
-            <input type="text" id="lib-search" placeholder="Search by filename..." oninput="debouncedLoad()">
-        </div>
-        <div class="form-group">
-            <label>Format</label>
-            <input type="text" id="lib-format" placeholder="e.g. pdf, docx" oninput="debouncedLoad()">
-        </div>
-    </div>
-
     <!-- Stats bar -->
-    <div style="display:flex;gap:16px;margin-bottom:12px;">
-        <div class="stat-card" style="flex:1;padding:12px 18px;">
+    <div style="display:flex;gap:12px;margin-bottom:14px;">
+        <div class="stat-card" style="flex:1;padding:10px 16px;">
             <div class="stat-label">Total Files</div>
             <div class="stat-value" id="lib-total-files">—</div>
         </div>
-        <div class="stat-card" style="flex:1;padding:12px 18px;">
+        <div class="stat-card" style="flex:1;padding:10px 16px;">
             <div class="stat-label">Total Size</div>
             <div class="stat-value" id="lib-total-size">—</div>
         </div>
+        <div class="stat-card" style="flex:1;padding:10px 16px;">
+            <div class="stat-label">Courses</div>
+            <div class="stat-value" id="lib-course-count">—</div>
+        </div>
     </div>
 
-    <!-- Table -->
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Filename</th>
-                    <th>Format</th>
-                    <th>Size</th>
-                    <th>Version</th>
-                    <th>Date Imported</th>
-                    <th>Hash</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="files-tbody">
-                <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-secondary);">Loading files...</td></tr>
-            </tbody>
-        </table>
-    </div>
+    <div class="lib-layout">
+        <!-- Left: filters + table -->
+        <div>
+            <!-- Upload zone -->
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.md,.py,.jpg,.jpeg,.png,.zip" onchange="handleFileSelect(this.files)">
+                <div style="font-size:0.9em;color:var(--text-secondary);margin-bottom:6px;">Drop files here or click to upload</div>
+                <div style="font-size:0.78em;color:var(--text-muted);">PDF, DOCX, PPTX, TXT, MD, PY, images, ZIP</div>
+                <div id="upload-status" style="margin-top:10px;font-size:0.82em;color:var(--accent);display:none;"></div>
+            </div>
 
-    <div id="files-pagination" style="display:flex;justify-content:center;gap:8px;margin-top:12px;"></div>
+            <!-- Filters -->
+            <div class="file-filters">
+                <div class="form-group">
+                    <label>Search</label>
+                    <input type="text" id="lib-search" placeholder="Filename, course..." oninput="debouncedRender()">
+                </div>
+                <div class="form-group">
+                    <label>Course</label>
+                    <select id="lib-course" onchange="renderFiles()">
+                        <option value="">All Courses</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Format</label>
+                    <select id="lib-format" onchange="renderFiles()">
+                        <option value="">All Formats</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:40%;">Filename</th>
+                            <th>Course</th>
+                            <th>Academic Item</th>
+                            <th>Size</th>
+                            <th>Imported</th>
+                        </tr>
+                    </thead>
+                    <tbody id="files-tbody">
+                        <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-secondary);">Loading files...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="files-pagination" style="display:flex;justify-content:center;gap:8px;margin-top:12px;"></div>
+        </div>
+
+        <!-- Right: metadata panel -->
+        <div class="meta-panel" id="metaPanel">
+            <div class="meta-panel-header">
+                <span>File Details</span>
+            </div>
+            <div id="metaContent" style="padding:24px;text-align:center;color:var(--text-muted);font-size:0.88em;">
+                Select a file to view details and actions
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload dialog: select academic item -->
+<div id="uploadModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-primary);border:1px solid var(--border-color);border-radius:8px;padding:24px;width:480px;max-width:95vw;">
+        <h3 style="margin-bottom:16px;font-size:1em;">Attach Files to Academic Item</h3>
+        <div class="form-group">
+            <label>Academic Item</label>
+            <select id="upload-item-select" style="width:100%;"></select>
+        </div>
+        <div id="upload-files-list" style="margin:12px 0;font-size:0.85em;color:var(--text-secondary);"></div>
+        <div id="upload-modal-status" style="margin-bottom:10px;font-size:0.82em;"></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+            <button class="btn btn-secondary" onclick="closeUploadModal()">Cancel</button>
+            <button class="btn" id="upload-confirm-btn" onclick="confirmUpload()">Upload</button>
+        </div>
+    </div>
+</div>
+
+<!-- Rename modal -->
+<div id="renameModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-primary);border:1px solid var(--border-color);border-radius:8px;padding:24px;width:440px;max-width:95vw;">
+        <h3 style="margin-bottom:16px;font-size:1em;">Rename File</h3>
+        <div class="form-group">
+            <label>New Filename</label>
+            <input type="text" id="rename-input" style="width:100%;">
+        </div>
+        <div id="rename-error" style="color:var(--danger);font-size:0.82em;margin-bottom:8px;display:none;"></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+            <button class="btn btn-secondary" onclick="document.getElementById('renameModal').style.display='none'">Cancel</button>
+            <button class="btn" onclick="confirmRename()">Rename</button>
+        </div>
+    </div>
+</div>
+
+<!-- Move modal -->
+<div id="moveModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-primary);border:1px solid var(--border-color);border-radius:8px;padding:24px;width:480px;max-width:95vw;">
+        <h3 style="margin-bottom:16px;font-size:1em;">Move to Academic Item</h3>
+        <div class="form-group">
+            <label>Target Academic Item</label>
+            <select id="move-item-select" style="width:100%;"></select>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+            <button class="btn btn-secondary" onclick="document.getElementById('moveModal').style.display='none'">Cancel</button>
+            <button class="btn" onclick="confirmMove()">Move</button>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-let filePage = 1;
-const FILE_PAGE_SIZE = 25;
 let allFiles = [];
+let filteredFiles = [];
+let filePage = 1;
+const FILE_PAGE_SIZE = 30;
+let selectedFileId = null;
+let pendingUploadFiles = [];
+let allItems = [];
 let debounceTimer = null;
 
-document.addEventListener('DOMContentLoaded', function() {
-    loadFiles();
+document.addEventListener('DOMContentLoaded', async function() {
+    await Promise.all([loadFiles(), loadItems()]);
+    setupDragDrop();
 });
 
-function debouncedLoad() {
+function debouncedRender() {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => { filePage = 1; renderFiles(); }, 300);
+    debounceTimer = setTimeout(() => { filePage = 1; renderFiles(); }, 250);
+}
+
+async function loadItems() {
+    try {
+        const data = await API.get('/api/v1/academic-items?page=1&page_size=500');
+        allItems = Array.isArray(data) ? data : (data.items || []);
+        // Populate move/upload selects
+        const opts = allItems.map(i =>
+            `<option value="${i.id}">[${i.course_code || 'No course'}] ${i.name}</option>`
+        ).join('');
+        document.getElementById('upload-item-select').innerHTML = opts;
+        document.getElementById('move-item-select').innerHTML = opts;
+    } catch(e) { console.error('Could not load items', e); }
 }
 
 async function loadFiles() {
     const tbody = document.getElementById('files-tbody');
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-secondary);">Loading...</td></tr>';
-
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-secondary);">Loading...</td></tr>';
     try {
         allFiles = await API.get('/api/v1/files');
         if (!Array.isArray(allFiles)) allFiles = allFiles.items || [];
+
+        // Populate course filter
+        const courses = [...new Set(allFiles.map(f => f.course_code).filter(Boolean))].sort();
+        const sel = document.getElementById('lib-course');
+        sel.innerHTML = '<option value="">All Courses</option>' +
+            courses.map(c => `<option value="${c}">${c}</option>`).join('');
+
+        // Populate format filter
+        const formats = [...new Set(allFiles.map(f => f.format).filter(Boolean))].sort();
+        const fmtSel = document.getElementById('lib-format');
+        fmtSel.innerHTML = '<option value="">All Formats</option>' +
+            formats.map(f => `<option value="${f}">${f.toUpperCase()}</option>`).join('');
+
+        // Stats
+        document.getElementById('lib-total-files').textContent = allFiles.length;
+        const totalSize = allFiles.reduce((a, f) => a + (f.size || 0), 0);
+        document.getElementById('lib-total-size').textContent = formatBytes(totalSize);
+        const courseSet = new Set(allFiles.map(f => f.course_id).filter(Boolean));
+        document.getElementById('lib-course-count').textContent = courseSet.size;
+
         filePage = 1;
         renderFiles();
-
-        // Update stats
-        document.getElementById('lib-total-files').textContent = allFiles.length;
-        const totalSize = allFiles.reduce((acc, f) => acc + (f.size || 0), 0);
-        document.getElementById('lib-total-size').textContent = formatBytes(totalSize);
     } catch(e) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;color:#d9534f;">Error: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--danger);">Error: ${e.message}</td></tr>`;
     }
 }
 
 function renderFiles() {
     const search = document.getElementById('lib-search').value.trim().toLowerCase();
-    const format = document.getElementById('lib-format').value.trim().toLowerCase();
+    const course = document.getElementById('lib-course').value;
+    const fmt = document.getElementById('lib-format').value;
 
-    let filtered = allFiles;
-    if (search) filtered = filtered.filter(f => (f.original_filename || f.path || '').toLowerCase().includes(search));
-    if (format) filtered = filtered.filter(f => (f.format || '').toLowerCase().includes(format));
+    filteredFiles = allFiles.filter(f => {
+        const name = (f.original_filename || f.path || '').toLowerCase();
+        if (search && !name.includes(search) && !(f.course_code || '').toLowerCase().includes(search) && !(f.item_name || '').toLowerCase().includes(search)) return false;
+        if (course && f.course_code !== course) return false;
+        if (fmt && f.format !== fmt) return false;
+        return true;
+    });
 
     const tbody = document.getElementById('files-tbody');
-    const total = filtered.length;
+    const total = filteredFiles.length;
     const start = (filePage - 1) * FILE_PAGE_SIZE;
-    const page = filtered.slice(start, start + FILE_PAGE_SIZE);
+    const page = filteredFiles.slice(start, start + FILE_PAGE_SIZE);
 
     if (!page.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-secondary);">No files found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-secondary);">No files found.</td></tr>';
         document.getElementById('files-pagination').innerHTML = '';
         return;
     }
 
     tbody.innerHTML = page.map(f => {
-        const name = f.original_filename || f.path || '—';
+        const name = f.original_filename || f.path.split('/').pop() || '—';
         const ext = (f.format || name.split('.').pop() || '?').toUpperCase();
+        const selected = f.id === selectedFileId ? ' selected' : '';
         return `
-            <tr>
-                <td style="font-weight:500;word-break:break-all;">
+            <tr class="file-row${selected}" onclick="selectFile(${f.id})" data-id="${f.id}">
+                <td style="font-weight:500;">
                     <span class="file-ext">${ext}</span>
-                    ${name}
+                    <span style="margin-left:6px;word-break:break-word;">${name}</span>
                 </td>
-                <td style="color:var(--text-secondary);">${f.format || '—'}</td>
-                <td style="color:var(--text-secondary);">${formatBytes(f.size || 0)}</td>
-                <td style="color:var(--text-secondary);">v${f.version || 1}</td>
-                <td style="color:var(--text-secondary);">${formatDate(f.date_imported || f.created_at)}</td>
-                <td style="font-family:monospace;font-size:0.75em;color:var(--text-secondary);">${(f.hash || '').slice(0,12)}${(f.hash||'').length > 12 ? '…' : ''}</td>
-                <td>
-                    <button class="btn btn-small" style="background:#d9534f;border-color:#d9534f;" onclick="deleteFile(${f.id}, this)">Del</button>
-                </td>
+                <td style="color:var(--text-secondary);font-size:0.85em;">${f.course_code || '—'}</td>
+                <td style="color:var(--text-secondary);font-size:0.85em;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f.item_name || '—'}</td>
+                <td style="color:var(--text-secondary);font-size:0.85em;">${formatBytes(f.size || 0)}</td>
+                <td style="color:var(--text-secondary);font-size:0.85em;">${formatDate(f.date_imported || f.created_at)}</td>
             </tr>
         `;
     }).join('');
@@ -160,40 +317,221 @@ function renderFiles() {
         (p) => { filePage = p; renderFiles(); }, 'files-pagination');
 }
 
-async function deleteFile(id, btn) {
-    if (!confirm('Delete this file record?')) return;
+function selectFile(id) {
+    selectedFileId = id;
+    // Update selected state
+    document.querySelectorAll('.file-row').forEach(r => r.classList.remove('selected'));
+    const row = document.querySelector(`[data-id="${id}"]`);
+    if (row) row.classList.add('selected');
+    showFileMeta(id);
+}
+
+function showFileMeta(id) {
+    const f = allFiles.find(f => f.id === id);
+    if (!f) return;
+    const name = f.original_filename || f.path.split('/').pop() || '—';
+    const ext = (f.format || '').toUpperCase() || '?';
+    document.getElementById('metaContent').innerHTML = `
+        <div class="meta-field">
+            <div class="meta-label">Filename</div>
+            <div class="meta-value" style="font-weight:600;">${name}</div>
+        </div>
+        <div class="meta-field">
+            <div class="meta-label">Format</div>
+            <div class="meta-value"><span class="file-ext">${ext}</span></div>
+        </div>
+        <div class="meta-field">
+            <div class="meta-label">Course</div>
+            <div class="meta-value">${f.course_code || '—'}</div>
+        </div>
+        <div class="meta-field">
+            <div class="meta-label">Academic Item</div>
+            <div class="meta-value">${f.item_name || '—'}</div>
+        </div>
+        <div class="meta-field">
+            <div class="meta-label">Size</div>
+            <div class="meta-value">${formatBytes(f.size || 0)}</div>
+        </div>
+        <div class="meta-field">
+            <div class="meta-label">Version</div>
+            <div class="meta-value">v${f.version || 1}</div>
+        </div>
+        <div class="meta-field">
+            <div class="meta-label">Imported</div>
+            <div class="meta-value">${formatDate(f.date_imported || f.created_at)}</div>
+        </div>
+        <div class="meta-field">
+            <div class="meta-label">File Location</div>
+            <div class="meta-value" style="font-family:monospace;font-size:0.78em;color:var(--text-muted);">${f.path || '—'}</div>
+        </div>
+        ${f.hash ? `<div class="meta-field">
+            <div class="meta-label">Hash (SHA-256)</div>
+            <div class="meta-value" style="font-family:monospace;font-size:0.72em;color:var(--text-muted);">${f.hash}</div>
+        </div>` : ''}
+        <div class="meta-actions">
+            <button class="btn" style="width:100%;" onclick="openRenameModal(${f.id}, '${name.replace(/'/g,"\\'")}')">Rename</button>
+            <button class="btn btn-secondary" style="width:100%;" onclick="openMoveModal(${f.id})">Move to Item</button>
+            <button class="btn btn-secondary" style="width:100%;background:transparent;border-color:var(--danger);color:var(--danger);" onclick="deleteFile(${f.id})">Delete Record</button>
+        </div>
+    `;
+}
+
+// ── Upload ──────────────────────────────────────────────────────────────────
+function setupDragDrop() {
+    const zone = document.getElementById('uploadZone');
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        handleFileSelect(e.dataTransfer.files);
+    });
+}
+
+function handleFileSelect(files) {
+    if (!files || !files.length) return;
+    pendingUploadFiles = Array.from(files);
+    document.getElementById('upload-files-list').textContent =
+        pendingUploadFiles.map(f => f.name).join(', ');
+    const modal = document.getElementById('uploadModal');
+    modal.style.display = 'flex';
+}
+
+function closeUploadModal() {
+    document.getElementById('uploadModal').style.display = 'none';
+    pendingUploadFiles = [];
+}
+
+async function confirmUpload() {
+    const itemId = document.getElementById('upload-item-select').value;
+    if (!itemId) { showToast('Please select an academic item', 'error'); return; }
+    const btn = document.getElementById('upload-confirm-btn');
+    const status = document.getElementById('upload-modal-status');
     btn.disabled = true;
-    try {
-        await API.del(`/api/v1/files/${id}`);
-        showToast('File deleted', 'success');
-        allFiles = allFiles.filter(f => f.id !== id);
-        document.getElementById('lib-total-files').textContent = allFiles.length;
-        const totalSize = allFiles.reduce((acc, f) => acc + (f.size || 0), 0);
-        document.getElementById('lib-total-size').textContent = formatBytes(totalSize);
-        renderFiles();
-    } catch(e) {
-        showToast('Error: ' + e.message, 'error');
-        btn.disabled = false;
+    btn.textContent = 'Uploading...';
+
+    let ok = 0, fail = 0;
+    for (const file of pendingUploadFiles) {
+        const fd = new FormData();
+        fd.append('file', file);
+        try {
+            const r = await fetch(`/api/v1/import/manual/file?academic_item_id=${itemId}`, {
+                method: 'POST',
+                headers: { 'X-API-Key': window.SCHOLARR_API_KEY || '' },
+                body: fd,
+            });
+            const data = await r.json();
+            if (data.success) ok++;
+            else { fail++; status.textContent = data.message || data.errors?.[0] || 'Error'; }
+        } catch(e) {
+            fail++;
+            status.textContent = e.message;
+        }
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Upload';
+    if (ok > 0) {
+        showToast(`${ok} file(s) uploaded`, 'success');
+        closeUploadModal();
+        await loadFiles();
     }
 }
 
+// ── Rename ──────────────────────────────────────────────────────────────────
+let renamingFileId = null;
+
+function openRenameModal(id, currentName) {
+    renamingFileId = id;
+    document.getElementById('rename-input').value = currentName;
+    document.getElementById('rename-error').style.display = 'none';
+    document.getElementById('renameModal').style.display = 'flex';
+    setTimeout(() => document.getElementById('rename-input').select(), 50);
+}
+
+async function confirmRename() {
+    const newName = document.getElementById('rename-input').value.trim();
+    const errEl = document.getElementById('rename-error');
+    if (!newName) { errEl.textContent = 'Name cannot be empty'; errEl.style.display = 'block'; return; }
+    errEl.style.display = 'none';
+    try {
+        const updated = await API.post(`/api/v1/files/${renamingFileId}/rename`, { new_name: newName });
+        const idx = allFiles.findIndex(f => f.id === renamingFileId);
+        if (idx >= 0) allFiles[idx] = updated;
+        document.getElementById('renameModal').style.display = 'none';
+        renderFiles();
+        showFileMeta(renamingFileId);
+        showToast('File renamed', 'success');
+    } catch(e) {
+        errEl.textContent = e.message;
+        errEl.style.display = 'block';
+    }
+}
+
+// ── Move ────────────────────────────────────────────────────────────────────
+let movingFileId = null;
+
+function openMoveModal(id) {
+    movingFileId = id;
+    document.getElementById('moveModal').style.display = 'flex';
+}
+
+async function confirmMove() {
+    const itemId = parseInt(document.getElementById('move-item-select').value);
+    if (!itemId) return;
+    try {
+        const updated = await API.post(`/api/v1/files/${movingFileId}/move`, { new_academic_item_id: itemId });
+        const idx = allFiles.findIndex(f => f.id === movingFileId);
+        if (idx >= 0) allFiles[idx] = updated;
+        document.getElementById('moveModal').style.display = 'none';
+        renderFiles();
+        showFileMeta(movingFileId);
+        showToast('File moved', 'success');
+    } catch(e) {
+        showToast('Error: ' + e.message, 'error');
+    }
+}
+
+// ── Delete ──────────────────────────────────────────────────────────────────
+async function deleteFile(id) {
+    if (!confirm('Remove this file record? The file on disk will NOT be deleted.')) return;
+    try {
+        await API.del(`/api/v1/files/${id}`);
+        allFiles = allFiles.filter(f => f.id !== id);
+        selectedFileId = null;
+        document.getElementById('metaContent').innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:0.88em;">Select a file to view details</div>';
+        renderFiles();
+        // Update stats
+        document.getElementById('lib-total-files').textContent = allFiles.length;
+        const totalSize = allFiles.reduce((a, f) => a + (f.size || 0), 0);
+        document.getElementById('lib-total-size').textContent = formatBytes(totalSize);
+        showToast('File removed from library', 'success');
+    } catch(e) {
+        showToast('Error: ' + e.message, 'error');
+    }
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
 function formatBytes(bytes) {
     if (!bytes || bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const k = 1024, sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return (bytes / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
 }
+
+function goToFilePage(p) { filePage = p; renderFiles(); }
 
 function renderPagination(total, pageSize, current, onPage, containerId) {
     const pages = Math.ceil(total / pageSize);
     const el = document.getElementById(containerId);
     if (pages <= 1) { el.innerHTML = ''; return; }
     let html = '';
-    if (current > 1) html += `<button class="btn btn-secondary btn-small" onclick="(${onPage})(${current-1})">← Prev</button>`;
+    if (current > 1) html += `<button class="btn btn-secondary btn-small" onclick="goToFilePage(${current-1})">Prev</button>`;
     html += `<span style="padding:6px 12px;color:var(--text-secondary);font-size:0.9em;">Page ${current} of ${pages}</span>`;
-    if (current < pages) html += `<button class="btn btn-secondary btn-small" onclick="(${onPage})(${current+1})">Next →</button>`;
+    if (current < pages) html += `<button class="btn btn-secondary btn-small" onclick="goToFilePage(${current+1})">Next</button>`;
     el.innerHTML = html;
 }
+
+// API key already in window.SCHOLARR_API_KEY from base template
 </script>
 {% endblock %}

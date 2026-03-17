@@ -159,7 +159,7 @@ async function loadDashboard() {
         const items = Array.isArray(upcoming) ? upcoming : [];
         const el = document.getElementById('dash-deadlines');
         if (!items.length) {
-            el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-secondary);font-size:0.88em;">No upcoming deadlines 🎉</div>';
+            el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-secondary);font-size:0.88em;">No upcoming deadlines</div>';
         } else {
             el.innerHTML = items.map(item => {
                 const daysLeft = Math.ceil((new Date(item.due_date) - new Date()) / 86400000);

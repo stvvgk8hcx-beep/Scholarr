@@ -20,8 +20,7 @@ class HistoryService:
         self,
         page: int,
         page_size: int,
-        action_type: Optional[str] = None,
-        entity_type: Optional[str] = None,
+        event_type: Optional[str] = None,
         course_id: Optional[int] = None,
     ) -> dict:
         """Get history entries with pagination and filtering."""
@@ -30,11 +29,9 @@ class HistoryService:
         count_q = select(func.count()).select_from(HistoryEntry)
         data_q = select(HistoryEntry)
 
-        if action_type or entity_type:
-            # event_type filter (action_type and entity_type both map to event_type)
-            filter_val = action_type or entity_type
-            count_q = count_q.where(HistoryEntry.event_type == filter_val)
-            data_q = data_q.where(HistoryEntry.event_type == filter_val)
+        if event_type:
+            count_q = count_q.where(HistoryEntry.event_type == event_type)
+            data_q = data_q.where(HistoryEntry.event_type == event_type)
 
         if course_id is not None:
             count_q = count_q.where(HistoryEntry.course_id == course_id)

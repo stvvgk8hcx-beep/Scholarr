@@ -204,6 +204,7 @@ class Course(Base):
     sort_name: Mapped[Optional[str]] = mapped_column(String(255))
     clean_name: Mapped[Optional[str]] = mapped_column(String(255))
     notes: Mapped[Optional[str]] = mapped_column(Text)
+    grade_weights: Mapped[Optional[str]] = mapped_column(Text)  # JSON: {type: weight%}
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         server_default=func.now(),

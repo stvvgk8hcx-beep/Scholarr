@@ -111,11 +111,9 @@ async function loadMore() {
 
 async function fetchActivity(reset) {
     const type = document.getElementById('filter-type').value;
-    const entity = document.getElementById('filter-entity').value;
 
     let url = `/api/v1/history?page=${actPage}&page_size=${ACT_PAGE_SIZE}`;
-    if (type) url += `&action_type=${encodeURIComponent(type)}`;
-    if (entity) url += `&entity_type=${encodeURIComponent(entity)}`;
+    if (type) url += `&event_type=${encodeURIComponent(type)}`;
 
     try {
         const data = await API.get(url);

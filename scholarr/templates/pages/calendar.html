@@ -251,8 +251,8 @@ async function exportCSV() {
         if (!items.length) { showToast('No items to export', 'warning'); return; }
         const header = ['Title','Type','Course','Due Date','Status','Grade','Notes'];
         const rows = items.map(i => [
-            `"${(i.title||i.name||'').replace(/"/g,'""')}"`,
-            i.item_type||i.type||'',
+            `"${(i.name||'').replace(/"/g,'""')}"`,
+            i.type||'',
             i.course_code||'',
             i.due_date||'',
             i.status||'',

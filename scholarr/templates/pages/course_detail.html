@@ -72,6 +72,11 @@
 
     <!-- Files Tab -->
     <div class="tab-panel active" id="tab-files">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <span style="color:var(--text-secondary);font-size:0.88em;" id="files-count-label"></span>
+            <button class="btn btn-small" onclick="document.getElementById('course-file-input').click()">Upload File</button>
+            <input type="file" id="course-file-input" multiple style="display:none;" onchange="uploadCourseFiles(this.files)">
+        </div>
         <div id="files-list">
             <div class="loading">Loading files...</div>
         </div>
@@ -158,6 +163,21 @@
                 <button class="btn btn-secondary" onclick="loadCourse()">Reset</button>
             </div>
 
+            <!-- Grade Weight Policy -->
+            <div style="background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:4px;padding:16px;margin-top:20px;margin-bottom:20px;">
+                <div style="font-weight:600;font-size:0.92em;margin-bottom:12px;">Grade Weight Policy</div>
+                <div style="font-size:0.82em;color:var(--text-secondary);margin-bottom:12px;">
+                    Set default weights by item type. Totals should add up to 100%. These are used as defaults when adding new items.
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="grade-weights-grid">
+                    <!-- populated by JS -->
+                </div>
+                <div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
+                    <button class="btn btn-secondary btn-small" onclick="saveGradeWeights()">Save Weights</button>
+                    <span id="weights-total-label" style="font-size:0.82em;color:var(--text-muted);"></span>
+                </div>
+            </div>
+
             <div class="danger-zone">
                 <h4>Danger Zone</h4>
                 <p style="color:var(--text-secondary);font-size:0.88em;margin-bottom:12px;">Delete this course and all its data. This cannot be undone.</p>
@@ -176,6 +196,7 @@ let courseData = null;
 document.addEventListener('DOMContentLoaded', function() {
     loadCourse();
     loadItems();
+    loadFiles();
     loadActivity();
     loadStudyTime();
 });
@@ -208,6 +229,7 @@ async function loadCourse() {
         document.getElementById('edit-color').value = courseData.color || '#2ecfa1';
         document.getElementById('edit-notes').value = courseData.notes || '';
         document.getElementById('edit-monitored').checked = courseData.monitored || false;
+        renderGradeWeightsGrid(courseData.grade_weights || {});
 
         const semesters = await API.get('/api/v1/semesters');
         const sel = document.getElementById('edit-semester');
@@ -261,19 +283,16 @@ async function deleteCourse() {
 
 async function loadItems() {
     const el = document.getElementById('items-list');
-    const el2 = document.getElementById('files-list');
     try {
-        const data = await API.get(`/api/v1/academic-items?course_id=${courseId}&page=1&page_size=50`);
+        const data = await API.get(`/api/v1/academic-items?course_id=${courseId}&page=1&page_size=100`);
         const items = Array.isArray(data) ? data : (data.items || []);
         if (!items.length) {
-            const msg = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">No academic items for this course.</div>';
-            el.innerHTML = msg;
-            el2.innerHTML = msg;
+            el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">No academic items for this course.</div>';
             return;
         }
         const statusCls = {NotStarted:'badge-notstarted',InProgress:'badge-inprogress',Submitted:'badge-submitted',Graded:'badge-graded',Late:'badge-late',Complete:'badge-complete'};
-        const table = `<div class="table-container"><table>
-            <thead><tr><th>Title</th><th>Type</th><th>Due</th><th>Status</th><th>Grade</th></tr></thead>
+        el.innerHTML = `<div class="table-container"><table>
+            <thead><tr><th>Title</th><th>Type</th><th>Due</th><th>Status</th><th>Grade</th><th>Weight</th></tr></thead>
             <tbody>${items.map(it => `
                 <tr>
                     <td style="font-weight:500;">${it.name || '—'}</td>
@@ -281,14 +300,89 @@ async function loadItems() {
                     <td style="color:var(--text-secondary);">${formatDate(it.due_date)}</td>
                     <td><span class="badge ${statusCls[it.status]||'badge-notstarted'}">${it.status || 'NotStarted'}</span></td>
                     <td style="color:var(--accent-blue);">${it.grade !== null && it.grade !== undefined ? it.grade + '%' : '—'}</td>
+                    <td style="color:var(--text-secondary);">${it.weight !== null && it.weight !== undefined ? it.weight + '%' : '—'}</td>
                 </tr>`).join('')}
             </tbody></table></div>`;
-        el.innerHTML = table;
-        el2.innerHTML = table;
     } catch(e) {
-        const err = `<div style="padding:20px;color:#d9534f;">Error: ${e.message}</div>`;
-        el.innerHTML = err;
-        el2.innerHTML = err;
+        el.innerHTML = `<div style="padding:20px;color:#d9534f;">Error: ${e.message}</div>`;
+    }
+}
+
+async function loadFiles() {
+    const el = document.getElementById('files-list');
+    const countLabel = document.getElementById('files-count-label');
+    try {
+        // Get all items for this course, then fetch files for each
+        const data = await API.get(`/api/v1/academic-items?course_id=${courseId}&page=1&page_size=100`);
+        const items = Array.isArray(data) ? data : (data.items || []);
+        const itemIds = items.map(i => i.id);
+
+        // Fetch all files and filter by item IDs
+        const allFiles = await API.get('/api/v1/files');
+        const files = (Array.isArray(allFiles) ? allFiles : []).filter(f => itemIds.includes(f.academic_item_id));
+
+        countLabel.textContent = `${files.length} file${files.length !== 1 ? 's' : ''}`;
+
+        if (!files.length) {
+            el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-secondary);">No files uploaded for this course yet.<br><span style="font-size:0.85em;margin-top:8px;display:block;">Use the Upload button above to add files.</span></div>';
+            return;
+        }
+
+        const formatBytes = (b) => {
+            if (!b) return '—';
+            const k=1024, sz=['B','KB','MB','GB'], i=Math.floor(Math.log(b)/Math.log(k));
+            return (b/Math.pow(k,i)).toFixed(1)+' '+sz[i];
+        };
+        el.innerHTML = `<div class="table-container"><table>
+            <thead><tr><th>Filename</th><th>Item</th><th>Format</th><th>Size</th><th>Imported</th><th>Actions</th></tr></thead>
+            <tbody>${files.map(f => {
+                const name = f.original_filename || f.path.split('/').pop() || '—';
+                const ext = (f.format || '?').toUpperCase();
+                return `<tr>
+                    <td style="font-weight:500;"><span style="background:var(--bg-tertiary);padding:2px 5px;border-radius:2px;font-size:0.72em;font-weight:700;color:var(--accent-blue);font-family:monospace;">${ext}</span> ${name}</td>
+                    <td style="color:var(--text-secondary);font-size:0.85em;">${f.item_name || '—'}</td>
+                    <td style="color:var(--text-secondary);font-size:0.85em;">${f.format || '—'}</td>
+                    <td style="color:var(--text-secondary);font-size:0.85em;">${formatBytes(f.size)}</td>
+                    <td style="color:var(--text-secondary);font-size:0.85em;">${formatDate(f.date_imported)}</td>
+                    <td style="white-space:nowrap;">
+                        <a href="/library" class="btn btn-small btn-secondary" style="font-size:0.78em;">Manage</a>
+                    </td>
+                </tr>`;
+            }).join('')}
+            </tbody></table></div>`;
+    } catch(e) {
+        el.innerHTML = `<div style="padding:20px;color:#d9534f;">Error: ${e.message}</div>`;
+    }
+}
+
+async function uploadCourseFiles(fileList) {
+    if (!fileList || !fileList.length) return;
+    // Get items for this course to pick one
+    const data = await API.get(`/api/v1/academic-items?course_id=${courseId}&page=1&page_size=100`);
+    const items = Array.isArray(data) ? data : (data.items || []);
+    if (!items.length) {
+        showToast('Add academic items to this course before uploading files', 'warning');
+        return;
+    }
+    // For simplicity, pick the first item or show a selection
+    const itemId = items[0].id;
+    let uploaded = 0;
+    for (const file of Array.from(fileList)) {
+        const fd = new FormData();
+        fd.append('file', file);
+        try {
+            const r = await fetch(`/api/v1/import/manual/file?academic_item_id=${itemId}`, {
+                method: 'POST',
+                headers: { 'X-API-Key': window.SCHOLARR_API_KEY || '' },
+                body: fd,
+            });
+            const res = await r.json();
+            if (res.success) uploaded++;
+        } catch(e) { console.error(e); }
+    }
+    if (uploaded > 0) {
+        showToast(`${uploaded} file(s) uploaded`, 'success');
+        loadFiles();
     }
 }
 
@@ -343,6 +437,50 @@ function loadStudyTime() {
         }).join('');
     } catch(e) {
         console.warn('Study time load error:', e);
+    }
+}
+
+const ITEM_TYPES = ['Assignment','Exam','Quiz','Lab','Project','Paper','Notes','Syllabus','Textbook','Slides','Tutorial','Other'];
+
+function renderGradeWeightsGrid(weights) {
+    const grid = document.getElementById('grade-weights-grid');
+    grid.innerHTML = ITEM_TYPES.map(t => `
+        <div style="display:flex;align-items:center;gap:8px;">
+            <label style="font-size:0.82em;min-width:80px;color:var(--text-secondary);">${t}</label>
+            <input type="number" id="gw-${t}" min="0" max="100" step="0.5"
+                value="${weights && weights[t] !== undefined ? weights[t] : ''}"
+                placeholder="0"
+                style="width:70px;padding:4px 6px;font-size:0.85em;"
+                oninput="updateWeightsTotal()">
+            <span style="font-size:0.8em;color:var(--text-muted);">%</span>
+        </div>
+    `).join('');
+    updateWeightsTotal();
+}
+
+function updateWeightsTotal() {
+    let total = 0;
+    ITEM_TYPES.forEach(t => {
+        const v = parseFloat(document.getElementById('gw-' + t)?.value || '0');
+        if (!isNaN(v)) total += v;
+    });
+    const lbl = document.getElementById('weights-total-label');
+    lbl.textContent = `Total: ${total.toFixed(1)}%`;
+    lbl.style.color = Math.abs(total - 100) < 0.1 ? 'var(--accent)' : (total > 100 ? 'var(--danger)' : 'var(--text-muted)');
+}
+
+async function saveGradeWeights() {
+    const weights = {};
+    ITEM_TYPES.forEach(t => {
+        const v = parseFloat(document.getElementById('gw-' + t)?.value || '');
+        if (!isNaN(v) && v > 0) weights[t] = v;
+    });
+    try {
+        await API.put(`/api/v1/courses/${courseId}`, { grade_weights: weights });
+        showToast('Grade weights saved', 'success');
+        if (courseData) courseData.grade_weights = weights;
+    } catch(e) {
+        showToast('Error: ' + e.message, 'error');
     }
 }
 

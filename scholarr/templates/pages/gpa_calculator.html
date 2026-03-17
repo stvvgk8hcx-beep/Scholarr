@@ -211,7 +211,7 @@
     <!-- Weighted Average Settings -->
     <div class="grade-scale-info" id="weighted-settings-panel">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-            <h4 style="margin:0;color:var(--accent);">⚖️ Program Weighted Rule</h4>
+            <h4 style="margin:0;color:var(--accent);">Program Weighted Rule</h4>
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;">
                 <input type="checkbox" id="weighted-enabled" onchange="toggleWeightedMode()" style="width:auto;">
                 <span style="font-size:0.9em;color:var(--text-secondary);">Enable weighted rule</span>
@@ -293,7 +293,7 @@
             <div class="semester-title">Current Semester Courses</div>
             <div class="semester-gpa">
                 GPA: <span class="semester-gpa-value" id="currentSemesterGpa">0.00</span>
-                <span id="weighted-pass-warn" style="margin-left:12px;font-size:0.82em;color:#f0ad4e;display:none;">⚠ Test/quiz below minimum</span>
+                <span id="weighted-pass-warn" style="margin-left:12px;font-size:0.82em;color:#f0ad4e;display:none;">Warning: Test/quiz below minimum</span>
             </div>
         </div>
 
@@ -488,7 +488,7 @@
             const tqAvg = testQuizTotalPct / testQuizCount;
             document.getElementById('testQuizAvg').textContent = tqAvg.toFixed(1) + '%';
             const passing = tqAvg >= (weightedEnabled ? minPct : 50);
-            document.getElementById('testQuizStatus').textContent = passing ? '✓ Meets minimum' : '⚠ Below minimum (' + (weightedEnabled ? minPct : 50) + '%)';
+            document.getElementById('testQuizStatus').textContent = passing ? 'Meets minimum' : 'Below minimum (' + (weightedEnabled ? minPct : 50) + '%)';
             document.getElementById('testQuizStatus').style.color = passing ? 'rgba(255,255,255,0.85)' : '#f0ad4e';
         } else {
             document.getElementById('testQuizAvg').textContent = '—';
@@ -501,7 +501,7 @@
             const wgpa = weightedCredits > 0 ? (weightedPoints / weightedCredits).toFixed(2) : '0.00';
             document.getElementById('weightedGpa').textContent = wgpa;
             const testQuizOk = testQuizCount === 0 || (testQuizTotalPct / testQuizCount) >= minPct;
-            document.getElementById('weightedGpaNote').textContent = testQuizOk ? 'On track to pass' : '⚠ Test/quiz below ' + minPct + '%';
+            document.getElementById('weightedGpaNote').textContent = testQuizOk ? 'On track to pass' : 'Warning: Test/quiz below ' + minPct + '%';
         }
     }
 

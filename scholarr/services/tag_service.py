@@ -2,8 +2,10 @@
 
 import logging
 from typing import Optional
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from scholarr.db.models import Tag
 from scholarr.schemas.tag import TagCreate, TagUpdate, TagResponse
 
 logger = logging.getLogger(__name__)
@@ -17,27 +19,42 @@ class TagService:
 
     async def list_tags(self) -> list[TagResponse]:
         """List all tags."""
-        # Implementation goes here
-        return []
+        result = await self.db.execute(select(Tag).order_by(Tag.label))
+        return [TagResponse.model_validate(row) for row in result.scalars().all()]
 
     async def get_tag(self, id: int) -> Optional[TagResponse]:
         """Get a tag by ID."""
-        # Implementation goes here
-        return None
+        obj = await self.db.get(Tag, id)
+        return TagResponse.model_validate(obj) if obj else None
 
     async def create_tag(self, tag: TagCreate) -> TagResponse:
         """Create a new tag."""
-        # Implementation goes here
-        pass
+        obj = Tag(**tag.model_dump())
+        self.db.add(obj)
+        await self.db.commit()
+        await self.db.refresh(obj)
+        logger.info(f"Created tag id={obj.id} label={obj.label!r}")
+        return TagResponse.model_validate(obj)
 
     async def update_tag(
         self, id: int, tag_update: TagUpdate
     ) -> Optional[TagResponse]:
         """Update a tag."""
-        # Implementation goes here
-        return None
+        obj = await self.db.get(Tag, id)
+        if not obj:
+            return None
+        for key, value in tag_update.model_dump(exclude_unset=True).items():
+            setattr(obj, key, value)
+        await self.db.commit()
+        await self.db.refresh(obj)
+        return TagResponse.model_validate(obj)
 
     async def delete_tag(self, id: int) -> bool:
         """Delete a tag."""
-        # Implementation goes here
-        return False
+        obj = await self.db.get(Tag, id)
+        if not obj:
+            return False
+        await self.db.delete(obj)
+        await self.db.commit()
+        logger.info(f"Deleted tag id={id}")
+        return True

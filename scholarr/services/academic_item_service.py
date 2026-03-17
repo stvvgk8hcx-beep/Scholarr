@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from scholarr.db.models import AcademicItem, AcademicItemStatusEnum, Course
+from scholarr.db.models import AcademicItem, AcademicItemStatusEnum, Course, HistoryEntry, HistoryEventTypeEnum
 from scholarr.schemas.academic_item import (
     AcademicItemCreate,
     AcademicItemUpdate,
@@ -157,16 +157,13 @@ class AcademicItemService:
     async def create_academic_item(self, item: AcademicItemCreate) -> AcademicItemResponse:
         # Exclude front-end alias fields that don't exist on the DB model
         data = item.model_dump(exclude={"title", "item_type"})
-        # If course_id is None, use a sentinel value or find the first course
         if data.get("course_id") is None:
-            from sqlalchemy import select as sa_select
-            from scholarr.db.models import Course
-            result = await self.db.execute(sa_select(Course).limit(1))
+            result = await self.db.execute(select(Course).limit(1))
             first_course = result.scalar_one_or_none()
             if first_course:
                 data["course_id"] = first_course.id
             else:
-                data["course_id"] = 1  # Fallback — will fail FK if no courses
+                raise ValueError("Cannot create item: no courses exist. Create a course first.")
         obj = AcademicItem(**data)
         self.db.add(obj)
         await self.db.commit()
@@ -182,8 +179,30 @@ class AcademicItemService:
             return None
         # Exclude front-end alias fields that don't map to DB columns
         update_data = item_update.model_dump(exclude_unset=True, exclude={"title", "item_type"})
+        old_grade = obj.grade
+        old_status = obj.status
         for key, value in update_data.items():
             setattr(obj, key, value)
+        # Log grade changes
+        if "grade" in update_data and update_data["grade"] != old_grade:
+            entry = HistoryEntry(
+                course_id=obj.course_id,
+                academic_item_id=obj.id,
+                event_type=HistoryEventTypeEnum.GRADE_CHANGE,
+                source_path=obj.name,
+                data={"old_grade": old_grade, "new_grade": update_data["grade"]},
+            )
+            self.db.add(entry)
+        # Log status changes
+        if "status" in update_data and update_data["status"] != old_status:
+            entry = HistoryEntry(
+                course_id=obj.course_id,
+                academic_item_id=obj.id,
+                event_type=HistoryEventTypeEnum.STATUS_CHANGE,
+                source_path=obj.name,
+                data={"old_status": str(old_status), "new_status": update_data["status"]},
+            )
+            self.db.add(entry)
         await self.db.commit()
         await self.db.refresh(obj)
         return AcademicItemResponse.model_validate(obj)

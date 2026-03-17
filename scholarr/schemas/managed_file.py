@@ -45,6 +45,10 @@ class ManagedFileResponse(BaseModel):
     original_filename: str | None
     created_at: datetime
     updated_at: datetime
+    # Enriched fields (not from DB)
+    item_name: str | None = None
+    course_code: str | None = None
+    course_id: int | None = None
 
 
 class ManagedFileListResponse(BaseModel):

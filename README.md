@@ -12,24 +12,28 @@ Scholarr is a local-first app that keeps your courses, deadlines, files, and gra
 | Feature | Details |
 |---------|---------|
 | **Course & Semester Management** | Track multiple courses across semesters; auto-assign courses to the active semester |
-| **Academic Items** | Assignments, Exams, Quizzes, Projects, Labs, Papers — with due dates, status, and grades |
-| **Dashboard** | At-a-glance stats: upcoming deadlines (colour-coded urgency), grade averages, status breakdown |
-| **Activity Log** | Full audit trail of every change, filterable by event type and entity |
+| **Academic Items** | Assignments, Exams, Quizzes, Projects, Labs, Papers — with due dates, status, grades, and weights |
+| **Dashboard** | At-a-glance stats: total courses, active items, upcoming deadlines (colour-coded urgency), grade averages, status breakdown |
+| **Activity Log** | Full audit trail of every change — grade changes, status updates, file imports, renames, moves, deletes — filterable by event type and course |
 
-### Organisation
+### File Management
 | Feature | Details |
 |---------|---------|
+| **File Library** | Browse all managed files with metadata panel, course/format filters, and search |
+| **File Upload** | Drag-and-drop or click-to-browse upload, linked to academic items |
+| **File Rename** | Rename files on disk with history tracking (old name, new name, timestamp) |
+| **File Move** | Reassign files between academic items with full audit trail |
+| **File Metadata** | View filename, format, course, item, size, version, import date, path, SHA-256 hash |
+| **Duplicate Detection** | SHA-256 hashing prevents importing the same file twice |
 | **Smart File Organiser** | Rename and move imported files using 25+ naming tokens (course code, item type, semester, etc.) |
-| **File History Tracking** | Every rename/move/delete records `original_path`, `original_filename`, `source_path → destination_path`, and timestamp |
-| **Duplicate Detection** | SHA256 hashing prevents importing the same file twice |
-| **Library View** | Browse all managed files with full metadata |
 
 ### Academic Tools
 | Feature | Details |
 |---------|---------|
 | **GPA Calculator** | Enter grades manually or pull from tracked items; what-if simulation |
-| **Weighted GPA** | Optional rule: Tests + Quizzes combined must exceed a threshold (default 50%) even if individual grades are high; shows both actual and weighted GPA |
-| **Study Timer** | Pomodoro-style focus timer with short and long breaks, browser notifications, audio alerts, session history, and day streak counter |
+| **Weighted GPA** | Optional rule: Tests + Quizzes combined must exceed a threshold; shows both actual and weighted GPA |
+| **Grade Weight Policy** | Per-course weight presets by item type (e.g., Exams 40%, Assignments 30%, Quizzes 15%, Projects 15%) |
+| **Study Tracker** | Course-aware Pomodoro timer with focus/break phases, session history, per-course time stats |
 | **Academic Calendar** | Monthly calendar view showing all items with due dates |
 
 ### Import / Export
@@ -61,7 +65,7 @@ Scholarr is a local-first app that keeps your courses, deadlines, files, and gra
 git clone https://github.com/yourusername/scholarr.git
 cd scholarr
 pip install -e ".[dev]"
-uvicorn scholarr.app:app --host 0.0.0.0 --port 8787 --reload
+uvicorn scholarr.app:create_app --factory --host 0.0.0.0 --port 8787
 # Open http://localhost:8787
 ```
 
@@ -126,17 +130,17 @@ See `.env.example` for a complete template.
 
 | URL | Page |
 |-----|------|
-| `/` | Dashboard |
+| `/` | Dashboard — stats, activity, upcoming deadlines, grade summary |
 | `/courses` | Course list with search, semester filter, sort, pagination |
 | `/courses/add` | Add course form |
-| `/courses/{id}` | Course detail: files, items, activity, edit |
+| `/courses/{id}` | Course detail: files, items, study & activity, grade weight settings |
 | `/academic-items` | All academic items with full filtering and CSV/ICS export |
 | `/semesters` | Semester management |
 | `/calendar` | Monthly calendar with ICS/CSV import and export |
-| `/activity` | Full activity log |
-| `/library` | File library |
+| `/activity` | Full activity log with event type filtering |
+| `/library` | File library with metadata panel, upload, rename, move |
 | `/gpa` | GPA calculator with weighted mode |
-| `/study-timer` | Pomodoro study timer |
+| `/study-timer` | Course-aware Pomodoro study timer |
 | `/settings` | App settings, backup/restore, cloud export |
 | `/system` | System info and health |
 | `/docs` | Interactive API documentation (Swagger UI) |
@@ -157,7 +161,7 @@ See `.env.example` for a complete template.
 pip install -e ".[dev]"
 
 # Run with auto-reload
-uvicorn scholarr.app:app --port 8787 --reload
+uvicorn scholarr.app:create_app --factory --port 8787 --reload
 ```
 
 The app generates an API key on first start and prints it to the console. Set `SCHOLARR_API_KEY=your-key` in `.env` to use a fixed key.
@@ -174,6 +178,17 @@ pytest tests/ --cov=scholarr --cov-report=html
 # Only integration tests
 pytest tests/integration/ -v
 ```
+
+### Seed Data
+
+Populate the database with sample data for testing:
+
+```bash
+SCHOLARR_API_KEY=test-key-12345 uvicorn scholarr.app:create_app --factory --port 8787 &
+python seed_data.py
+```
+
+This creates 4 semesters, 12 courses, and 35+ academic items with realistic grades and due dates.
 
 ### Code quality
 
@@ -200,13 +215,18 @@ X-API-Key: <your-api-key>
 | `GET` | `/api/v1/semesters` | List semesters (includes `course_count`) |
 | `POST` | `/api/v1/semesters` | Create semester (`year`/`term` auto-derived from name if omitted) |
 | `PUT` | `/api/v1/semesters/{id}/activate` | Set active semester |
-| `GET` | `/api/v1/courses` | List courses |
+| `GET` | `/api/v1/courses` | List courses (includes `item_count`, `semester_name`, `grade_weights`) |
 | `GET` | `/api/v1/courses/paged` | Paginated courses with `search`, `semester_id`, `monitored`, `sort_key`, `sort_dir` |
 | `POST` | `/api/v1/courses` | Create course (`semester_id` optional — falls back to active semester) |
-| `GET` | `/api/v1/academic-items` | List items with `search`, `type`, `status`, `course_id`, `due_after`, `due_before`, `page`, `page_size` |
-| `GET` | `/api/v1/academic-items/upcoming` | Deadlines within `?days=N` (default 7) |
-| `GET` | `/api/v1/history` | Activity log with `action_type`, `entity_type` filters |
-| `POST` | `/api/v1/integrations/calendar/generate-ics` | Generate `.ics` from a list of academic items |
+| `GET` | `/api/v1/academic-items` | List items with `search`, `type`, `status`, `course_id`, `due_after`, `due_before` |
+| `GET` | `/api/v1/academic-items/upcoming` | Deadlines within `?days=N` (default 7); includes `course_code` |
+| `GET` | `/api/v1/files` | List all managed files with `course_code`, `item_name` enrichment |
+| `POST` | `/api/v1/files/{id}/rename` | Rename file on disk with history logging |
+| `POST` | `/api/v1/files/{id}/move` | Move file to different academic item |
+| `POST` | `/api/v1/import/manual/file` | Upload file linked to an academic item |
+| `GET` | `/api/v1/history` | Activity log with `event_type`, `course_id` filters |
+| `GET` | `/api/v1/tags` | List tags |
+| `POST` | `/api/v1/integrations/calendar/generate-ics` | Generate `.ics` from academic items |
 | `GET` | `/api/v1/system/status` | System health and runtime info |
 
 ---
@@ -216,8 +236,8 @@ X-API-Key: <your-api-key>
 | Layer | Technology |
 |-------|-----------|
 | **Backend** | Python 3.11+, FastAPI, SQLAlchemy 2.0 (async), Pydantic V2 |
-| **Frontend** | Jinja2 templates, Vanilla JS (`window.API` fetch helper) |
-| **Database** | SQLite + aiosqlite (dev) · MySQL 8 / PostgreSQL (prod) |
+| **Frontend** | Jinja2 templates, Vanilla JS (`window.API` fetch helper), inline SVG icons |
+| **Database** | SQLite + aiosqlite (dev) / MySQL 8 / PostgreSQL (prod) |
 | **Auth** | API key (`X-API-Key` header), injected server-side into all templates |
 | **Real-time** | WebSocket at `/ws` |
 | **Infrastructure** | Docker, docker-compose, systemd, LaunchAgent, Windows Service |
@@ -229,7 +249,7 @@ X-API-Key: <your-api-key>
 
 **Port 8787 already in use**
 ```
-SCHOLARR_PORT=9000 uvicorn scholarr.app:app --port 9000
+SCHOLARR_PORT=9000 uvicorn scholarr.app:create_app --factory --port 9000
 ```
 
 **"No semester found" when creating a course**

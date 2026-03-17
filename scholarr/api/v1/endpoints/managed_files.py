@@ -2,6 +2,7 @@
 
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.security import verify_api_key
@@ -14,6 +15,14 @@ from scholarr.schemas.managed_file import (
 from scholarr.services.managed_file_service import ManagedFileService
 
 router = APIRouter()
+
+
+class RenameRequest(BaseModel):
+    new_name: str
+
+
+class MoveRequest(BaseModel):
+    new_academic_item_id: int
 
 
 @router.get("", response_model=list[ManagedFileResponse])
@@ -72,12 +81,43 @@ async def update_managed_file(
 @router.delete("/{id}", status_code=204)
 async def delete_managed_file(
     id: int,
+    delete_from_disk: bool = Query(False),
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):
-    """Delete a managed file entry."""
+    """Delete a managed file entry (optionally from disk too)."""
     service = ManagedFileService(db)
-    success = await service.delete_managed_file(id)
+    success = await service.delete_managed_file(id, delete_from_disk=delete_from_disk)
     if not success:
         raise HTTPException(status_code=404, detail="File not found")
     return None
+
+
+@router.post("/{id}/rename", response_model=ManagedFileResponse)
+async def rename_managed_file(
+    id: int,
+    body: RenameRequest,
+    db: AsyncSession = Depends(get_db_session),
+    api_key: str = Depends(verify_api_key),
+):
+    """Rename a managed file."""
+    service = ManagedFileService(db)
+    updated = await service.rename_file(id, body.new_name)
+    if not updated:
+        raise HTTPException(status_code=404, detail="File not found")
+    return updated
+
+
+@router.post("/{id}/move", response_model=ManagedFileResponse)
+async def move_managed_file(
+    id: int,
+    body: MoveRequest,
+    db: AsyncSession = Depends(get_db_session),
+    api_key: str = Depends(verify_api_key),
+):
+    """Move a managed file to a different academic item."""
+    service = ManagedFileService(db)
+    updated = await service.move_file(id, body.new_academic_item_id)
+    if not updated:
+        raise HTTPException(status_code=404, detail="File or target item not found")
+    return updated

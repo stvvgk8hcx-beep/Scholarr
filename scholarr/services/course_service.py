@@ -1,5 +1,6 @@
 """Course service."""
 
+import json
 import logging
 from typing import Optional
 from sqlalchemy import select, func, or_, update as sql_update
@@ -141,6 +142,9 @@ class CourseService:
             raise ValueError("Course code cannot be empty")
 
         data = course.model_dump()
+        # Serialize grade_weights dict to JSON string for storage
+        if data.get("grade_weights") is not None:
+            data["grade_weights"] = json.dumps(data["grade_weights"])
 
         # Resolve missing semester_id
         if not data.get("semester_id"):
@@ -174,6 +178,8 @@ class CourseService:
         if not obj:
             return None
         update_data = course_update.model_dump(exclude_unset=True)
+        if "grade_weights" in update_data and isinstance(update_data["grade_weights"], dict):
+            update_data["grade_weights"] = json.dumps(update_data["grade_weights"])
         if update_data:
             await self.db.execute(
                 sql_update(Course)

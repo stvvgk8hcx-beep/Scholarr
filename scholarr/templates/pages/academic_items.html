@@ -309,7 +309,7 @@ async function loadItems() {
                 <td><span class="badge ${statusBadge(item.status)}">${item.status || 'NotStarted'}</span></td>
                 <td class="grade-cell">${item.grade !== null && item.grade !== undefined ? item.grade + '%' : '—'}</td>
                 <td style="display:flex;gap:6px;">
-                    <button class="btn btn-secondary btn-small" onclick="editItem(${item.id})">✏️</button>
+                    <button class="btn btn-secondary btn-small" onclick="editItem(${item.id})">Edit</button>
                     <button class="btn btn-small" style="background:#d9534f;border-color:#d9534f;" onclick="deleteItem(${item.id}, this)">Del</button>
                 </td>
             </tr>
@@ -451,8 +451,8 @@ async function exportItemsCSV() {
         if (!items.length) { showToast('No items to export', 'warning'); return; }
         const header = ['Title','Type','Course','Due Date','Status','Grade (%)','Notes'];
         const rows = items.map(i => [
-            `"${(i.title||i.name||'').replace(/"/g,'""')}"`,
-            i.item_type||i.type||'',
+            `"${(i.name||'').replace(/"/g,'""')}"`,
+            i.type||'',
             i.course_code||'',
             i.due_date||'',
             i.status||'',
