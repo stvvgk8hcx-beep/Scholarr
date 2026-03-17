@@ -11,39 +11,42 @@
    ============================================================ */
 
 /* ── CSS Variables ─────────────────────────────────────────── */
+/* Blends Scholarr's navy identity with OmmWriter's warmth.
+   Future: add [data-theme="light"] override for full light mode. */
 :root {
-  --bg-primary:    #13132b;
-  --bg-secondary:  #1a1a38;
-  --bg-tertiary:   #20204a;
-  --bg-hover:      #252550;
-  --bg-active:     #2a2a5a;
+  --bg-primary:    #11111f;
+  --bg-secondary:  #181828;
+  --bg-tertiary:   #1e1e34;
+  --bg-hover:      #23233e;
+  --bg-active:     #282848;
 
-  --border-color:  #2a2a55;
+  --border-color:  #28284a;
   --border-focus:  #2ecfa1;
 
   --accent:        #2ecfa1;
-  --accent-blue:   #2ecfa1;   /* alias used by templates */
-  --accent-dim:    rgba(46, 207, 161, 0.12);
-  --accent-hover:  #35ddb0;
+  --accent-blue:   #2ecfa1;
+  --accent-dim:    rgba(46, 207, 161, 0.10);
+  --accent-hover:  #38e0b4;
+  --accent-rgb:    46, 207, 161;
 
-  --text-primary:  #e0e2f0;
-  --text-secondary:#7f8baa;
-  --text-muted:    #4a5578;
+  --text-primary:  #dcdee8;
+  --text-secondary:#8890a8;
+  --text-muted:    #505870;
 
   --status-complete: #2ecfa1;
-  --status-pending:  #f0ad4e;
-  --status-overdue:  #d9534f;
+  --status-pending:  #e8a840;
+  --status-overdue:  #d04848;
   --status-active:   #2ecfa1;
 
   --success:  #2ecfa1;
-  --warning:  #f0ad4e;
-  --danger:   #d9534f;
-  --info:     #5bc0de;
+  --warning:  #e8a840;
+  --danger:   #d04848;
+  --info:     #5bb8d8;
 
-  --radius:   5px;
-  --shadow:   0 4px 16px rgba(0,0,0,0.4);
-  --shadow-sm:0 2px 6px  rgba(0,0,0,0.3);
-  --transition: 0.18s ease;
+  --radius:   6px;
+  --shadow:   0 8px 32px rgba(0,0,0,0.35);
+  --shadow-sm:0 2px 8px  rgba(0,0,0,0.2);
+  --transition: 0.22s ease;
 }
 
 /* ── Reset ─────────────────────────────────────────────────── */
@@ -52,13 +55,14 @@
 html, body { height: 100%; width: 100%; }
 
 body {
-  font-family: -apple-system, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
   font-size: 14px;
-  line-height: 1.55;
+  line-height: 1.6;
   background: var(--bg-primary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: 0.01em;
 }
 
 a { color: var(--accent); text-decoration: none; }
@@ -75,7 +79,7 @@ a:hover { color: var(--accent-hover); }
 .sidebar {
   width: 224px;
   background: var(--bg-secondary);
-  border-right: 1px solid var(--border-color);
+  border-right: 1px solid rgba(255,255,255,0.04);
   overflow-y: auto;
   overflow-x: hidden;
   position: fixed;
@@ -173,12 +177,12 @@ a:hover { color: var(--accent-hover); }
 /* ── Topbar ─────────────────────────────────────────────────── */
 .topbar {
   background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
   padding: 0 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 54px;
+  height: 52px;
   flex-shrink: 0;
   position: sticky;
   top: 0;
@@ -285,9 +289,9 @@ a:hover { color: var(--accent-hover); }
 }
 
 .stat-card:hover {
-  border-color: var(--accent);
+  border-color: rgba(46,207,161,0.3);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(46,207,161,0.08);
+  box-shadow: 0 4px 16px rgba(46,207,161,0.06);
 }
 
 .stat-label {
@@ -372,9 +376,9 @@ input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: rgba(46,207,161,0.5);
   background: var(--bg-active);
-  box-shadow: 0 0 0 3px var(--accent-dim);
+  box-shadow: 0 0 0 2px rgba(46,207,161,0.08);
 }
 
 input::placeholder,
@@ -431,8 +435,7 @@ input[type="submit"] {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   white-space: nowrap;
   font-family: inherit;
   background: var(--accent);
@@ -442,8 +445,7 @@ input[type="submit"] {
 button:hover,
 .btn:hover {
   background: var(--accent-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(46,207,161,0.25);
+  box-shadow: 0 2px 8px rgba(46,207,161,0.2);
 }
 
 button:active, .btn:active { transform: translateY(0); }
@@ -899,6 +901,75 @@ button:disabled {
 .htmx-indicator { display: none; }
 .htmx-request .htmx-indicator { display: inline-block; }
 
+/* ── Global Scrollbar ────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+/* ── Subtle Animations ──────────────────────────────────────── */
+/* Future: add [data-reduce-motion] to disable for accessibility */
+.card, .stat-card, .note-card { transition: border-color 0.3s, transform 0.2s, box-shadow 0.3s; }
+.btn { transition: background 0.2s, box-shadow 0.2s, opacity 0.2s; }
+.nav-item { transition: background 0.2s, color 0.2s, border-left-color 0.2s; }
+
+/* ── Loading Skeleton ───────────────────────────────────────── */
+/* Future: use .skeleton class for placeholder loading states */
+.loading {
+  color: var(--text-muted);
+  font-size: 0.88em;
+  padding: 20px;
+  text-align: center;
+}
+
+/* ── Alert Boxes ────────────────────────────────────────────── */
+/* Future: .alert-info, .alert-warning, .alert-danger for inline messages */
+.alert {
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  font-size: 0.88em;
+  margin-bottom: 16px;
+}
+.alert-info { background: rgba(91,184,216,0.1); border: 1px solid rgba(91,184,216,0.2); color: var(--info); }
+.alert-warning { background: rgba(232,168,64,0.1); border: 1px solid rgba(232,168,64,0.2); color: var(--warning); }
+.alert-danger { background: rgba(208,72,72,0.1); border: 1px solid rgba(208,72,72,0.2); color: var(--danger); }
+.alert-success { background: rgba(46,207,161,0.1); border: 1px solid rgba(46,207,161,0.2); color: var(--success); }
+
+/* ── Danger Zone ────────────────────────────────────────────── */
+/* Future: standardize danger-zone styling across all settings pages */
+.danger-zone {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(208,72,72,0.2);
+}
+.danger-zone h4 { color: var(--danger); font-size: 0.9em; margin-bottom: 8px; }
+
+/* ── Course Tabs ────────────────────────────────────────────── */
+/* Future: convert to generic .tab-container component */
+.course-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border-color);
+  margin-bottom: 16px;
+}
+.course-tab {
+  padding: 10px 18px;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.88em;
+  background: none;
+  border-top: none; border-left: none; border-right: none;
+  transition: color 0.2s, border-color 0.2s;
+  font-family: inherit;
+}
+.course-tab:hover { color: var(--text-primary); }
+.course-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
 /* ── Print ───────────────────────────────────────────────────── */
 @media print {
   .sidebar, .topbar, .btn, .modal-close { display: none; }
@@ -907,3 +978,18 @@ button:disabled {
   body { background: white; color: black; }
   .card { background: white; border-color: #ddd; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   EXTENSION POINTS — Future Features
+   ──────────────────────────────────────────────────────────────
+   1. [data-theme="light"] — Full light mode override (invert vars)
+   2. [data-reduce-motion] — Disable all animations for accessibility
+   3. .skeleton — Loading placeholder with shimmer animation
+   4. .tooltip — Hover tooltips for toolbar icons
+   5. .sidebar-collapsed — Narrow sidebar mode (icons only)
+   6. .command-palette — Cmd+K command palette overlay
+   7. .notification-panel — Slide-out notification center
+   8. .drag-handle — Sortable item handles
+   9. .markdown-preview — Rendered markdown in notes
+   10. .kanban-column — Kanban board for academic items
+   ══════════════════════════════════════════════════════════════ */
