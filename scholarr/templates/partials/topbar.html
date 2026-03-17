@@ -1,0 +1,39 @@
+<!-- Top Navigation Bar -->
+<div class="topbar">
+    <div class="topbar-left">
+        <h1 class="topbar-title">{% block topbar_title %}Dashboard{% endblock %}</h1>
+    </div>
+
+    <div class="topbar-right">
+        <!-- Search box -->
+        <input
+            type="text"
+            class="search-box"
+            placeholder="Search academic items, courses..."
+            hx-get="/api/v1/courses/search"
+            hx-target="#search-results"
+            hx-trigger="keyup changed delay:300ms"
+        >
+
+        <!-- Quick action buttons -->
+        <div class="topbar-icon" title="Help">
+            <span>❓</span>
+        </div>
+
+        <div class="topbar-icon" title="Notifications">
+            <span>🔔</span>
+        </div>
+
+        <div class="dropdown">
+            <div class="topbar-icon dropdown-toggle" onclick="this.parentElement.querySelector('.dropdown-menu').classList.toggle('active')">
+                <span>👤</span>
+            </div>
+            <div class="dropdown-menu">
+                <a href="/" class="dropdown-item">Profile</a>
+                <a href="/settings" class="dropdown-item">Settings</a>
+                <div class="dropdown-divider"></div>
+                <a href="/" class="dropdown-item">Logout</a>
+            </div>
+        </div>
+    </div>
+</div>

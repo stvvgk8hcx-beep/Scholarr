@@ -1,0 +1,279 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}File Library - Scholarr{% endblock %}
+
+{% block page_title %}File Library{% endblock %}
+
+{% block extra_css %}
+<style>
+    .library-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 20px;
+    }
+
+    .stat-label {
+        color: var(--text-secondary);
+        font-size: 0.9em;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .stat-value {
+        font-size: 2em;
+        font-weight: 700;
+        color: var(--accent-blue);
+    }
+
+    .storage-bar {
+        background-color: var(--bg-tertiary);
+        border-radius: 4px;
+        height: 8px;
+        margin-top: 10px;
+        overflow: hidden;
+    }
+
+    .storage-used {
+        background: linear-gradient(90deg, var(--accent-blue), #0d7dd8);
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s;
+    }
+
+    .storage-label {
+        font-size: 0.75em;
+        color: var(--text-secondary);
+        margin-top: 8px;
+    }
+
+    .type-distribution {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .type-item {
+        background-color: var(--bg-tertiary);
+        padding: 10px;
+        border-radius: 3px;
+        text-align: center;
+        font-size: 0.85em;
+    }
+
+    .type-count {
+        font-weight: 600;
+        color: var(--accent-blue);
+        display: block;
+    }
+
+    .file-filters {
+        background-color: var(--bg-secondary);
+        padding: 20px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        border: 1px solid var(--border-color);
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+
+    .file-filters .form-group {
+        margin-bottom: 0;
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .file-size {
+        color: var(--text-secondary);
+        font-size: 0.85em;
+    }
+
+    .file-type-badge {
+        display: inline-block;
+        background-color: var(--bg-tertiary);
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 0.75em;
+        font-weight: 600;
+        color: var(--accent-blue);
+        margin-right: 8px;
+    }
+
+    .file-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .file-actions .btn-small {
+        padding: 4px 8px;
+        font-size: 0.8em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Statistics Cards -->
+<div class="library-stats">
+    <!-- Total Files -->
+    <div class="stat-card">
+        <div class="stat-label">Total Files</div>
+        <div class="stat-value" id="totalFiles">0</div>
+    </div>
+
+    <!-- Total Size -->
+    <div class="stat-card">
+        <div class="stat-label">Total Size</div>
+        <div class="stat-value" id="totalSize">0 GB</div>
+        <div class="storage-bar">
+            <div class="storage-used" id="storageBar" style="width: 0%;"></div>
+        </div>
+        <div class="storage-label" id="storageLabel">0 GB / 100 GB</div>
+    </div>
+
+    <!-- File Type Distribution -->
+    <div class="stat-card">
+        <div class="stat-label">File Types</div>
+        <div class="type-distribution" id="typeDistribution">
+            <!-- Loaded via HTMX -->
+        </div>
+    </div>
+</div>
+
+<!-- File Filters -->
+<div class="file-filters">
+    <div class="form-group">
+        <label>Search Files</label>
+        <input type="text" 
+               id="fileSearch"
+               placeholder="Search by filename..."
+               hx-get="/api/v1/managed-files/"
+               hx-target="#filesTable"
+               hx-trigger="keyup changed delay:500ms"
+               hx-include="[name='file_type'], [name='course_id'], [name='date_from']">
+    </div>
+
+    <div class="form-group">
+        <label>File Type</label>
+        <select name="file_type"
+                hx-get="/api/v1/managed-files/"
+                hx-target="#filesTable"
+                hx-trigger="change">
+            <option value="">All Types</option>
+            <option value="pdf">PDF</option>
+            <option value="docx">Word</option>
+            <option value="xlsx">Excel</option>
+            <option value="pptx">PowerPoint</option>
+            <option value="txt">Text</option>
+            <option value="image">Images</option>
+            <option value="video">Videos</option>
+            <option value="other">Other</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Course</label>
+        <select name="course_id"
+                hx-get="/api/v1/managed-files/"
+                hx-target="#filesTable"
+                hx-trigger="change">
+            <option value="">All Courses</option>
+            <!-- Loaded from API -->
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Uploaded After</label>
+        <input type="date" name="date_from"
+               hx-get="/api/v1/managed-files/"
+               hx-target="#filesTable"
+               hx-trigger="change">
+    </div>
+</div>
+
+<!-- Files Table -->
+<div id="filesTable" class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Filename</th>
+                <th>Type</th>
+                <th>Course</th>
+                <th>Size</th>
+                <th>Date Added</th>
+                <th>Hash</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="filesBody">
+            <tr>
+                <td colspan="7" class="text-muted" style="text-align: center; padding: 40px;">
+                    Loading files... <span class="htmx-request"></span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Format bytes to human readable size
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    // Load initial files
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load files
+        htmx.ajax('GET', '/api/v1/managed-files/paged', {
+            target: '#filesBody',
+            swap: 'innerHTML'
+        });
+
+        // Load stats
+        htmx.ajax('GET', '/api/v1/managed-files/stats', {
+            target: '#filesBody',
+            swap: 'none',
+            onload: function(xhr) {
+                try {
+                    const stats = JSON.parse(xhr.response);
+                    document.getElementById('totalFiles').textContent = stats.total_files;
+                    document.getElementById('totalSize').textContent = formatBytes(stats.total_size);
+                    
+                    // Update storage bar
+                    const percentage = (stats.total_size / stats.max_storage) * 100;
+                    document.getElementById('storageBar').style.width = percentage + '%';
+                    document.getElementById('storageLabel').textContent = 
+                        formatBytes(stats.total_size) + ' / ' + formatBytes(stats.max_storage);
+
+                    // Populate type distribution
+                    let typeHtml = '';
+                    for (const [type, count] of Object.entries(stats.by_type)) {
+                        typeHtml += `<div class="type-item"><span class="type-count">${count}</span>${type}</div>`;
+                    }
+                    document.getElementById('typeDistribution').innerHTML = typeHtml;
+                } catch (e) {
+                    console.error('Error loading stats:', e);
+                }
+            }
+        });
+    });
+
+    // Expose formatBytes globally
+    window.formatBytes = formatBytes;
+</script>
+{% endblock %}

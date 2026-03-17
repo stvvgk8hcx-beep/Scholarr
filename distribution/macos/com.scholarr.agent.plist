@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.scholarr.agent</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/opt/scholarr/venv/bin/python</string>
+        <string>-m</string>
+        <string>uvicorn</string>
+        <string>scholarr.app:app</string>
+        <string>--host</string>
+        <string>0.0.0.0</string>
+        <string>--port</string>
+        <string>8787</string>
+        <string>--log-level</string>
+        <string>info</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/usr/local/opt/scholarr</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/opt/scholarr/venv/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>HOME</key>
+        <string>$HOME</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>$HOME/.local/share/scholarr/logs/scholarr.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>$HOME/.local/share/scholarr/logs/scholarr.error.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>Nice</key>
+    <integer>0</integer>
+
+    <key>StartInterval</key>
+    <integer>0</integer>
+
+    <key>ExitTimeOut</key>
+    <integer>20</integer>
+</dict>
+</plist>

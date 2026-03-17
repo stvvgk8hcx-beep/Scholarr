@@ -1,0 +1,247 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Calendar - Scholarr{% endblock %}
+
+{% block page_title %}Academic Calendar{% endblock %}
+
+{% block header_actions %}
+<button class="btn btn-small" hx-get="/api/v1/calendar/export" hx-target="body" hx-swap="none">Export iCal</button>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendar-container {
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .calendar-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .calendar-month {
+        font-size: 1.5em;
+        font-weight: 600;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1px;
+        background-color: var(--border-color);
+        padding: 1px;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .calendar-day-header {
+        background-color: var(--bg-tertiary);
+        padding: 12px 8px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.85em;
+        color: var(--text-secondary);
+    }
+
+    .calendar-day {
+        background-color: var(--bg-secondary);
+        padding: 12px 8px;
+        min-height: 100px;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .calendar-day:hover {
+        background-color: var(--bg-tertiary);
+    }
+
+    .calendar-day.other-month {
+        background-color: #1a1a1a;
+        color: var(--text-secondary);
+    }
+
+    .calendar-day.today {
+        background-color: rgba(13, 125, 216, 0.1);
+        border-left: 3px solid var(--accent-blue);
+    }
+
+    .calendar-day-number {
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 0.95em;
+    }
+
+    .calendar-day.other-month .calendar-day-number {
+        color: var(--text-secondary);
+    }
+
+    .calendar-events {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .calendar-event {
+        font-size: 0.75em;
+        padding: 2px 4px;
+        border-radius: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: white;
+        cursor: pointer;
+    }
+
+    .calendar-event:hover {
+        text-decoration: underline;
+    }
+
+    .calendar-event-assignment {
+        background-color: #0d7dd8;
+    }
+
+    .calendar-event-exam {
+        background-color: #d9534f;
+    }
+
+    .calendar-event-project {
+        background-color: #5cb85c;
+    }
+
+    .calendar-event-quiz {
+        background-color: #f0ad4e;
+    }
+
+    .calendar-event-other {
+        background-color: #666666;
+    }
+
+    /* Day Details Panel */
+    .day-details {
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .day-details h3 {
+        color: var(--accent-blue);
+        margin-bottom: 15px;
+    }
+
+    .day-items {
+        list-style: none;
+    }
+
+    .day-item {
+        background-color: var(--bg-tertiary);
+        padding: 12px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        border-left: 3px solid var(--accent-blue);
+    }
+
+    .day-item-title {
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .day-item-course {
+        color: var(--text-secondary);
+        font-size: 0.9em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="calendar-container">
+    <!-- Navigation -->
+    <div class="calendar-nav">
+        <button class="btn btn-secondary btn-small"
+                hx-get="/api/v1/calendar/prev"
+                hx-target="#calendarView"
+                hx-swap="innerHTML">← Previous</button>
+        
+        <div class="calendar-month" id="currentMonth">
+            {{ current_month }} {{ current_year }}
+        </div>
+        
+        <button class="btn btn-secondary btn-small"
+                hx-get="/api/v1/calendar/next"
+                hx-target="#calendarView"
+                hx-swap="innerHTML">Next →</button>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div id="calendarView" hx-trigger="load" hx-get="/api/v1/calendar/month">
+        <div class="calendar-grid" id="calendarGrid">
+            <!-- Days will be loaded via HTMX -->
+            <!-- Headers -->
+            <div class="calendar-day-header">Sun</div>
+            <div class="calendar-day-header">Mon</div>
+            <div class="calendar-day-header">Tue</div>
+            <div class="calendar-day-header">Wed</div>
+            <div class="calendar-day-header">Thu</div>
+            <div class="calendar-day-header">Fri</div>
+            <div class="calendar-day-header">Sat</div>
+            
+            <!-- Loading placeholder -->
+            <div style="grid-column: 1/-1; padding: 40px; text-align: center; color: var(--text-secondary);">
+                Loading calendar...
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Day Details Panel -->
+<div id="dayDetailsPanel" class="day-details" style="display: none;">
+    <h3 id="selectedDayTitle">Selected Day</h3>
+    <ul class="day-items" id="dayItemsList">
+        <!-- Items for selected day -->
+    </ul>
+</div>
+
+<script>
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
+
+    function loadCalendar(month, year) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}`;
+        htmx.ajax('GET', `/api/v1/calendar/month?date=${dateStr}`, {
+            target: '#calendarGrid',
+            swap: 'innerHTML'
+        });
+        document.getElementById('currentMonth').textContent = 
+            new Date(year, month).toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    }
+
+    function selectDay(day) {
+        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        htmx.ajax('GET', `/api/v1/academic-items/?due_date=${dateStr}`, {
+            target: '#dayItemsList',
+            swap: 'innerHTML'
+        });
+
+        const date = new Date(currentYear, currentMonth, day);
+        document.getElementById('selectedDayTitle').textContent = 
+            date.toLocaleString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+        document.getElementById('dayDetailsPanel').style.display = 'block';
+    }
+
+    // Load initial calendar
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCalendar(currentMonth, currentYear);
+    });
+
+    // Expose functions globally
+    window.selectDay = selectDay;
+</script>
+{% endblock %}

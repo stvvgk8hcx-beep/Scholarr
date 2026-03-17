@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Scholarr{% endblock %} - Academic File Management</title>
+
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="/static/css/scholarr.css">
+
+    <!-- HTMX for dynamic interactions (no JS frameworks) -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <!-- Additional page-specific styles -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        {% include 'partials/sidebar.html' %}
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Top Bar -->
+            {% include 'partials/topbar.html' %}
+
+            <!-- Content Area -->
+            <div class="content">
+                {% block content %}
+                <p>Welcome to Scholarr. Select a section from the sidebar to get started.</p>
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notification container for HTMX messages -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Page-specific scripts -->
+    {% block extra_js %}{% endblock %}
+
+    <!-- Global HTMX configuration and utilities -->
+    <script>
+        // Configure HTMX defaults
+        htmx.config.defaultIndicatorStyle = 'spinner';
+        htmx.config.historyCacheSize = 0;
+
+        // Toast notification handler for HTMX responses
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            const response = evt.detail.xhr.getResponseHeader('X-Toast-Message');
+            const toastType = evt.detail.xhr.getResponseHeader('X-Toast-Type') || 'info';
+
+            if (response) {
+                showToast(response, toastType);
+            }
+        });
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <span>${message}</span>
+                <span class="toast-close">&times;</span>
+            `;
+
+            const container = document.getElementById('toast-container');
+            container.appendChild(toast);
+
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+
+            // Manual close
+            toast.querySelector('.toast-close').addEventListener('click', () => {
+                toast.remove();
+            });
+        }
+
+        // Handle navigation active states
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-item').forEach(item => {
+                const href = item.getAttribute('href') || item.getAttribute('data-href');
+                if (href && currentPath.startsWith(href)) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

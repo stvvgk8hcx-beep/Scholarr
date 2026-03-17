@@ -1,0 +1,413 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}GPA Calculator - Scholarr{% endblock %}
+
+{% block page_title %}GPA Calculator{% endblock %}
+
+{% block extra_css %}
+<style>
+    .gpa-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .gpa-display {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .gpa-card {
+        background: linear-gradient(135deg, var(--accent-blue), #0a5ca8);
+        border-radius: 4px;
+        padding: 30px 20px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(13, 125, 216, 0.2);
+    }
+
+    .gpa-label {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.9em;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+    }
+
+    .gpa-value {
+        font-size: 2.5em;
+        font-weight: 700;
+        color: white;
+    }
+
+    .gpa-value-subtext {
+        font-size: 0.8em;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 5px;
+    }
+
+    .grade-scale-info {
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+
+    .grade-scale-info h4 {
+        margin-bottom: 15px;
+        color: var(--accent-blue);
+    }
+
+    .grade-scale {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 10px;
+    }
+
+    .grade-scale-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px;
+        background-color: var(--bg-tertiary);
+        border-radius: 3px;
+        font-size: 0.9em;
+    }
+
+    .grade-scale-item-letter {
+        font-weight: 600;
+        color: var(--accent-blue);
+        min-width: 30px;
+    }
+
+    .grade-scale-item-points {
+        color: var(--text-secondary);
+    }
+
+    /* Courses Table */
+    .courses-table-container {
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .courses-table {
+        width: 100%;
+    }
+
+    .courses-table th {
+        background-color: var(--bg-tertiary);
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    .courses-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .courses-table tbody tr:hover {
+        background-color: var(--bg-tertiary);
+    }
+
+    .grade-input {
+        width: 100%;
+        padding: 8px;
+        background-color: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: 3px;
+    }
+
+    .grade-input:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+    }
+
+    .credits-input {
+        width: 100%;
+        padding: 8px;
+        background-color: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: 3px;
+    }
+
+    .credits-input:focus {
+        outline: none;
+        border-color: var(--accent-blue);
+    }
+
+    .semester-section {
+        margin-bottom: 30px;
+    }
+
+    .semester-header {
+        background-color: var(--bg-secondary);
+        padding: 20px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+        border-left: 4px solid var(--accent-blue);
+    }
+
+    .semester-title {
+        font-size: 1.3em;
+        font-weight: 600;
+        color: var(--accent-blue);
+        margin-bottom: 10px;
+    }
+
+    .semester-gpa {
+        font-size: 1.2em;
+        font-weight: 600;
+    }
+
+    .semester-gpa-value {
+        color: var(--accent-blue);
+    }
+
+    .add-course-btn {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        padding: 20px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="gpa-container">
+    <!-- GPA Display -->
+    <div class="gpa-display">
+        <div class="gpa-card">
+            <div class="gpa-label">Cumulative GPA</div>
+            <div class="gpa-value" id="cumulativeGpa">0.00</div>
+            <div class="gpa-value-subtext" id="cumulativeCredits">0 credits completed</div>
+        </div>
+
+        <div class="gpa-card">
+            <div class="gpa-label">Current Semester GPA</div>
+            <div class="gpa-value" id="semesterGpa">0.00</div>
+            <div class="gpa-value-subtext" id="semesterCredits">0 credits this semester</div>
+        </div>
+    </div>
+
+    <!-- Grade Scale Reference -->
+    <div class="grade-scale-info">
+        <h4>Grade Scale Reference</h4>
+        <div class="grade-scale">
+            <div class="grade-scale-item">
+                <span class="grade-scale-item-letter">A</span>
+                <span class="grade-scale-item-points">4.0</span>
+            </div>
+            <div class="grade-scale-item">
+                <span class="grade-scale-item-letter">A-</span>
+                <span class="grade-scale-item-points">3.7</span>
+            </div>
+            <div class="grade-scale-item">
+                <span class="grade-scale-item-letter">B+</span>
+                <span class="grade-scale-item-points">3.3</span>
+            </div>
+            <div class="grade-scale-item">
+                <span class="grade-scale-item-letter">B</span>
+                <span class="grade-scale-item-points">3.0</span>
+            </div>
+            <div class="grade-scale-item">
+                <span class="grade-scale-item-letter">B-</span>
+                <span class="grade-scale-item-points">2.7</span>
+            </div>
+            <div class="grade-scale-item">
+                <span class="grade-scale-item-letter">C+</span>
+                <span class="grade-scale-item-points">2.3</span>
+            </div>
+            <div class="grade-scale-item">
+                <span class="grade-scale-item-letter">C</span>
+                <span class="grade-scale-item-points">2.0</span>
+            </div>
+            <div class="grade-scale-item">
+                <span class="grade-scale-item-letter">C-</span>
+                <span class="grade-scale-item-points">1.7</span>
+            </div>
+            <div class="grade-scale-item">
+                <span class="grade-scale-item-letter">D+</span>
+                <span class="grade-scale-item-points">1.3</span>
+            </div>
+            <div class="grade-scale-item">
+                <span class="grade-scale-item-letter">D</span>
+                <span class="grade-scale-item-points">1.0</span>
+            </div>
+            <div class="grade-scale-item">
+                <span class="grade-scale-item-letter">F</span>
+                <span class="grade-scale-item-points">0.0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Semester Courses -->
+    <div class="semester-section">
+        <div class="semester-header">
+            <div class="semester-title">Current Semester Courses</div>
+            <div class="semester-gpa">
+                GPA: <span class="semester-gpa-value" id="currentSemesterGpa">0.00</span>
+            </div>
+        </div>
+
+        <div class="add-course-btn">
+            <button class="btn btn-small" onclick="addCourseRow()">+ Add Course</button>
+        </div>
+
+        <div class="courses-table-container">
+            <table class="courses-table">
+                <thead>
+                    <tr>
+                        <th>Course Name</th>
+                        <th>Grade</th>
+                        <th>Credits</th>
+                        <th>Points</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="currentSemesterCourses">
+                    <!-- Courses will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <button class="btn" 
+                hx-post="/api/v1/gpa/save"
+                hx-include="#currentSemesterCourses input"
+                hx-target="body"
+                hx-swap="none">Save Courses</button>
+        <button class="btn btn-secondary" 
+                hx-get="/api/v1/gpa/load"
+                hx-target="#currentSemesterCourses"
+                hx-swap="innerHTML">Load from API</button>
+    </div>
+</div>
+
+<script>
+    // Grade to GPA mapping
+    const gradeScale = {
+        'A': 4.0, 'A-': 3.7,
+        'B+': 3.3, 'B': 3.0, 'B-': 2.7,
+        'C+': 2.3, 'C': 2.0, 'C-': 1.7,
+        'D+': 1.3, 'D': 1.0, 'D-': 0.7,
+        'F': 0.0
+    };
+
+    let courseCounter = 0;
+
+    function addCourseRow() {
+        const tbody = document.getElementById('currentSemesterCourses');
+        const rowId = 'course-' + (courseCounter++);
+        
+        const row = document.createElement('tr');
+        row.id = rowId;
+        row.innerHTML = `
+            <td>
+                <input type="text" class="grade-input" placeholder="Course name" name="course_name">
+            </td>
+            <td>
+                <select class="grade-input" name="grade" onchange="calculateRow('${rowId}')">
+                    <option value="">Select Grade</option>
+                    <option value="A">A</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B">B</option>
+                    <option value="B-">B-</option>
+                    <option value="C+">C+</option>
+                    <option value="C">C</option>
+                    <option value="C-">C-</option>
+                    <option value="D+">D+</option>
+                    <option value="D">D</option>
+                    <option value="D-">D-</option>
+                    <option value="F">F</option>
+                </select>
+            </td>
+            <td>
+                <input type="number" class="credits-input" placeholder="0" min="0" max="6" name="credits" onchange="calculateRow('${rowId}')">
+            </td>
+            <td style="font-weight: 600; color: var(--accent-blue);" class="points-value">0.0</td>
+            <td>
+                <button class="btn btn-small btn-danger" onclick="removeCourseRow('${rowId}')">Remove</button>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    }
+
+    function removeCourseRow(rowId) {
+        document.getElementById(rowId).remove();
+        calculateGPA();
+    }
+
+    function calculateRow(rowId) {
+        const row = document.getElementById(rowId);
+        const gradeSelect = row.querySelector('select[name="grade"]');
+        const creditsInput = row.querySelector('input[name="credits"]');
+        const pointsCell = row.querySelector('.points-value');
+
+        const grade = gradeSelect.value;
+        const credits = parseFloat(creditsInput.value) || 0;
+        const gradePoints = gradeScale[grade] || 0;
+        const points = gradePoints * credits;
+
+        pointsCell.textContent = points.toFixed(2);
+        calculateGPA();
+    }
+
+    function calculateGPA() {
+        const rows = document.querySelectorAll('#currentSemesterCourses tr');
+        let totalPoints = 0;
+        let totalCredits = 0;
+
+        rows.forEach(row => {
+            const gradeSelect = row.querySelector('select[name="grade"]');
+            const creditsInput = row.querySelector('input[name="credits"]');
+            
+            if (gradeSelect && creditsInput && gradeSelect.value) {
+                const credits = parseFloat(creditsInput.value) || 0;
+                const grade = gradeSelect.value;
+                const gradePoints = gradeScale[grade] || 0;
+                
+                totalPoints += gradePoints * credits;
+                totalCredits += credits;
+            }
+        });
+
+        const gpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : 0;
+        document.getElementById('currentSemesterGpa').textContent = gpa;
+        document.getElementById('semesterGpa').textContent = gpa;
+        document.getElementById('semesterCredits').textContent = totalCredits + ' credits this semester';
+    }
+
+    // Load initial courses
+    document.addEventListener('DOMContentLoaded', function() {
+        htmx.ajax('GET', '/api/v1/gpa/load', {
+            target: '#currentSemesterCourses',
+            swap: 'innerHTML',
+            onload: function() {
+                calculateGPA();
+            }
+        });
+    });
+
+    // Expose functions globally
+    window.addCourseRow = addCourseRow;
+    window.removeCourseRow = removeCourseRow;
+    window.calculateRow = calculateRow;
+    window.calculateGPA = calculateGPA;
+</script>
+{% endblock %}

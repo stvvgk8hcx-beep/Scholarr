@@ -1,0 +1,243 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Activity Log - Scholarr{% endblock %}
+
+{% block page_title %}Activity Log{% endblock %}
+
+{% block extra_css %}
+<style>
+    .activity-filters {
+        background-color: var(--bg-secondary);
+        padding: 20px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        border: 1px solid var(--border-color);
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+    }
+
+    .activity-filters .form-group {
+        margin-bottom: 0;
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .timeline {
+        position: relative;
+        padding: 20px 0;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 25px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: var(--border-color);
+    }
+
+    .activity-entry {
+        margin-left: 80px;
+        margin-bottom: 30px;
+        position: relative;
+        padding: 15px 20px;
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+
+    .activity-entry:hover {
+        border-color: var(--accent-blue);
+        background-color: var(--bg-tertiary);
+    }
+
+    .activity-icon {
+        position: absolute;
+        left: -45px;
+        top: 12px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: var(--bg-tertiary);
+        border: 2px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.9em;
+    }
+
+    .activity-icon.import { background-color: rgba(13, 125, 216, 0.2); border-color: #0d7dd8; color: #0d7dd8; }
+    .activity-icon.rename { background-color: rgba(92, 184, 92, 0.2); border-color: #5cb85c; color: #5cb85c; }
+    .activity-icon.move { background-color: rgba(240, 173, 78, 0.2); border-color: #f0ad4e; color: #f0ad4e; }
+    .activity-icon.delete { background-color: rgba(217, 83, 79, 0.2); border-color: #d9534f; color: #d9534f; }
+    .activity-icon.create { background-color: rgba(92, 184, 92, 0.2); border-color: #5cb85c; color: #5cb85c; }
+    .activity-icon.update { background-color: rgba(102, 102, 102, 0.2); border-color: #666666; color: #666666; }
+
+    .activity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 10px;
+    }
+
+    .activity-title {
+        font-weight: 600;
+        font-size: 1em;
+        color: var(--text-primary);
+    }
+
+    .activity-time {
+        color: var(--text-secondary);
+        font-size: 0.85em;
+        white-space: nowrap;
+    }
+
+    .activity-entity {
+        color: var(--text-secondary);
+        font-size: 0.9em;
+        margin-bottom: 8px;
+    }
+
+    .activity-entity-name {
+        color: var(--accent-blue);
+        font-weight: 500;
+    }
+
+    .activity-details {
+        background-color: var(--bg-tertiary);
+        padding: 12px;
+        border-radius: 3px;
+        font-size: 0.85em;
+        color: var(--text-secondary);
+        margin-top: 10px;
+        max-height: 100px;
+        overflow-y: auto;
+    }
+
+    .activity-details p {
+        margin: 5px 0;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-secondary);
+    }
+
+    .load-more {
+        text-align: center;
+        padding: 20px;
+    }
+
+    .load-more .btn {
+        margin-top: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Filter Bar -->
+<div class="activity-filters">
+    <div class="form-group">
+        <label>Event Type</label>
+        <select name="event_type"
+                hx-get="/api/v1/history/"
+                hx-target="#activityTimeline"
+                hx-swap="innerHTML"
+                hx-include="[name='date_from'], [name='date_to']">
+            <option value="">All Events</option>
+            <option value="import">Import</option>
+            <option value="create">Create</option>
+            <option value="rename">Rename</option>
+            <option value="move">Move</option>
+            <option value="update">Update</option>
+            <option value="delete">Delete</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>From Date</label>
+        <input type="date" name="date_from"
+               hx-get="/api/v1/history/"
+               hx-target="#activityTimeline"
+               hx-swap="innerHTML"
+               hx-include="[name='event_type'], [name='date_to']">
+    </div>
+
+    <div class="form-group">
+        <label>To Date</label>
+        <input type="date" name="date_to"
+               hx-get="/api/v1/history/"
+               hx-target="#activityTimeline"
+               hx-swap="innerHTML"
+               hx-include="[name='event_type'], [name='date_from']">
+    </div>
+</div>
+
+<!-- Activity Timeline -->
+<div class="timeline">
+    <div id="activityTimeline">
+        <div class="loading">
+            Loading activity log... <span class="htmx-request"></span>
+        </div>
+    </div>
+    
+    <!-- Infinite scroll trigger -->
+    <div id="scrollTrigger"
+         hx-get="/api/v1/history/?page=2"
+         hx-target="#activityTimeline"
+         hx-swap="beforeend"
+         hx-trigger="revealed"
+         style="text-align: center; padding: 20px; color: var(--text-secondary);">
+        Load more...
+    </div>
+</div>
+
+<script>
+    // Map event types to icons
+    function getEventIcon(eventType) {
+        const iconMap = {
+            'import': '📥',
+            'create': '✨',
+            'rename': '✎',
+            'move': '↦',
+            'update': '⟲',
+            'delete': '✕'
+        };
+        return iconMap[eventType] || '◆';
+    }
+
+    function formatRelativeTime(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return date.toLocaleDateString();
+    }
+
+    // Load initial activity
+    document.addEventListener('DOMContentLoaded', function() {
+        htmx.ajax('GET', '/api/v1/history/?page=1', {
+            target: '#activityTimeline',
+            swap: 'innerHTML'
+        });
+    });
+
+    // Expose functions globally
+    window.getEventIcon = getEventIcon;
+    window.formatRelativeTime = formatRelativeTime;
+</script>
+{% endblock %}

@@ -1,0 +1,168 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Academic Items - Scholarr{% endblock %}
+
+{% block page_title %}Academic Items{% endblock %}
+
+{% block header_actions %}
+<button class="btn btn-small" hx-get="/api/v1/academic-items/export" hx-target="body" hx-swap="none">Export</button>
+{% endblock %}
+
+{% block content %}
+<style>
+    .filter-bar {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+    }
+
+    .status-badge {
+        white-space: nowrap;
+    }
+
+    .grade-cell {
+        font-weight: 600;
+        color: var(--accent-blue);
+    }
+
+    .date-cell {
+        color: var(--text-secondary);
+        font-size: 0.9em;
+    }
+</style>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <div class="form-group">
+        <label>Search Items</label>
+        <input type="text" 
+               id="searchInput"
+               placeholder="Search by title..."
+               hx-get="/api/v1/academic-items/search"
+               hx-target="#itemsTable"
+               hx-trigger="keyup changed delay:500ms"
+               hx-include="[name='type'], [name='status'], [name='course_id'], [name='date_from'], [name='date_to']">
+    </div>
+
+    <div class="form-group">
+        <label>Type</label>
+        <select name="type" 
+                hx-get="/api/v1/academic-items/"
+                hx-target="#itemsTable"
+                hx-trigger="change">
+            <option value="">All Types</option>
+            <option value="assignment">Assignment</option>
+            <option value="exam">Exam</option>
+            <option value="project">Project</option>
+            <option value="quiz">Quiz</option>
+            <option value="presentation">Presentation</option>
+            <option value="lab">Lab</option>
+            <option value="other">Other</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Status</label>
+        <select name="status" 
+                hx-get="/api/v1/academic-items/"
+                hx-target="#itemsTable"
+                hx-trigger="change">
+            <option value="">All Status</option>
+            <option value="NotStarted">Not Started</option>
+            <option value="InProgress">In Progress</option>
+            <option value="Submitted">Submitted</option>
+            <option value="Graded">Graded</option>
+            <option value="Late">Late</option>
+            <option value="Incomplete">Incomplete</option>
+            <option value="Complete">Complete</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Course</label>
+        <select name="course_id" 
+                hx-get="/api/v1/academic-items/"
+                hx-target="#itemsTable"
+                hx-trigger="change">
+            <option value="">All Courses</option>
+            <!-- Populate with actual courses from API -->
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Due From</label>
+        <input type="date" name="date_from"
+               hx-get="/api/v1/academic-items/"
+               hx-target="#itemsTable"
+               hx-trigger="change">
+    </div>
+
+    <div class="form-group">
+        <label>Due To</label>
+        <input type="date" name="date_to"
+               hx-get="/api/v1/academic-items/"
+               hx-target="#itemsTable"
+               hx-trigger="change">
+    </div>
+</div>
+
+<!-- Items Table -->
+<div id="itemsTable" class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Course</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Grade</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="itemsBody">
+            <!-- Loaded via HTMX -->
+            <tr>
+                <td colspan="7" class="text-muted" style="text-align: center; padding: 40px;">
+                    Loading items... <span class="htmx-request"></span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Load initial data
+    document.addEventListener('DOMContentLoaded', function() {
+        htmx.ajax('GET', '/api/v1/academic-items/paged', {
+            target: '#itemsBody',
+            swap: 'innerHTML'
+        });
+    });
+
+    // Helper function to get status badge class
+    function getStatusBadgeClass(status) {
+        const statusMap = {
+            'NotStarted': 'badge-notstarted',
+            'InProgress': 'badge-inprogress',
+            'Submitted': 'badge-submitted',
+            'Graded': 'badge-graded',
+            'Late': 'badge-late',
+            'Incomplete': 'badge-incomplete',
+            'Complete': 'badge-complete'
+        };
+        return statusMap[status] || 'badge-notstarted';
+    }
+
+    // Format date for display
+    function formatDate(dateString) {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    // Expose functions to global scope for template use
+    window.getStatusBadgeClass = getStatusBadgeClass;
+    window.formatDate = formatDate;
+</script>
+{% endblock %}

@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  scholarr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: scholarr-dev
+    ports:
+      - "8787:8787"
+    volumes:
+      - .:/app
+      - scholarr-config:/home/scholarr/.config/scholarr
+      - scholarr-library:/home/scholarr/.local/share/scholarr/library
+      - scholarr-inbox:/home/scholarr/.local/share/scholarr/inbox
+    environment:
+      - SCHOLARR_DATABASE_URL=mysql+aiomysql://scholarr:scholarr_password@mysql:3306/scholarr
+      - SCHOLARR_ENVIRONMENT=development
+      - SCHOLARR_LOG_LEVEL=debug
+      - DEBUG=true
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - scholarr-network
+    command: uvicorn scholarr.app:app --host 0.0.0.0 --port 8787 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8787/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  mysql:
+    image: mysql:8.0
+    container_name: scholarr-mysql-dev
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=scholarr_root_password
+      - MYSQL_DATABASE=scholarr
+      - MYSQL_USER=scholarr
+      - MYSQL_PASSWORD=scholarr_password
+      - MYSQL_CHARACTER_SET_SERVER=utf8mb4
+      - MYSQL_COLLATION_SERVER=utf8mb4_unicode_ci
+    restart: unless-stopped
+    networks:
+      - scholarr-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "scholarr", "-pscholarr_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  scholarr-config:
+    driver: local
+  scholarr-library:
+    driver: local
+  scholarr-inbox:
+    driver: local
+  mysql-data:
+    driver: local
+
+networks:
+  scholarr-network:
+    driver: bridge

@@ -1,0 +1,255 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Add Course - Scholarr{% endblock %}
+{% block page_title %}Add New Course{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-dark-card border border-dark-border rounded-lg p-8">
+        <!-- Form Instructions -->
+        <div class="mb-8 p-4 bg-dark-border rounded">
+            <p class="text-sm text-gray-300">
+                📚 Add a new course to Scholarr. Once created, you can upload files and track deadlines.
+            </p>
+        </div>
+
+        <!-- Add Course Form -->
+        <form id="add-course-form"
+              hx-post="/api/v1/courses"
+              hx-swap="none"
+              class="space-y-6">
+
+            <!-- Row 1: Code and Name -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Course Code -->
+                <div>
+                    <label for="code" class="block text-sm font-medium text-gray-300 mb-2">
+                        Course Code <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text"
+                           id="code"
+                           name="code"
+                           required
+                           placeholder="CS 101"
+                           class="w-full px-4 py-2 bg-dark-border border border-dark-border rounded text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                    />
+                    <p class="text-xs text-gray-500 mt-1">e.g., CS 101, MATH 201</p>
+                </div>
+
+                <!-- Course Name -->
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-300 mb-2">
+                        Course Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text"
+                           id="name"
+                           name="name"
+                           required
+                           placeholder="Introduction to Computer Science"
+                           class="w-full px-4 py-2 bg-dark-border border border-dark-border rounded text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                    />
+                </div>
+            </div>
+
+            <!-- Row 2: Professor and Semester -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Professor -->
+                <div>
+                    <label for="professor" class="block text-sm font-medium text-gray-300 mb-2">
+                        Professor
+                    </label>
+                    <input type="text"
+                           id="professor"
+                           name="professor"
+                           placeholder="Dr. Jane Smith"
+                           class="w-full px-4 py-2 bg-dark-border border border-dark-border rounded text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                    />
+                </div>
+
+                <!-- Semester -->
+                <div>
+                    <label for="semester_id" class="block text-sm font-medium text-gray-300 mb-2">
+                        Semester <span class="text-red-500">*</span>
+                    </label>
+                    <select id="semester_id"
+                            name="semester_id"
+                            required
+                            hx-get="/api/v1/semesters"
+                            hx-trigger="load"
+                            hx-swap="innerHTML"
+                            class="w-full px-4 py-2 bg-dark-border border border-dark-border rounded text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                        <option value="">Loading semesters...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Row 3: Section and Credits -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Section -->
+                <div>
+                    <label for="section" class="block text-sm font-medium text-gray-300 mb-2">
+                        Section
+                    </label>
+                    <input type="text"
+                           id="section"
+                           name="section"
+                           placeholder="001"
+                           class="w-full px-4 py-2 bg-dark-border border border-dark-border rounded text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                    />
+                </div>
+
+                <!-- Credits -->
+                <div>
+                    <label for="credits" class="block text-sm font-medium text-gray-300 mb-2">
+                        Credits
+                    </label>
+                    <input type="number"
+                           id="credits"
+                           name="credits"
+                           min="0"
+                           max="12"
+                           placeholder="3"
+                           class="w-full px-4 py-2 bg-dark-border border border-dark-border rounded text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                    />
+                </div>
+            </div>
+
+            <!-- Color Picker -->
+            <div>
+                <label for="color" class="block text-sm font-medium text-gray-300 mb-2">
+                    Color
+                </label>
+                <div class="flex items-center gap-4">
+                    <input type="color"
+                           id="color"
+                           name="color"
+                           value="#00d4ff"
+                           class="h-12 w-24 rounded cursor-pointer bg-dark-border border border-dark-border"
+                    />
+                    <p class="text-xs text-gray-500">Pick a color to identify this course</p>
+                </div>
+            </div>
+
+            <!-- Root Folder Path -->
+            <div>
+                <label for="root_folder_path" class="block text-sm font-medium text-gray-300 mb-2">
+                    Root Folder Path
+                </label>
+                <input type="text"
+                       id="root_folder_path"
+                       name="root_folder_path"
+                       placeholder="/documents/courses/CS101"
+                       class="w-full px-4 py-2 bg-dark-border border border-dark-border rounded text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+                <p class="text-xs text-gray-500 mt-1">Optional: base folder for imported files</p>
+            </div>
+
+            <!-- Notes -->
+            <div>
+                <label for="notes" class="block text-sm font-medium text-gray-300 mb-2">
+                    Notes
+                </label>
+                <textarea id="notes"
+                          name="notes"
+                          rows="4"
+                          placeholder="Add any notes about this course, instructor links, resources, etc."
+                          class="w-full px-4 py-2 bg-dark-border border border-dark-border rounded text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+                ></textarea>
+            </div>
+
+            <!-- Monitor Toggle -->
+            <div class="flex items-center gap-3 p-4 bg-dark-border rounded">
+                <input type="checkbox"
+                       id="monitored"
+                       name="monitored"
+                       checked
+                       class="w-4 h-4 rounded bg-dark-border border-dark-border text-primary focus:ring-primary"
+                />
+                <label for="monitored" class="text-sm font-medium text-gray-300 cursor-pointer">
+                    Monitor this course for incoming files and deadlines
+                </label>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex gap-3 pt-6 border-t border-dark-border">
+                <button type="submit" class="bg-primary text-black px-6 py-2 rounded font-semibold hover:bg-blue-400 transition flex-1 md:flex-none">
+                    ➕ Create Course
+                </button>
+                <a href="/courses" class="bg-dark-border text-gray-300 px-6 py-2 rounded hover:bg-gray-700 transition text-center flex-1 md:flex-none">
+                    Cancel
+                </a>
+            </div>
+        </form>
+
+        <!-- Success Alert (hidden by default) -->
+        <div id="success-alert" class="hidden mt-6 p-4 bg-green-900 border border-green-700 rounded text-green-200">
+            ✓ Course created successfully! Redirecting...
+        </div>
+
+        <!-- Error Alert (hidden by default) -->
+        <div id="error-alert" class="hidden mt-6 p-4 bg-red-900 border border-red-700 rounded text-red-200">
+            <p id="error-message">An error occurred while creating the course.</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Load semesters on page load
+    document.addEventListener('htmx:load', function() {
+        loadSemesters();
+    });
+
+    async function loadSemesters() {
+        try {
+            const res = await fetch('/api/v1/semesters');
+            const semesters = await res.json();
+            const select = document.getElementById('semester_id');
+            select.innerHTML = '<option value="">Select a semester...</option>';
+
+            semesters.forEach(sem => {
+                const opt = document.createElement('option');
+                opt.value = sem.id;
+                opt.textContent = sem.name;
+                // Select current semester if available
+                if (sem.is_current) opt.selected = true;
+                select.appendChild(opt);
+            });
+        } catch (error) {
+            console.error('Error loading semesters:', error);
+            document.getElementById('semester_id').innerHTML = '<option value="">Error loading semesters</option>';
+        }
+    }
+
+    // Form submission handler
+    document.getElementById('add-course-form').addEventListener('htmx:afterRequest', function(event) {
+        const errorAlert = document.getElementById('error-alert');
+        const successAlert = document.getElementById('success-alert');
+
+        if (event.detail.xhr.status === 201) {
+            // Success
+            successAlert.classList.remove('hidden');
+            // Redirect to courses list after 2 seconds
+            setTimeout(() => {
+                window.location.href = '/courses';
+            }, 2000);
+        } else {
+            // Error
+            try {
+                const response = JSON.parse(event.detail.xhr.responseText);
+                document.getElementById('error-message').textContent = response.detail || 'An error occurred.';
+            } catch {
+                document.getElementById('error-message').textContent = 'An error occurred while creating the course.';
+            }
+            errorAlert.classList.remove('hidden');
+            // Scroll to error
+            errorAlert.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+
+    // Initial semester load
+    loadSemesters();
+</script>
+{% endblock %}

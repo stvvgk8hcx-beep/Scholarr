@@ -1,0 +1,255 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Courses - Scholarr{% endblock %}
+{% block page_title %}Courses{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header with Add Button -->
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-white">All Courses</h1>
+        <a href="/courses/add" class="bg-primary text-black px-4 py-2 rounded font-semibold hover:bg-blue-400 transition">
+            ➕ Add Course
+        </a>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="bg-dark-card border border-dark-border rounded-lg p-4">
+        <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <!-- Search Input -->
+            <div class="flex-1 min-w-0">
+                <input type="text"
+                       id="course-search"
+                       placeholder="Search courses by code, name, or professor..."
+                       hx-get="/api/v1/courses"
+                       hx-trigger="keyup changed delay:500ms"
+                       hx-target="#courses-table"
+                       hx-swap="innerHTML"
+                       hx-vals='{"search": "PLACEHOLDER"}'
+                       class="w-full px-4 py-2 bg-dark-border border border-dark-border rounded text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="flex gap-2 text-sm">
+                <select id="semester-filter"
+                        hx-get="/api/v1/courses"
+                        hx-trigger="change"
+                        hx-target="#courses-table"
+                        hx-swap="innerHTML"
+                        class="px-3 py-2 bg-dark-border border border-dark-border rounded text-white focus:outline-none focus:border-primary">
+                    <option value="">All Semesters</option>
+                    <!-- Options loaded from API -->
+                </select>
+
+                <label class="flex items-center gap-2 px-3 py-2 bg-dark-border border border-dark-border rounded cursor-pointer hover:bg-gray-700">
+                    <input type="checkbox"
+                           id="monitored-only"
+                           hx-get="/api/v1/courses"
+                           hx-trigger="change"
+                           hx-target="#courses-table"
+                           hx-swap="innerHTML"
+                           class="w-4 h-4"
+                    />
+                    <span class="text-white">Monitored Only</span>
+                </label>
+            </div>
+
+            <!-- Sort Buttons -->
+            <div class="flex gap-2 text-sm">
+                <button hx-get="/api/v1/courses?sort_key=name&sort_dir=asc"
+                        hx-target="#courses-table"
+                        hx-swap="innerHTML"
+                        class="px-3 py-2 bg-dark-border border border-dark-border rounded text-white hover:bg-gray-700 transition">
+                    A-Z
+                </button>
+                <button hx-get="/api/v1/courses?sort_key=created_at&sort_dir=desc"
+                        hx-target="#courses-table"
+                        hx-swap="innerHTML"
+                        class="px-3 py-2 bg-dark-border border border-dark-border rounded text-white hover:bg-gray-700 transition">
+                    Newest
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Actions Toolbar (hidden until selection) -->
+    <div id="bulk-actions" class="hidden bg-dark-card border border-dark-border rounded-lg p-4">
+        <div class="flex items-center justify-between">
+            <span class="text-sm text-gray-400">
+                <span id="selected-count">0</span> course(s) selected
+            </span>
+            <div class="flex gap-2">
+                <button class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm">
+                    🗑️ Delete
+                </button>
+                <button class="px-4 py-2 bg-dark-border text-white rounded hover:bg-gray-700 transition text-sm">
+                    📊 Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Courses Table Container -->
+    <div class="bg-dark-card border border-dark-border rounded-lg overflow-hidden">
+        <!-- Table Header with Column Sorters -->
+        <div class="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-dark-border border-b border-dark-border text-xs font-semibold text-gray-300 uppercase tracking-wide">
+            <div class="col-span-1">
+                <input type="checkbox" id="select-all" class="w-4 h-4 cursor-pointer">
+            </div>
+            <button hx-get="/api/v1/courses?sort_key=code&sort_dir=asc"
+                    hx-target="#courses-table"
+                    hx-swap="innerHTML"
+                    class="col-span-2 text-left hover:text-primary cursor-pointer">
+                Code ⇅
+            </button>
+            <button hx-get="/api/v1/courses?sort_key=name&sort_dir=asc"
+                    hx-target="#courses-table"
+                    hx-swap="innerHTML"
+                    class="col-span-3 text-left hover:text-primary cursor-pointer">
+                Name ⇅
+            </button>
+            <button hx-get="/api/v1/courses?sort_key=professor&sort_dir=asc"
+                    hx-target="#courses-table"
+                    hx-swap="innerHTML"
+                    class="col-span-2 text-left hover:text-primary cursor-pointer">
+                Professor ⇅
+            </button>
+            <div class="col-span-1 text-left">Semester</div>
+            <div class="col-span-1 text-left">Items</div>
+            <div class="col-span-1 text-left">Status</div>
+            <div class="col-span-1 text-right">Actions</div>
+        </div>
+
+        <!-- Courses Table Body - HTMX loaded -->
+        <div id="courses-table"
+             hx-get="/api/v1/courses?page=1&page_size=20"
+             hx-trigger="load"
+             hx-swap="innerHTML"
+             class="divide-y divide-dark-border">
+            <!-- Loading state -->
+            <div class="p-6 text-center text-gray-500 animate-pulse">
+                Loading courses...
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination (will be added by HTMX response) -->
+    <div id="pagination" class="flex justify-center gap-2">
+        <!-- Pagination controls -->
+    </div>
+</div>
+
+<!-- Course Row Template (rendered by HTMX response) -->
+<template id="course-row-template">
+    <div class="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-dark-border border-b border-dark-border items-center cursor-pointer transition"
+         onclick="window.location.href = '/courses/' + {{ id }}">
+        <div class="col-span-1">
+            <input type="checkbox" class="course-checkbox w-4 h-4 cursor-pointer" data-id="{{ id }}" onclick="event.stopPropagation()">
+        </div>
+        <div class="col-span-2">
+            <span class="font-mono text-sm font-semibold text-primary">{{ code }}</span>
+        </div>
+        <div class="col-span-3">
+            <p class="font-medium text-gray-200 truncate">{{ name }}</p>
+        </div>
+        <div class="col-span-2">
+            <p class="text-sm text-gray-400 truncate">{{ professor or 'N/A' }}</p>
+        </div>
+        <div class="col-span-1">
+            <span class="text-xs text-gray-500">{{ semester }}</span>
+        </div>
+        <div class="col-span-1">
+            <span class="text-sm text-gray-300">{{ item_count }}</span>
+        </div>
+        <div class="col-span-1">
+            <span class="px-2 py-1 rounded text-xs font-medium {% if monitored %}bg-green-900 text-green-200{% else %}bg-gray-700 text-gray-300{% endif %}">
+                {% if monitored %}✓ Active{% else %}○ Paused{% endif %}
+            </span>
+        </div>
+        <div class="col-span-1 text-right">
+            <button hx-confirm="Delete this course?"
+                    hx-delete="/api/v1/courses/{{ id }}"
+                    hx-target="#courses-table"
+                    hx-swap="innerHTML"
+                    onclick="event.stopPropagation()"
+                    class="text-red-400 hover:text-red-300 text-sm">
+                🗑️
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Card View -->
+    <div class="block md:hidden p-4 border-b border-dark-border hover:bg-dark-border transition"
+         onclick="window.location.href = '/courses/' + {{ id }}">
+        <div class="flex items-start justify-between mb-2">
+            <div>
+                <p class="font-semibold text-primary">{{ code }}</p>
+                <p class="text-sm text-gray-300">{{ name }}</p>
+            </div>
+            <span class="px-2 py-1 rounded text-xs font-medium {% if monitored %}bg-green-900 text-green-200{% else %}bg-gray-700 text-gray-300{% endif %}">
+                {% if monitored %}✓{% else %}○{% endif %}
+            </span>
+        </div>
+        <div class="text-xs text-gray-500 space-y-1">
+            <p>Prof: {{ professor or 'N/A' }}</p>
+            <p>{{ semester }} • {{ item_count }} items</p>
+        </div>
+    </div>
+</template>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Load semesters for filter dropdown on page load
+    document.addEventListener('htmx:load', function() {
+        loadSemesters();
+    });
+
+    // Update search parameter when typing
+    document.getElementById('course-search').addEventListener('keyup', function(e) {
+        const searchVal = this.value;
+        const htmxElement = document.getElementById('courses-table');
+        htmxElement.setAttribute('hx-vals', JSON.stringify({'search': searchVal}));
+    });
+
+    // Handle select all checkbox
+    document.addEventListener('change', function(e) {
+        if (e.target.id === 'select-all') {
+            const checkboxes = document.querySelectorAll('.course-checkbox');
+            checkboxes.forEach(cb => cb.checked = e.target.checked);
+            updateBulkActions();
+        } else if (e.target.classList.contains('course-checkbox')) {
+            updateBulkActions();
+        }
+    });
+
+    function updateBulkActions() {
+        const selected = document.querySelectorAll('.course-checkbox:checked').length;
+        const bulkActions = document.getElementById('bulk-actions');
+        if (selected > 0) {
+            bulkActions.classList.remove('hidden');
+            document.getElementById('selected-count').textContent = selected;
+        } else {
+            bulkActions.classList.add('hidden');
+        }
+    }
+
+    async function loadSemesters() {
+        try {
+            const res = await fetch('/api/v1/semesters');
+            const semesters = await res.json();
+            const select = document.getElementById('semester-filter');
+            semesters.forEach(sem => {
+                const opt = document.createElement('option');
+                opt.value = sem.id;
+                opt.textContent = sem.name;
+                select.appendChild(opt);
+            });
+        } catch (error) {
+            console.error('Error loading semesters:', error);
+        }
+    }
+</script>
+{% endblock %}

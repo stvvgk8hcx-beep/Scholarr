@@ -1,0 +1,21 @@
+<!-- Toast Notification Partial
+     Used by HTMX responses to show brief notifications
+     Usage: Include this or trigger via X-Toast headers in responses
+     Classes: toast-success, toast-warning, toast-danger, toast-info -->
+
+{% if message %}
+<script>
+    // This script will be executed after the template is rendered
+    document.addEventListener('DOMContentLoaded', function() {
+        showToast('{{ message }}', '{{ message_type | default("info") }}');
+    });
+</script>
+{% endif %}
+
+<!-- Alternative: Direct HTML toast (for server-rendered responses) -->
+{% if show_toast %}
+<div class="toast toast-{{ toast_type | default('info') }}">
+    <span>{{ toast_message }}</span>
+    <span class="toast-close">&times;</span>
+</div>
+{% endif %}
