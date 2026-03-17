@@ -423,37 +423,54 @@ body.dark-mode { --ed-text-current: #d8dae8; }
 .code-edit {
     flex: 1;
     min-width: 0;
-    overflow: auto;
+    position: relative;
+    overflow: hidden;
 }
-.code-ce {
+/* Backdrop: colored, behind textarea */
+.code-backdrop {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    padding: 10px 14px;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.82em;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow: auto;
+    pointer-events: none;
+    color: transparent;
+}
+.code-backdrop .kw { color: #c792ea; }
+.code-backdrop .bi { color: #ffcb6b; }
+.code-backdrop .fn { color: #82aaff; }
+.code-backdrop .st { color: #c3e88d; }
+.code-backdrop .cm { color: #546e7a; font-style: italic; }
+.code-backdrop .nu { color: #f78c6c; }
+.code-backdrop .op { color: #89ddff; }
+/* Textarea: on top, transparent text, visible caret */
+.code-ta {
+    position: relative;
+    z-index: 1;
     width: 100%;
     min-height: 100px;
+    height: 100%;
     background: transparent;
     border: none;
     outline: none;
-    color: #c8cce0;
+    color: transparent;
+    caret-color: var(--ed-accent);
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
     font-size: 0.82em;
     line-height: 1.7;
     padding: 10px 14px;
+    resize: none;
     tab-size: 4;
     white-space: pre-wrap;
     word-break: break-word;
-    caret-color: var(--ed-accent);
+    overflow: auto;
 }
-.code-ce:empty::before {
-    content: 'Write code here...';
-    color: rgba(255,255,255,0.15);
-    font-style: italic;
-}
-/* Syntax colors */
-.code-ce .kw { color: #c792ea; }
-.code-ce .bi { color: #ffcb6b; }
-.code-ce .fn { color: #82aaff; }
-.code-ce .st { color: #c3e88d; }
-.code-ce .cm { color: #546e7a; font-style: italic; }
-.code-ce .nu { color: #f78c6c; }
-.code-ce .op { color: #89ddff; }
+.code-ta::placeholder { color: rgba(255,255,255,0.15); }
+.code-ta::selection { background: rgba(46,207,161,0.25); color: transparent; }
 
 /* Resizable divider */
 .code-divider {
@@ -518,7 +535,9 @@ body.dark-mode { --ed-text-current: #d8dae8; }
             </div>
             <div class="code-split">
                 <div class="code-edit">
-                    <div class="code-ce" id="codeInput" contenteditable="true" spellcheck="false" onkeydown="handleTab(event)" oninput="debouncedHighlight()"></div>
+                    <div class="code-backdrop" id="codeBackdrop"></div>
+                    <textarea class="code-ta" id="codeInput" placeholder="Write code here..." spellcheck="false"
+                        onkeydown="handleTab(event)" oninput="syncHighlight()" onscroll="syncScroll()"></textarea>
                 </div>
                 <div class="code-divider" id="codeDivider"></div>
                 <div class="code-out" id="codeOutWrap">
@@ -1351,8 +1370,11 @@ function toggleCodePanel() {
 function handleTab(e) {
     if (e.key === 'Tab') {
         e.preventDefault();
-        document.execCommand('insertText', false, '    ');
-        debouncedHighlight();
+        const ta = e.target;
+        const s = ta.selectionStart, end = ta.selectionEnd;
+        ta.value = ta.value.substring(0, s) + '    ' + ta.value.substring(end);
+        ta.selectionStart = ta.selectionEnd = s + 4;
+        syncHighlight();
     }
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -1365,11 +1387,7 @@ function syncScroll() {
 }
 
 // ── Syntax Highlighting (contenteditable) ─────────────────
-let hlTimer = null;
-function debouncedHighlight() {
-    clearTimeout(hlTimer);
-    hlTimer = setTimeout(applyHighlight, 150);
-}
+// Highlighting happens via syncHighlight() on textarea input
 
 const HL = {
     python: [
@@ -1396,76 +1414,33 @@ const HL = {
     zsh: null, // falls back to bash
 };
 
-// Keep a clean copy of the code text (avoids reading back markers)
-let _codeText = '';
-
-function applyHighlight() {
-    const el = document.getElementById('codeInput');
+function syncHighlight() {
+    const text = document.getElementById('codeInput').value;
     const lang = document.getElementById('codeLang').value;
     const rules = HL[lang] || HL[lang === 'zsh' ? 'bash' : 'python'] || HL.python;
 
-    // Read raw text and clean any leftover markers
-    let raw = el.innerText || '';
-    raw = raw.replace(/[\uFFFD\uFFFE]/g, '');
-    _codeText = raw;
-
-    if (!raw.trim()) { el.innerHTML = ''; return; }
-
-    // Save cursor position
-    const sel = window.getSelection();
-    let cursorOffset = 0;
-    if (sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0);
-        const preRange = range.cloneRange();
-        preRange.selectNodeContents(el);
-        preRange.setEnd(range.startContainer, range.startOffset);
-        // Clean markers from the measured text too
-        cursorOffset = preRange.toString().replace(/[\uFFFD\uFFFE]/g, '').length;
-    }
-
     // Escape HTML
-    let h = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    let h = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-    // Tokenize with safe placeholders
-    const saved = [];
+    // Apply rules in order (comments/strings first)
     for (const [re, cls] of rules) {
         re.lastIndex = 0;
-        h = h.replace(re, (m) => {
-            // Skip if already inside a placeholder
-            if (m.includes('\uFFFD')) return m;
-            const idx = saved.length;
-            saved.push(`<span class="${cls}">${m}</span>`);
-            return `\uFFFD${idx}\uFFFE`;
-        });
+        h = h.replace(re, `<span class="${cls}">$&</span>`);
     }
-    // Restore all placeholders
-    for (let i = 0; i < saved.length; i++) {
-        h = h.replace(`\uFFFD${i}\uFFFE`, saved[i]);
-    }
-    el.innerHTML = h.replace(/\n/g, '<br>');
 
-    // Restore cursor
-    try {
-        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
-        let count = 0;
-        let node;
-        while (node = walker.nextNode()) {
-            const len = node.textContent.length;
-            if (count + len >= cursorOffset) {
-                const r2 = document.createRange();
-                r2.setStart(node, Math.min(cursorOffset - count, len));
-                r2.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(r2);
-                break;
-            }
-            count += len;
-        }
-    } catch(e) {}
+    // Must end with newline so backdrop height matches textarea
+    document.getElementById('codeBackdrop').innerHTML = h + '\n';
+}
+
+function syncScroll() {
+    const ta = document.getElementById('codeInput');
+    const bd = document.getElementById('codeBackdrop');
+    bd.scrollTop = ta.scrollTop;
+    bd.scrollLeft = ta.scrollLeft;
 }
 
 function getCodeText() {
-    return _codeText || (document.getElementById('codeInput').innerText || '').replace(/[\uFFFD\uFFFE]/g, '');
+    return document.getElementById('codeInput').value;
 }
 
 // ── Run Code ─────────────────────────────────────────────
