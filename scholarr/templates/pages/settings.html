@@ -414,7 +414,7 @@ async function restoreFromFile(input) {
         }
         // Import academic items
         for (const item of (backup.data.academic_items || [])) {
-            try { await API.post('/api/v1/academic-items', { title: item.title, item_type: item.item_type || 'other', status: item.status || 'NotStarted', due_date: item.due_date, grade: item.grade }); imported++; } catch(e) { failed++; }
+            try { await API.post('/api/v1/academic-items', { name: item.name || item.title, type: item.type || item.item_type || 'Other', status: item.status || 'NotStarted', due_date: item.due_date, grade: item.grade }); imported++; } catch(e) { failed++; }
         }
         el.innerHTML = `<span class="save-ok">✓ Imported ${imported} items${failed ? ` (${failed} skipped)` : ''}</span>`;
         showToast(`Restore complete: ${imported} imported`, 'success');

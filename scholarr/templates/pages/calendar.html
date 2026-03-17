@@ -172,9 +172,9 @@ function renderGrid(items) {
 
         const dayItems = byDate[dateStr] || [];
         const eventHtml = dayItems.slice(0, 3).map(item => {
-            const type = (item.item_type || item.type || 'other').toLowerCase();
+            const type = (item.type || 'other').toLowerCase();
             const cls = ['assignment','exam','project','quiz'].includes(type) ? `ev-${type}` : 'ev-other';
-            return `<div class="cal-event ${cls}" title="${item.title || item.name}">${item.title || item.name}</div>`;
+            return `<div class="cal-event ${cls}" title="${item.name}">${item.name}</div>`;
         }).join('') + (dayItems.length > 3 ? `<div style="font-size:0.68em;color:var(--text-secondary);margin-top:2px;">+${dayItems.length-3} more</div>` : '');
 
         cell.innerHTML = `<div class="day-num">${day}</div><div class="cal-events">${eventHtml}</div>`;
@@ -204,8 +204,8 @@ function showDayDetail(day, dateStr, items) {
     } else {
         content.innerHTML = items.map(item => `
             <div style="background:var(--bg-tertiary);padding:12px;border-radius:3px;margin-bottom:8px;border-left:3px solid var(--accent-blue);">
-                <div style="font-weight:600;margin-bottom:4px;">${item.title || item.name}</div>
-                <div style="font-size:0.85em;color:var(--text-secondary);">${item.course_code || ''} · <span style="text-transform:capitalize;">${item.item_type || item.type || 'other'}</span></div>
+                <div style="font-weight:600;margin-bottom:4px;">${item.name}</div>
+                <div style="font-size:0.85em;color:var(--text-secondary);">${item.course_code || ''} · <span style="text-transform:capitalize;">${item.type || 'Other'}</span></div>
                 <div style="margin-top:6px;">
                     <span class="badge ${statusBadge(item.status)}">${item.status || 'NotStarted'}</span>
                     ${item.grade !== null && item.grade !== undefined ? `<span style="margin-left:8px;font-size:0.85em;color:var(--accent-blue);">Grade: ${item.grade}%</span>` : ''}

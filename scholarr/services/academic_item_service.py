@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from scholarr.db.models import AcademicItem, AcademicItemStatusEnum
+from scholarr.db.models import AcademicItem, AcademicItemStatusEnum, Course
 from scholarr.schemas.academic_item import (
     AcademicItemCreate,
     AcademicItemUpdate,
@@ -14,6 +14,20 @@ from scholarr.schemas.academic_item import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+async def _enrich_items(items: list[AcademicItemResponse], db) -> list[AcademicItemResponse]:
+    """Batch-fetch course codes and attach to response objects."""
+    if not items:
+        return items
+    course_ids = {i.course_id for i in items}
+    result = await db.execute(
+        select(Course.id, Course.code).where(Course.id.in_(course_ids))
+    )
+    code_map = {row.id: row.code for row in result}
+    for item in items:
+        item.course_code = code_map.get(item.course_id)
+    return items
 
 
 class AcademicItemService:
@@ -77,7 +91,8 @@ class AcademicItemService:
         if page is not None and page_size is not None:
             query = query.offset((page - 1) * page_size).limit(page_size)
         result = await self.db.execute(query)
-        return [AcademicItemResponse.model_validate(row) for row in result.scalars().all()]
+        items = [AcademicItemResponse.model_validate(row) for row in result.scalars().all()]
+        return await _enrich_items(items, self.db)
 
     async def list_academic_items_paginated(
         self,
@@ -101,6 +116,7 @@ class AcademicItemService:
             query = query.where(AcademicItem.course_id == course_id)
         result = await self.db.execute(query.order_by(order).offset(offset).limit(page_size))
         items = [AcademicItemResponse.model_validate(row) for row in result.scalars().all()]
+        items = await _enrich_items(items, self.db)
         return AcademicItemListResponse(
             items=items,
             total=total,
@@ -131,7 +147,8 @@ class AcademicItemService:
         if course_id is not None:
             query = query.where(AcademicItem.course_id == course_id)
         result = await self.db.execute(query)
-        return [AcademicItemResponse.model_validate(row) for row in result.scalars().all()]
+        items = [AcademicItemResponse.model_validate(row) for row in result.scalars().all()]
+        return await _enrich_items(items, self.db)
 
     async def get_academic_item(self, id: int) -> AcademicItemResponse | None:
         obj = await self.db.get(AcademicItem, id)

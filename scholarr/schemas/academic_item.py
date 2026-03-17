@@ -102,6 +102,7 @@ class AcademicItemResponse(BaseModel):
 
     id: int
     course_id: int
+    course_code: Optional[str] = None  # populated by service via join
     type: AcademicItemTypeEnum
     name: str
     number: Optional[str]
@@ -116,18 +117,6 @@ class AcademicItemResponse(BaseModel):
     clean_name: Optional[str]
     created_at: datetime
     updated_at: datetime
-
-    # Front-end aliases — serialised in JSON output
-    @property
-    def title(self) -> str:
-        return self.name
-
-    @property
-    def item_type(self) -> str:
-        return self.type.value if self.type else "Other"
-
-    def model_post_init(self, __context):
-        pass  # Hook available for future extension
 
 
 class AcademicItemListResponse(BaseModel):

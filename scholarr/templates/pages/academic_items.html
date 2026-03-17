@@ -302,8 +302,8 @@ async function loadItems() {
 
         tbody.innerHTML = items.map(item => `
             <tr>
-                <td style="font-weight:500;">${item.title || item.name}</td>
-                <td><span class="badge badge-notstarted" style="text-transform:capitalize;">${item.item_type || item.type || '—'}</span></td>
+                <td style="font-weight:500;">${item.name}</td>
+                <td><span class="badge badge-notstarted" style="text-transform:capitalize;">${item.type || '—'}</span></td>
                 <td style="color:var(--text-secondary);">${item.course_code || '—'}</td>
                 <td class="date-cell">${formatDate(item.due_date)}</td>
                 <td><span class="badge ${statusBadge(item.status)}">${item.status || 'NotStarted'}</span></td>
@@ -369,8 +369,8 @@ async function editItem(id) {
     try {
         const item = await API.get(`/api/v1/academic-items/${id}`);
         document.getElementById('edit-item-id').value = item.id;
-        document.getElementById('edit-item-title').value = item.title || item.name || '';
-        document.getElementById('edit-item-type').value = item.type || item.item_type || 'Other';
+        document.getElementById('edit-item-title').value = item.name || '';
+        document.getElementById('edit-item-type').value = item.type || 'Other';
         document.getElementById('edit-item-status').value = item.status || 'NotStarted';
         document.getElementById('edit-item-due').value = item.due_date ? item.due_date.slice(0,10) : '';
         document.getElementById('edit-item-grade').value = (item.grade !== null && item.grade !== undefined) ? item.grade : '';
