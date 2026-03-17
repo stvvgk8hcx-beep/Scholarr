@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="12" fill="#0d7dd8"/>
-  <text x="32" y="46" font-size="38" text-anchor="middle" font-family="serif">📚</text>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <rect x="0" y="0" width="1024" height="1024" rx="184" ry="184" fill="#1a1a2e"/>
+  <polygon points="512.0,272.4 809.0,430.1 512.0,587.8 215.0,430.1" fill="#2ecfa1" />
+  <path d="M 304.1,554.0 Q 512.0,921.6 719.9,554.0" fill="none" stroke="#2ecfa1" stroke-width="28.7" stroke-linecap="round"/>
+  <line x1="512.0" y1="587.8" x2="512.0" y2="554.0" stroke="#2ecfa1" stroke-width="22.5" stroke-linecap="round"/>
+  <line x1="737.7" y1="407.6" x2="737.7" y2="925.7" stroke="#2ecfa1" stroke-width="22.5" stroke-linecap="round"/>
+  <circle cx="737.7" cy="925.7" r="20.5" fill="#2ecfa1"/>
+  <polygon points="512.0,272.4 809.0,430.1 512.0,430.1" fill="rgba(255,255,255,0.15)"/>
 </svg>
