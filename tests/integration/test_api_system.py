@@ -1,6 +1,5 @@
 """Integration tests for system API endpoints."""
 
-import pytest
 
 
 class TestHealthEndpoint:

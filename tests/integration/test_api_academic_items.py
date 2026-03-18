@@ -2,8 +2,6 @@
 
 from datetime import datetime, timedelta
 
-import pytest
-
 
 class TestCreateItemAPI:
     """Tests for creating academic items via API."""

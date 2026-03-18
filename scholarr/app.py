@@ -10,6 +10,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+
 from scholarr.api.v1.router import router as v1_router
 from scholarr.core.config import settings
 from scholarr.signalr import ConnectionManager
@@ -238,10 +239,10 @@ def create_app() -> FastAPI:
 
     # --- Exception handlers (proper HTTP status codes) ---
     from scholarr.core.exceptions import (
-        ValidationException,
+        ForbiddenError,
         NotFoundError,
         UnauthorizedError,
-        ForbiddenError,
+        ValidationException,
     )
 
     @app.exception_handler(ValidationException)

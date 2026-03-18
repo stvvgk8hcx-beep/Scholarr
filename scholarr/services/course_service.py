@@ -2,12 +2,13 @@
 
 import json
 import logging
-from typing import Optional
-from sqlalchemy import select, func, or_, update as sql_update
+
+from sqlalchemy import func, or_, select
+from sqlalchemy import update as sql_update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.db.models import AcademicItem, Course, Semester
-from scholarr.schemas.course import CourseCreate, CourseUpdate, CourseResponse, CourseListResponse
+from scholarr.schemas.course import CourseCreate, CourseListResponse, CourseResponse, CourseUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,7 @@ class CourseService:
             responses.append(r)
         return responses
 
-    async def _find_semester_id(self) -> Optional[int]:
+    async def _find_semester_id(self) -> int | None:
         """Return the active semester id, or the first semester id, or None."""
         result = await self.db.execute(
             select(Semester.id).where(Semester.active == True).limit(1)  # noqa: E712
@@ -167,7 +168,7 @@ class CourseService:
             await self.db.rollback()
             raise ValueError(
                 f"A course with code {course.code!r} already exists in this semester"
-            )
+            ) from None
         await self.db.refresh(obj)
         logger.info(f"Created course id={obj.id} code={obj.code!r}")
         enriched = await self._enrich([obj])

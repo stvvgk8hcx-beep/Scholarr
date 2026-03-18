@@ -3,15 +3,16 @@
 import logging
 import shutil
 from pathlib import Path
-from sqlalchemy import select, func
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from scholarr.db.models import ManagedFile, AcademicItem, Course, HistoryEntry, HistoryEventTypeEnum
+from scholarr.db.models import AcademicItem, Course, HistoryEntry, HistoryEventTypeEnum, ManagedFile
 from scholarr.schemas.managed_file import (
     ManagedFileCreate,
-    ManagedFileUpdate,
-    ManagedFileResponse,
     ManagedFileListResponse,
+    ManagedFileResponse,
+    ManagedFileUpdate,
 )
 
 logger = logging.getLogger(__name__)

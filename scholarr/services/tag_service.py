@@ -1,12 +1,12 @@
 """Tag service for business logic."""
 
 import logging
-from typing import Optional
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.db.models import Tag
-from scholarr.schemas.tag import TagCreate, TagUpdate, TagResponse
+from scholarr.schemas.tag import TagCreate, TagResponse, TagUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ class TagService:
         result = await self.db.execute(select(Tag).order_by(Tag.label))
         return [TagResponse.model_validate(row) for row in result.scalars().all()]
 
-    async def get_tag(self, id: int) -> Optional[TagResponse]:
+    async def get_tag(self, id: int) -> TagResponse | None:
         """Get a tag by ID."""
         obj = await self.db.get(Tag, id)
         return TagResponse.model_validate(obj) if obj else None
@@ -38,7 +38,7 @@ class TagService:
 
     async def update_tag(
         self, id: int, tag_update: TagUpdate
-    ) -> Optional[TagResponse]:
+    ) -> TagResponse | None:
         """Update a tag."""
         obj = await self.db.get(Tag, id)
         if not obj:

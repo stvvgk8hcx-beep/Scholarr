@@ -12,19 +12,19 @@ Example academic database schemas (for reference):
   - Students: id, name, email, student_number
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+import contextlib
 import logging
+from typing import Any
 
 try:
-    from sqlalchemy import create_engine, text, inspect
-    from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-    from sqlalchemy.pool import StaticPool
+    from sqlalchemy import create_engine, inspect, text
+    from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine  # noqa: F401
+    from sqlalchemy.pool import StaticPool  # noqa: F401
     HAS_SQLALCHEMY = True
 except ImportError:
     HAS_SQLALCHEMY = False
 
-from scholarr.core.integrations import BaseIntegrationProvider, IntegrationType, IntegrationStatus
+from scholarr.core.integrations import BaseIntegrationProvider, IntegrationStatus, IntegrationType
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class SqlIntegrationProvider(BaseIntegrationProvider):
         if not HAS_SQLALCHEMY:
             logger.warning("SQLAlchemy not installed; SQL integration will be limited")
 
-    async def connect(self, config: Dict[str, Any]) -> bool:
+    async def connect(self, config: dict[str, Any]) -> bool:
         """Connect to external SQL database.
 
         Config should contain:
@@ -90,7 +90,7 @@ class SqlIntegrationProvider(BaseIntegrationProvider):
             if success:
                 self._is_connected = True
                 self._clear_last_error()
-                logger.info(f"Connected to SQL database")
+                logger.info("Connected to SQL database")
             else:
                 self._set_last_error("Failed to connect to database")
 
@@ -145,9 +145,9 @@ class SqlIntegrationProvider(BaseIntegrationProvider):
 
     async def export_courses_to_sql(
         self,
-        courses: List[Dict[str, Any]],
+        courses: list[dict[str, Any]],
         table_name: str = "scholarr_courses"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Export Scholarr courses to external database.
 
         Creates or appends to a table with Scholarr course data.
@@ -173,7 +173,7 @@ class SqlIntegrationProvider(BaseIntegrationProvider):
         if not self._is_connected:
             return {"error": "Not connected to database"}
 
-        results = {"rows_exported": 0, "errors": []}
+        results: dict[str, Any] = {"rows_exported": 0, "errors": []}
 
         try:
             logger.debug(f"SQL export_courses_to_sql: stub for {len(courses)} courses")
@@ -188,8 +188,8 @@ class SqlIntegrationProvider(BaseIntegrationProvider):
     async def import_from_sql(
         self,
         query: str,
-        params: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
+        params: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
         """Import data from external database using custom SQL query.
 
         Args:
@@ -208,7 +208,7 @@ class SqlIntegrationProvider(BaseIntegrationProvider):
             return []
 
         try:
-            logger.debug(f"SQL import_from_sql: stub for custom query")
+            logger.debug("SQL import_from_sql: stub for custom query")
             return []
 
         except Exception as e:
@@ -218,8 +218,8 @@ class SqlIntegrationProvider(BaseIntegrationProvider):
 
     async def sync_grades_from_sql(
         self,
-        course_id: Optional[int] = None
-    ) -> Dict[str, Any]:
+        course_id: int | None = None
+    ) -> dict[str, Any]:
         """Sync grades from external gradebook database.
 
         Pulls grades for all courses or specific course and imports
@@ -249,7 +249,7 @@ class SqlIntegrationProvider(BaseIntegrationProvider):
         if not self._is_connected:
             return {"error": "Not connected to database"}
 
-        results = {"grades_synced": 0, "courses_synced": 0, "errors": []}
+        results: dict[str, Any] = {"grades_synced": 0, "courses_synced": 0, "errors": []}
 
         try:
             logger.debug("SQL sync_grades_from_sql: stub implementation")
@@ -260,7 +260,7 @@ class SqlIntegrationProvider(BaseIntegrationProvider):
             results["errors"].append(str(e))
             return results
 
-    async def list_tables(self) -> List[str]:
+    async def list_tables(self) -> list[str]:
         """List all available tables in connected database.
 
         Returns:
@@ -276,7 +276,7 @@ class SqlIntegrationProvider(BaseIntegrationProvider):
             logger.error(f"Failed to list tables: {e}")
             return []
 
-    async def sync(self) -> Dict[str, Any]:
+    async def sync(self) -> dict[str, Any]:
         """Not applicable for direct database connections.
 
         Returns:
@@ -292,10 +292,8 @@ class SqlIntegrationProvider(BaseIntegrationProvider):
         """
         tables = []
         if self._is_connected:
-            try:
+            with contextlib.suppress(Exception):
                 tables = await self.list_tables()
-            except Exception:
-                pass
 
         return IntegrationStatus(
             provider_name="sql",

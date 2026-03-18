@@ -1,13 +1,13 @@
 """Logs endpoint for viewing application logs."""
 
-from typing import Optional
-from fastapi import APIRouter, Depends, Query, HTTPException
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.security import verify_api_key
 from scholarr.db.session import get_db_session
-from scholarr.schemas.log import LogEntryResponse, LogListResponse
+from scholarr.schemas.log import LogListResponse
 from scholarr.services.log_service import LogService
 
 router = APIRouter()
@@ -17,8 +17,8 @@ router = APIRouter()
 async def get_logs(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
-    level: Optional[str] = Query(None),
-    search: Optional[str] = Query(None),
+    level: str | None = Query(None),
+    search: str | None = Query(None),
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):

@@ -17,11 +17,11 @@ Moodle's Web Services API is more complex than Canvas but provides
 fine-grained data access.
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 import logging
+from datetime import datetime
+from typing import Any
 
-from scholarr.core.integrations import BaseIntegrationProvider, IntegrationType, IntegrationStatus
+from scholarr.core.integrations import BaseIntegrationProvider, IntegrationStatus, IntegrationType
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +35,10 @@ class MoodleProvider(BaseIntegrationProvider):
     def __init__(self):
         """Initialize Moodle provider."""
         super().__init__("moodle", IntegrationType.LMS)
-        self._token: Optional[str] = None
-        self._user_id: Optional[int] = None
+        self._token: str | None = None
+        self._user_id: int | None = None
 
-    async def connect(self, config: Dict[str, Any]) -> bool:
+    async def connect(self, config: dict[str, Any]) -> bool:
         """Connect to Moodle instance.
 
         Config should contain:
@@ -104,7 +104,7 @@ class MoodleProvider(BaseIntegrationProvider):
         logger.debug("Moodle test_connection: stub implementation")
         return True
 
-    async def get_courses(self) -> List[Dict[str, Any]]:
+    async def get_courses(self) -> list[dict[str, Any]]:
         """Fetch list of courses for authenticated user.
 
         Calls core_course_get_courses
@@ -115,7 +115,7 @@ class MoodleProvider(BaseIntegrationProvider):
         logger.debug("Moodle get_courses: stub implementation")
         return []
 
-    async def get_assignments(self, course_id: int) -> List[Dict[str, Any]]:
+    async def get_assignments(self, course_id: int) -> list[dict[str, Any]]:
         """Fetch assignments for a course.
 
         Uses core_course_get_course_module or mod_assign_* functions
@@ -129,7 +129,7 @@ class MoodleProvider(BaseIntegrationProvider):
         logger.debug(f"Moodle get_assignments for course {course_id}: stub")
         return []
 
-    async def get_grades(self, course_id: int) -> List[Dict[str, Any]]:
+    async def get_grades(self, course_id: int) -> list[dict[str, Any]]:
         """Fetch grades for a course.
 
         Calls core_grades_get_grades or gradereport_* functions
@@ -143,7 +143,7 @@ class MoodleProvider(BaseIntegrationProvider):
         logger.debug(f"Moodle get_grades for course {course_id}: stub")
         return []
 
-    async def sync(self) -> Dict[str, Any]:
+    async def sync(self) -> dict[str, Any]:
         """Sync all data from Moodle.
 
         Fetches courses, assignments, and grades.

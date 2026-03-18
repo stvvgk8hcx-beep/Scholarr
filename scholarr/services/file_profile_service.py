@@ -1,15 +1,16 @@
 """File Profile service."""
 
 import logging
-from sqlalchemy import select, func
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.db.models import FileProfile
 from scholarr.schemas.file_profile import (
     FileProfileCreate,
-    FileProfileUpdate,
-    FileProfileResponse,
     FileProfileListResponse,
+    FileProfileResponse,
+    FileProfileUpdate,
 )
 
 logger = logging.getLogger(__name__)

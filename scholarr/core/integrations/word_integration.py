@@ -10,20 +10,19 @@ Can extract:
   - Attempts to detect assignment info (course code, assignment number, etc.)
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 import logging
 import re
-from pathlib import Path
+from datetime import datetime
+from typing import Any
 
 try:
     from docx import Document
-    from docx.oxml.ns import qn
+    from docx.oxml.ns import qn  # noqa: F401
     HAS_DOCX = True
 except ImportError:
     HAS_DOCX = False
 
-from scholarr.core.integrations import BaseIntegrationProvider, IntegrationType, IntegrationStatus
+from scholarr.core.integrations import BaseIntegrationProvider, IntegrationStatus, IntegrationType
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +40,7 @@ class WordIntegrationProvider(BaseIntegrationProvider):
         if not HAS_DOCX:
             logger.warning("python-docx not installed; Word integration will be limited")
 
-    async def connect(self, config: Dict[str, Any]) -> bool:
+    async def connect(self, config: dict[str, Any]) -> bool:
         """Word documents don't need a persistent connection.
 
         Config can be empty or contain default document locations.
@@ -65,7 +64,7 @@ class WordIntegrationProvider(BaseIntegrationProvider):
         self._is_connected = False
         return True
 
-    async def sync(self) -> Dict[str, Any]:
+    async def sync(self) -> dict[str, Any]:
         """Not applicable for document tool.
 
         Returns:
@@ -81,7 +80,7 @@ class WordIntegrationProvider(BaseIntegrationProvider):
         """
         return HAS_DOCX
 
-    def extract_metadata(self, file_path: str) -> Dict[str, Any]:
+    def extract_metadata(self, file_path: str) -> dict[str, Any]:
         """Extract metadata from a Word document.
 
         Args:
@@ -112,7 +111,7 @@ class WordIntegrationProvider(BaseIntegrationProvider):
             logger.error(f"Failed to extract metadata from {file_path}: {e}")
             return {"error": str(e), "file_path": file_path}
 
-    def extract_headings(self, file_path: str) -> List[Dict[str, Any]]:
+    def extract_headings(self, file_path: str) -> list[dict[str, Any]]:
         """Extract heading structure from a Word document.
 
         Useful for parsing assignment instructions organized by sections.
@@ -131,18 +130,18 @@ class WordIntegrationProvider(BaseIntegrationProvider):
             headings = []
 
             for para in doc.paragraphs:
-                if para.style.name.startswith("Heading"):
+                style_name = para.style.name if para.style else ""
+                if style_name.startswith("Heading"):
                     # Extract level from style name (Heading 1, Heading 2, etc.)
                     level = 1
-                    if "Heading" in para.style.name:
-                        parts = para.style.name.split()
-                        if len(parts) > 1 and parts[1].isdigit():
-                            level = int(parts[1])
+                    parts = style_name.split()
+                    if len(parts) > 1 and parts[1].isdigit():
+                        level = int(parts[1])
 
                     headings.append({
                         "text": para.text.strip(),
                         "level": level,
-                        "style": para.style.name
+                        "style": style_name
                     })
 
             return headings
@@ -151,7 +150,7 @@ class WordIntegrationProvider(BaseIntegrationProvider):
             logger.error(f"Failed to extract headings from {file_path}: {e}")
             return []
 
-    def extract_tables(self, file_path: str) -> List[List[List[str]]]:
+    def extract_tables(self, file_path: str) -> list[list[list[str]]]:
         """Extract all tables from a Word document.
 
         Tables often contain grade rubrics, requirements, etc.
@@ -201,7 +200,7 @@ class WordIntegrationProvider(BaseIntegrationProvider):
             logger.error(f"Failed to extract text from {file_path}: {e}")
             return ""
 
-    def detect_assignment_info(self, file_path: str) -> Dict[str, Any]:
+    def detect_assignment_info(self, file_path: str) -> dict[str, Any]:
         """Try to detect assignment information from document content.
 
         Looks for common patterns:

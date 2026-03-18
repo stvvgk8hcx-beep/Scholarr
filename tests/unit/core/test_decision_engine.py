@@ -3,16 +3,14 @@
 import tempfile
 from pathlib import Path
 
-import pytest
 import pytest_asyncio
 
 from scholarr.core.import_sources.decision_engine import (
     DecisionEngine,
     DecisionResult,
     ImportAction,
-    QualityRank,
 )
-from scholarr.core.parser import FileNameParser, ParseResult, ItemType
+from scholarr.core.parser import ItemType, ParseResult
 
 
 @pytest_asyncio.fixture

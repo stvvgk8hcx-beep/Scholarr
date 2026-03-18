@@ -1,6 +1,5 @@
 """Managed files service for Scholarr."""
 
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +18,7 @@ class ManagedFileService:
         """
         self.session = session
 
-    async def get_all(self, academic_item_id: Optional[int] = None) -> list:
+    async def get_all(self, academic_item_id: int | None = None) -> list:
         """Get all managed files with optional filtering.
 
         Args:
@@ -36,7 +35,7 @@ class ManagedFileService:
             query = query.where(ManagedFile.academic_item_id == academic_item_id)
 
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def get_by_id(self, file_id: int):
         """Get managed file by ID.
@@ -124,7 +123,7 @@ class ManagedFileService:
         await self.session.delete(managed_file)
         await self.session.commit()
 
-    async def get_by_hash(self, file_hash: str) -> Optional[object]:
+    async def get_by_hash(self, file_hash: str) -> object | None:
         """Get managed file by content hash.
 
         Args:

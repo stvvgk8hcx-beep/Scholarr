@@ -1,7 +1,6 @@
 """Naming Configuration schemas."""
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -22,10 +21,10 @@ class NamingConfigResponse(BaseModel):
     id: int
     renaming_enabled: bool
     replace_illegal_characters: bool
-    standard_file_format: Optional[str]
-    folder_format: Optional[str]
-    course_folder_format: Optional[str]
-    semester_folder_format: Optional[str]
-    colon_replacement_format: Optional[str]
+    standard_file_format: str | None
+    folder_format: str | None
+    course_folder_format: str | None
+    semester_folder_format: str | None
+    colon_replacement_format: str | None
     created_at: datetime
     updated_at: datetime

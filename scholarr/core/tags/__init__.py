@@ -26,7 +26,7 @@ class TagService:
         from scholarr.db.models import Tag
 
         result = await self.session.execute(select(Tag))
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def get_by_id(self, tag_id: int):
         """Get tag by ID.

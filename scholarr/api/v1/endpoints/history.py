@@ -1,6 +1,6 @@
 """History endpoint."""
 
-from typing import Optional
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,9 +16,9 @@ router = APIRouter()
 async def get_history(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    event_type: Optional[str] = Query(None),
-    action_type: Optional[str] = Query(None),  # backward compat alias
-    course_id: Optional[int] = Query(None),
+    event_type: str | None = Query(None),
+    action_type: str | None = Query(None),  # backward compat alias
+    course_id: int | None = Query(None),
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):

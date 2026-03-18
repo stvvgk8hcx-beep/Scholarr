@@ -2,7 +2,6 @@
 
 import secrets
 from functools import lru_cache
-from typing import List, Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -33,21 +32,21 @@ class Settings(BaseSettings):
     secret_key: str = "change-this-in-production"
 
     # CORS and trusted hosts
-    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:8787"]
-    allowed_hosts: List[str] = ["localhost", "127.0.0.1"]
+    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:8787"]
+    allowed_hosts: list[str] = ["localhost", "127.0.0.1"]
 
     # Feature flags
     enable_scheduler: bool = True
     enable_file_watcher: bool = True
 
     # Sentry (optional)
-    sentry_dsn: Optional[str] = None
+    sentry_dsn: str | None = None
 
     # File paths
     data_dir: str = "./data"
     upload_dir: str = "./data/uploads"
     backup_dir: str = "./data/backups"
-    inbox_path: Optional[str] = None
+    inbox_path: str | None = None
 
     model_config = SettingsConfigDict(
         env_prefix="SCHOLARR_",

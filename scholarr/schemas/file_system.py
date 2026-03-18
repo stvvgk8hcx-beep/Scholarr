@@ -1,6 +1,5 @@
 """File System schemas."""
 
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -11,6 +10,6 @@ class DirectoryEntryResponse(BaseModel):
     name: str
     path: str
     is_dir: bool
-    size: Optional[int] = None
+    size: int | None = None
     modified: str
-    created_at: Optional[str] = None
+    created_at: str | None = None

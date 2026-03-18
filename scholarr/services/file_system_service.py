@@ -2,9 +2,8 @@
 
 import logging
 import shutil
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -38,7 +37,7 @@ class FileOperationService:
         managed_file_id: int,
         new_filename: str,
         *,
-        reason: Optional[str] = None,
+        reason: str | None = None,
     ) -> ManagedFile:
         """Rename a file on disk and record the change in history.
 
@@ -106,8 +105,8 @@ class FileOperationService:
         managed_file_id: int,
         new_directory: str,
         *,
-        new_filename: Optional[str] = None,
-        reason: Optional[str] = None,
+        new_filename: str | None = None,
+        reason: str | None = None,
     ) -> ManagedFile:
         """Move a file to a different directory (optionally renaming it too).
 
@@ -181,7 +180,7 @@ class FileOperationService:
         managed_file_id: int,
         *,
         remove_from_disk: bool = False,
-        reason: Optional[str] = None,
+        reason: str | None = None,
     ) -> bool:
         """Delete a ManagedFile record (and optionally the physical file).
 
@@ -254,9 +253,9 @@ class FileOperationService:
         self,
         mf: ManagedFile,
         event_type: HistoryEventTypeEnum,
-        source_path: Optional[str],
-        destination_path: Optional[str],
-        data: Optional[dict] = None,
+        source_path: str | None,
+        destination_path: str | None,
+        data: dict | None = None,
     ) -> None:
         entry = HistoryEntry(
             course_id=mf.academic_item.course_id if mf.academic_item else None,
@@ -265,7 +264,7 @@ class FileOperationService:
             source_path=source_path,
             destination_path=destination_path,
             event_type=event_type,
-            date=datetime.now(timezone.utc),
+            date=datetime.now(UTC),
             data=data or {},
         )
         self.db.add(entry)
@@ -289,6 +288,6 @@ class FileSystemService(FileOperationService):
                 "path": str(child),
                 "is_dir": child.is_dir(),
                 "size": child.stat().st_size if child.is_file() else None,
-                "modified": datetime.fromtimestamp(child.stat().st_mtime, tz=timezone.utc).isoformat(),
+                "modified": datetime.fromtimestamp(child.stat().st_mtime, tz=UTC).isoformat(),
             })
         return entries

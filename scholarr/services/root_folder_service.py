@@ -1,15 +1,16 @@
 """Root Folder service."""
 
 import logging
-from sqlalchemy import select, func
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.db.models import RootFolder
 from scholarr.schemas.root_folder import (
     RootFolderCreate,
-    RootFolderUpdate,
-    RootFolderResponse,
     RootFolderListResponse,
+    RootFolderResponse,
+    RootFolderUpdate,
 )
 
 logger = logging.getLogger(__name__)

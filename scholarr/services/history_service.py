@@ -1,8 +1,8 @@
 """History service for business logic."""
 
 import logging
-from typing import Optional
-from sqlalchemy import select, func
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.db.models import HistoryEntry
@@ -20,8 +20,8 @@ class HistoryService:
         self,
         page: int,
         page_size: int,
-        event_type: Optional[str] = None,
-        course_id: Optional[int] = None,
+        event_type: str | None = None,
+        course_id: int | None = None,
     ) -> dict:
         """Get history entries with pagination and filtering."""
         offset = (page - 1) * page_size

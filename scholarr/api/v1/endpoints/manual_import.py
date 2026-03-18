@@ -1,10 +1,8 @@
 """Manual Import endpoint for file imports and previews."""
 
-import hashlib
-from typing import Optional, List
-from fastapi import APIRouter, Depends, File, UploadFile, Query, Body, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Body, Depends, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.security import verify_api_key
 from scholarr.db.session import get_db_session
@@ -24,8 +22,8 @@ _ACCEPTED_EXTENSIONS = {
 class ImportFilePathRequest(BaseModel):
     """Request schema for importing from file paths."""
 
-    file_paths: List[str] = Field(..., min_length=1)
-    course_id: Optional[int] = None
+    file_paths: list[str] = Field(..., min_length=1)
+    course_id: int | None = None
 
 
 class ImportPreview(BaseModel):
@@ -33,22 +31,22 @@ class ImportPreview(BaseModel):
 
     file_path: str
     suggested_name: str
-    suggested_course: Optional[str] = None
-    suggested_type: Optional[str] = None
-    metadata: Optional[dict] = None
+    suggested_course: str | None = None
+    suggested_type: str | None = None
+    metadata: dict | None = None
 
 
 class ImportPreviewResponse(BaseModel):
     """Response containing import previews."""
 
-    previews: List[ImportPreview]
+    previews: list[ImportPreview]
     total_files: int
 
 
 class ImportConfirmRequest(BaseModel):
     """Request to confirm import after preview."""
 
-    file_paths: List[str] = Field(..., min_length=1)
+    file_paths: list[str] = Field(..., min_length=1)
     course_id: int
     apply_to_all: bool = False
 
@@ -58,14 +56,14 @@ class ImportAcceptedResponse(BaseModel):
 
     accepted: bool
     filename: str
-    course_id: Optional[int] = None
+    course_id: int | None = None
     message: str
 
 
 @router.post("/manual", response_model=ImportAcceptedResponse, status_code=202)
 async def import_file(
     file: UploadFile = File(...),
-    course_id: Optional[int] = Query(None),
+    course_id: int | None = Query(None),
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):

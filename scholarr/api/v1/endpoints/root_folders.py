@@ -7,8 +7,8 @@ from scholarr.core.security import verify_api_key
 from scholarr.db.session import get_db_session
 from scholarr.schemas.root_folder import (
     RootFolderCreate,
-    RootFolderUpdate,
     RootFolderResponse,
+    RootFolderUpdate,
 )
 from scholarr.services.root_folder_service import RootFolderService
 

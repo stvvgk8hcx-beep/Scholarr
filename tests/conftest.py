@@ -1,30 +1,28 @@
 """Shared test fixtures and configuration."""
 
 import tempfile
-from datetime import datetime, timedelta, timezone
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
+from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.pool import StaticPool
-
 from fastapi import Header, HTTPException
-from typing import Optional
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 from scholarr.app import create_app
 from scholarr.core.security import verify_api_key
 from scholarr.db.base import Base
 from scholarr.db.models import (
-    Semester,
-    Course,
     AcademicItem,
+    AcademicItemStatusEnum,
+    AcademicItemTypeEnum,
+    Course,
     ManagedFile,
+    Semester,
     Tag,
     TermEnum,
-    AcademicItemTypeEnum,
-    AcademicItemStatusEnum,
 )
 from scholarr.db.session import get_db_session
 
@@ -63,7 +61,7 @@ async def test_client(async_session: AsyncSession) -> AsyncGenerator[AsyncClient
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield async_session
 
-    async def override_verify_api_key(x_api_key: Optional[str] = Header(None)) -> str:
+    async def override_verify_api_key(x_api_key: str | None = Header(None)) -> str:
         if not x_api_key:
             raise HTTPException(status_code=401, detail="API key missing")
         if x_api_key != _TEST_API_KEY:
@@ -147,7 +145,7 @@ async def sample_academic_item(
         name="Assignment 3",
         number="3",
         topic="Binary Search Trees",
-        due_date=datetime.now(timezone.utc) + timedelta(days=7),
+        due_date=datetime.now(UTC) + timedelta(days=7),
         status=AcademicItemStatusEnum.IN_PROGRESS,
         grade=None,
         weight=10.0,

@@ -57,3 +57,15 @@ class BackupError(ScholarrException):
     """Raised when backup/restore fails."""
 
     pass
+
+
+class JobError(ScholarrException):
+    """Raised when a job or command execution fails."""
+
+    pass
+
+
+class MaintenanceError(ScholarrException):
+    """Raised when a maintenance/housekeeping task fails."""
+
+    pass

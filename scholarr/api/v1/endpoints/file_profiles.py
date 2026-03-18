@@ -7,8 +7,8 @@ from scholarr.core.security import verify_api_key
 from scholarr.db.session import get_db_session
 from scholarr.schemas.file_profile import (
     FileProfileCreate,
-    FileProfileUpdate,
     FileProfileResponse,
+    FileProfileUpdate,
 )
 from scholarr.services.file_profile_service import FileProfileService
 

@@ -4,7 +4,6 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,9 +18,9 @@ class FormatSpecification:
     """Specification for a custom file format."""
 
     extensions: list[str]
-    min_size: Optional[int] = None
-    max_size: Optional[int] = None
-    filename_regex: Optional[str] = None
+    min_size: int | None = None
+    max_size: int | None = None
+    filename_regex: str | None = None
 
     def to_dict(self) -> dict:
         """Convert specification to dictionary.
@@ -57,7 +56,7 @@ class FormatSpecification:
                 filename_regex=data.get("filename_regex"),
             )
         except (KeyError, TypeError) as e:
-            raise ValidationException(f"Invalid format specification: {e}")
+            raise ValidationException(f"Invalid format specification: {e}") from e
 
 
 class CustomFormatService:
@@ -80,7 +79,7 @@ class CustomFormatService:
         from scholarr.db.models import CustomFormat
 
         result = await self.session.execute(select(CustomFormat))
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def get_by_id(self, format_id: int):
         """Get custom format by ID.
@@ -146,7 +145,7 @@ class CustomFormatService:
         try:
             FormatSpecification.from_dict(specifications)
         except ValidationException as e:
-            raise ValidationException(f"Invalid format specification: {e}")
+            raise ValidationException(f"Invalid format specification: {e}") from e
 
         custom_format = CustomFormat(
             name=name,
@@ -180,7 +179,7 @@ class CustomFormatService:
             try:
                 FormatSpecification.from_dict(data["specifications"])
             except ValidationException as e:
-                raise ValidationException(f"Invalid format specification: {e}")
+                raise ValidationException(f"Invalid format specification: {e}") from e
 
         for key, value in data.items():
             if hasattr(custom_format, key):
@@ -205,7 +204,7 @@ class CustomFormatService:
         await self.session.delete(custom_format)
         await self.session.commit()
 
-    def match_file(self, file_path: str, format_spec: dict) -> bool:
+    def match_file(self, file_path: str | Path, format_spec: dict) -> bool:
         """Check if a file matches a custom format specification.
 
         Args:

@@ -3,13 +3,12 @@
 import asyncio
 from logging.config import fileConfig
 
-from sqlalchemy import pool
-from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.engine import Connection
-
 from alembic import context
+from sqlalchemy import pool
+from sqlalchemy.engine import Connection
+from sqlalchemy.ext.asyncio import create_async_engine
+
 from scholarr.db.base import Base
-from scholarr.db import models as _
 
 config = context.config
 
@@ -48,10 +47,6 @@ async def run_migrations_online() -> None:
     """Run migrations in online mode."""
     sqlalchemy_url = config.get_main_option("sqlalchemy.url")
 
-    configuration = {
-        "sqlalchemy.url": sqlalchemy_url,
-        "sqlalchemy.poolclass": pool.NullPool,
-    }
 
     engine = create_async_engine(
         sqlalchemy_url,

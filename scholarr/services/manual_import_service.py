@@ -2,16 +2,14 @@
 
 import hashlib
 import logging
-import os
 import shutil
 from pathlib import Path
-from typing import Optional, List
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.config import get_settings
-from scholarr.db.models import AcademicItem, ManagedFile, HistoryEntry, HistoryEventTypeEnum
+from scholarr.db.models import AcademicItem, HistoryEntry, HistoryEventTypeEnum, ManagedFile
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +31,7 @@ class ManualImportService:
         return d
 
     async def preview_import(
-        self, file_paths: List[str], course_id: Optional[int] = None
+        self, file_paths: list[str], course_id: int | None = None
     ) -> dict:
         """Preview how files would be parsed without importing."""
         previews = []
@@ -51,7 +49,7 @@ class ManualImportService:
             })
         return {"previews": previews, "total_files": len(file_paths)}
 
-    async def execute_import(self, file_paths: List[str], course_id: int) -> dict:
+    async def execute_import(self, file_paths: list[str], course_id: int) -> dict:
         """Execute import of local file paths into the library."""
         imported_count = 0
         failed_count = 0

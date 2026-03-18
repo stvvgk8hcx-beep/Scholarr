@@ -1,7 +1,6 @@
 """History schemas."""
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -10,14 +9,14 @@ class HistoryEntryResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    course_id: Optional[int] = None
-    academic_item_id: Optional[int] = None
-    managed_file_id: Optional[int] = None
+    course_id: int | None = None
+    academic_item_id: int | None = None
+    managed_file_id: int | None = None
     event_type: str
-    source_path: Optional[str] = None
-    destination_path: Optional[str] = None
+    source_path: str | None = None
+    destination_path: str | None = None
     date: datetime
-    data: Optional[dict] = None
+    data: dict | None = None
 
 
 class HistoryListResponse(BaseModel):

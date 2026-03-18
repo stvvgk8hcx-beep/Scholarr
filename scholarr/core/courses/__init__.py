@@ -1,6 +1,5 @@
 """Course management service for Scholarr."""
 
-from typing import Optional
 
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,9 +45,9 @@ class CourseService:
 
     async def get_all(
         self,
-        semester_id: Optional[int] = None,
-        monitored: Optional[bool] = None,
-        search: Optional[str] = None,
+        semester_id: int | None = None,
+        monitored: bool | None = None,
+        search: str | None = None,
     ) -> list:
         """Get all courses with optional filtering.
 
@@ -81,7 +80,7 @@ class CourseService:
             query = query.where(and_(*filters))
 
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def get_paged(
         self,
@@ -89,7 +88,7 @@ class CourseService:
         page_size: int = 20,
         sort_key: str = "code",
         sort_dir: str = "asc",
-        filters: Optional[dict] = None,
+        filters: dict | None = None,
     ) -> PaginatedResult:
         """Get paginated courses with sorting and filtering.
 
@@ -143,7 +142,7 @@ class CourseService:
         query = query.offset(offset).limit(page_size)
 
         result = await self.session.execute(query)
-        items = result.scalars().all()
+        items = list(result.scalars().all())
 
         return PaginatedResult(items, page, page_size, total)
 

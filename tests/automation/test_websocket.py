@@ -1,8 +1,6 @@
 """Integration tests for WebSocket functionality."""
 
-import asyncio
 
-import pytest
 
 
 class TestWebsocketConnect:

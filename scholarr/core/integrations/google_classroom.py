@@ -16,11 +16,11 @@ Google Classroom is simpler than many LMS because most data is read-only
 from student perspective (can't submit via API).
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 import logging
+from datetime import datetime
+from typing import Any
 
-from scholarr.core.integrations import BaseIntegrationProvider, IntegrationType, IntegrationStatus
+from scholarr.core.integrations import BaseIntegrationProvider, IntegrationStatus, IntegrationType
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ class GoogleClassroomProvider(BaseIntegrationProvider):
         super().__init__("google_classroom", IntegrationType.LMS)
         self._service = None  # Google API service object
 
-    async def connect(self, config: Dict[str, Any]) -> bool:
+    async def connect(self, config: dict[str, Any]) -> bool:
         """Connect to Google Classroom.
 
         Config should contain one of:
@@ -100,7 +100,7 @@ class GoogleClassroomProvider(BaseIntegrationProvider):
         logger.debug("Google Classroom test_connection: stub implementation")
         return True
 
-    async def list_courses(self) -> List[Dict[str, Any]]:
+    async def list_courses(self) -> list[dict[str, Any]]:
         """Fetch list of courses for authenticated user.
 
         Calls courses.list()
@@ -111,7 +111,7 @@ class GoogleClassroomProvider(BaseIntegrationProvider):
         logger.debug("Google Classroom list_courses: stub implementation")
         return []
 
-    async def list_coursework(self, course_id: str) -> List[Dict[str, Any]]:
+    async def list_coursework(self, course_id: str) -> list[dict[str, Any]]:
         """Fetch course work (assignments) for a course.
 
         Calls courses.courseWork.list()
@@ -129,7 +129,7 @@ class GoogleClassroomProvider(BaseIntegrationProvider):
         self,
         course_id: str,
         course_work_id: str
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Fetch submissions for a course work item.
 
         Calls courses.courseWork.studentSubmissions.list()
@@ -146,7 +146,7 @@ class GoogleClassroomProvider(BaseIntegrationProvider):
         )
         return []
 
-    async def sync(self) -> Dict[str, Any]:
+    async def sync(self) -> dict[str, Any]:
         """Sync all data from Google Classroom.
 
         Fetches courses, course work, and submissions.

@@ -27,7 +27,7 @@ class RootFolderService:
         from scholarr.db.models import RootFolder
 
         result = await self.session.execute(select(RootFolder))
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def get_by_id(self, folder_id: int):
         """Get root folder by ID.

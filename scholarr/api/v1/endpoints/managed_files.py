@@ -1,6 +1,7 @@
 """Managed Files endpoint."""
 
-from typing import Annotated, Optional
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,8 +10,8 @@ from scholarr.core.security import verify_api_key
 from scholarr.db.session import get_db_session
 from scholarr.schemas.managed_file import (
     ManagedFileCreate,
-    ManagedFileUpdate,
     ManagedFileResponse,
+    ManagedFileUpdate,
 )
 from scholarr.services.managed_file_service import ManagedFileService
 
@@ -27,7 +28,7 @@ class MoveRequest(BaseModel):
 
 @router.get("", response_model=list[ManagedFileResponse])
 async def list_managed_files(
-    academic_item_id: Optional[int] = Query(None),
+    academic_item_id: int | None = Query(None),
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):

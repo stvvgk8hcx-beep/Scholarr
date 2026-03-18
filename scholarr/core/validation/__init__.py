@@ -2,7 +2,6 @@
 
 import os
 import re
-from typing import Optional
 
 from scholarr.core.exceptions import ValidationException as ValidationError
 
@@ -80,8 +79,8 @@ def validate_grade(grade: str) -> bool:
 
 def validate_file_extension(
     extension: str,
-    allowed: Optional[list[str]] = None,
-    blocked: Optional[list[str]] = None,
+    allowed: list[str] | None = None,
+    blocked: list[str] | None = None,
 ) -> bool:
     """Validate file extension.
 
@@ -109,11 +108,10 @@ def validate_file_extension(
     if blocked and ext.lower() in [b.lower() for b in blocked]:
         raise ValidationError(f"File extension .{ext} is not permitted")
 
-    if allowed:
-        if ext.lower() not in [a.lower() for a in allowed]:
-            raise ValidationError(
-                f"File extension .{ext} not allowed. Allowed: {', '.join(allowed)}"
-            )
+    if allowed and ext.lower() not in [a.lower() for a in allowed]:
+        raise ValidationError(
+            f"File extension .{ext} not allowed. Allowed: {', '.join(allowed)}"
+        )
 
     return True
 

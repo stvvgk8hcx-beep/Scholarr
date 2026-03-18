@@ -2,7 +2,7 @@
 
 import pytest
 
-from scholarr.core.parser import FileNameParser, ItemType, ParseResult
+from scholarr.core.parser import FileNameParser, ItemType
 
 
 @pytest.fixture

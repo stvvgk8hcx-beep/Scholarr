@@ -15,9 +15,9 @@ async def run_migrations() -> None:
 
     if "sqlite" in settings.database_url:
         # SQLite dev mode — create all tables directly
-        from scholarr.db.session import async_engine
-        from scholarr.db.base import Base
         import scholarr.db.models  # noqa: F401 — ensures models are registered
+        from scholarr.db.base import Base
+        from scholarr.db.session import async_engine
 
         async with async_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
@@ -27,8 +27,9 @@ async def run_migrations() -> None:
     # Production: delegate to Alembic
     try:
         import asyncio
-        from alembic.config import Config
+
         from alembic import command
+        from alembic.config import Config
 
         alembic_cfg = Config("alembic.ini")
 

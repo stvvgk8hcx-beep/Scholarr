@@ -7,8 +7,8 @@ from scholarr.core.security import verify_api_key
 from scholarr.db.session import get_db_session
 from scholarr.schemas.notification import (
     NotificationCreate,
-    NotificationUpdate,
     NotificationResponse,
+    NotificationUpdate,
 )
 from scholarr.services.notification_service import NotificationService
 

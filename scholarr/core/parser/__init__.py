@@ -4,7 +4,6 @@ import logging
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -31,12 +30,12 @@ class ItemType(str, Enum):
 class ParseResult:
     """Result of parsing a filename."""
 
-    course_code: Optional[str] = None
-    item_type: Optional[ItemType] = None
-    item_number: Optional[str] = None
-    topic: Optional[str] = None
-    version: Optional[str] = None
-    date_hint: Optional[str] = None
+    course_code: str | None = None
+    item_type: ItemType | None = None
+    item_number: str | None = None
+    topic: str | None = None
+    version: str | None = None
+    date_hint: str | None = None
     confidence_score: float = 0.0
 
 
@@ -162,7 +161,7 @@ class FileNameParser:
         """Remove file extension from filename."""
         return re.sub(r"\.\w+$", "", filename)
 
-    def _extract_course_code(self, text: str) -> Optional[str]:
+    def _extract_course_code(self, text: str) -> str | None:
         """Extract course code (e.g., BCS310, MAT235).
 
         Filters out matches whose letter prefix is a known item-type keyword
@@ -178,13 +177,13 @@ class FileNameParser:
             return None
         return code
 
-    def _extract_item_number(self, text: str) -> Optional[str]:
+    def _extract_item_number(self, text: str) -> str | None:
         """Extract item number (e.g., 3, 3.5)."""
         # Look for patterns like "Lab3", "Assignment 3", "#3"
         match = self.item_number_pattern.search(text)
         return match.group(1) if match else None
 
-    def _extract_item_type(self, text: str) -> Optional[ItemType]:
+    def _extract_item_type(self, text: str) -> ItemType | None:
         """Extract item type from text."""
         match = self.item_type_pattern.search(text)
         if match:
@@ -192,17 +191,17 @@ class FileNameParser:
             return self.ITEM_TYPE_KEYWORDS.get(keyword)
         return None
 
-    def _extract_version(self, text: str) -> Optional[str]:
+    def _extract_version(self, text: str) -> str | None:
         """Extract version hint from text."""
         match = self.version_pattern.search(text)
         return match.group(1).lower() if match else None
 
-    def _extract_date(self, text: str) -> Optional[str]:
+    def _extract_date(self, text: str) -> str | None:
         """Extract date hint from text."""
         match = self.date_pattern.search(text)
         return match.group(1) if match else None
 
-    def _extract_topic(self, text: str, item_type: Optional[ItemType] = None) -> Optional[str]:
+    def _extract_topic(self, text: str, item_type: ItemType | None = None) -> str | None:
         """Extract topic/description from text."""
         # Remove common elements to get cleaner topic
         topic = text

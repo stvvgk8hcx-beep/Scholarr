@@ -8,20 +8,12 @@ Provides HTTP endpoints for managing external integrations:
   - Export to calendar format
 """
 
-from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Query
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 
-from scholarr.core.security import verify_api_key
-from scholarr.db.session import get_db_session
-from scholarr.core.integrations import (
-    get_registry,
-    IntegrationRegistry,
-    IntegrationStatus,
-    IntegrationType
-)
-from scholarr.core.integrations.word_integration import WordIntegrationProvider
+from scholarr.core.integrations import IntegrationType, get_registry
 from scholarr.core.integrations.calendar_sync import CalendarSyncProvider
+from scholarr.core.integrations.word_integration import WordIntegrationProvider
+from scholarr.core.security import verify_api_key
 
 router = APIRouter()
 
@@ -109,7 +101,7 @@ async def connect_provider(
             }
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Connection error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Connection error: {str(e)}") from None
 
 
 @router.post("/{provider}/disconnect")
@@ -147,7 +139,7 @@ async def disconnect_provider(
             }
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Disconnection error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Disconnection error: {str(e)}") from None
 
 
 @router.post("/{provider}/sync")
@@ -180,7 +172,7 @@ async def trigger_sync(
         }
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Sync error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Sync error: {str(e)}") from None
 
 
 @router.get("/{provider}/status")
@@ -216,7 +208,7 @@ async def get_provider_status(
         }
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Status check error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Status check error: {str(e)}") from None
 
 
 @router.post("/word/extract")
@@ -238,13 +230,13 @@ async def extract_from_word(
     Returns:
         Extracted data dictionary
     """
-    if not file.filename.endswith(".docx"):
+    if not file.filename or not file.filename.endswith(".docx"):
         raise HTTPException(status_code=400, detail="File must be .docx format")
 
     try:
         # Save uploaded file temporarily
-        import tempfile
         import os
+        import tempfile
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as tmp:
             content = await file.read()
@@ -272,12 +264,12 @@ async def extract_from_word(
             os.unlink(tmp_path)
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Extraction error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Extraction error: {str(e)}") from None
 
 
 @router.post("/calendar/generate-ics")
 async def generate_calendar_ics(
-    academic_items: List[dict],
+    academic_items: list[dict],
     api_key: str = Depends(verify_api_key),
 ) -> dict:
     """Generate iCalendar (.ics) file from academic items.
@@ -306,12 +298,12 @@ async def generate_calendar_ics(
         }
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Generation error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Generation error: {str(e)}") from None
 
 
 @router.post("/calendar/export")
 async def export_to_calendar(
-    academic_items: List[dict],
+    academic_items: list[dict],
     calendar_service: str = Query("ics", pattern="^(ics|google|outlook)$"),
     api_key: str = Depends(verify_api_key),
 ) -> dict:
@@ -361,4 +353,4 @@ async def export_to_calendar(
             raise HTTPException(status_code=400, detail="Unknown calendar service")
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Export error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Export error: {str(e)}") from None

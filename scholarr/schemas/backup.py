@@ -1,7 +1,7 @@
 """Backup schemas."""
 
-from typing import Optional, Any
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -13,7 +13,7 @@ class BackupResponse(BaseModel):
     filename: str
     size: int
     created_at: datetime
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class BackupListResponse(BaseModel):
@@ -29,4 +29,4 @@ class BackupRestoreResponse(BaseModel):
 
     success: bool
     message: str
-    details: Optional[dict[str, Any]] = None
+    details: dict[str, Any] | None = None

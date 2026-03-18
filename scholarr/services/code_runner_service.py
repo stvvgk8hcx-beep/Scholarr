@@ -1,10 +1,10 @@
 """Sandboxed code execution service for note editor code blocks."""
 
 import asyncio
+import contextlib
 import logging
-import tempfile
 import os
-from pathlib import Path
+import tempfile
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ async def run_code(language: str, code: str) -> dict:
             stdout, stderr = await asyncio.wait_for(
                 proc.communicate(), timeout=MAX_EXEC_TIME
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             proc.kill()
             await proc.wait()
             return {"success": False, "output": f"Execution timed out ({MAX_EXEC_TIME}s limit)", "error": True}
@@ -77,10 +77,8 @@ async def run_code(language: str, code: str) -> dict:
         logger.error(f"Code execution error: {e}")
         return {"success": False, "output": str(e), "error": True}
     finally:
-        try:
+        with contextlib.suppress(Exception):
             os.unlink(tmp_path)
-        except Exception:
-            pass
 
 
 def _ext(lang: str) -> str:

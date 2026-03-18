@@ -1,12 +1,13 @@
 """Semesters endpoint."""
 
 from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.security import verify_api_key
 from scholarr.db.session import get_db_session
-from scholarr.schemas.semester import SemesterCreate, SemesterUpdate, SemesterResponse
+from scholarr.schemas.semester import SemesterCreate, SemesterResponse, SemesterUpdate
 from scholarr.services.semester_service import SemesterService
 
 router = APIRouter()
@@ -48,7 +49,7 @@ async def create_semester(
     try:
         new_semester = await service.create_semester(semester)
     except ValueError as e:
-        raise HTTPException(status_code=409, detail=str(e))
+        raise HTTPException(status_code=409, detail=str(e)) from None
     return new_semester
 
 

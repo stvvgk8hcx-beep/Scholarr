@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 
-from sqlalchemy import and_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.exceptions import MaintenanceError
@@ -28,14 +28,14 @@ class HousekeepingService:
         Returns:
             int: Number of records deleted.
         """
-        from scholarr.db.models import Command
+        from scholarr.db.models import CommandModel as Command
 
         cutoff_date = datetime.utcnow() - timedelta(days=days)
 
         result = await self.session.execute(
             select(Command).where(Command.created_at < cutoff_date)
         )
-        records = result.scalars().all()
+        records = list(result.scalars().all())
         count = len(records)
 
         for record in records:
@@ -55,14 +55,14 @@ class HousekeepingService:
         Returns:
             int: Number of records deleted.
         """
-        from scholarr.db.models import History
+        from scholarr.db.models import HistoryEntry as History
 
         cutoff_date = datetime.utcnow() - timedelta(days=days)
 
         result = await self.session.execute(
             select(History).where(History.timestamp < cutoff_date)
         )
-        records = result.scalars().all()
+        records = list(result.scalars().all())
         count = len(records)
 
         for record in records:
@@ -82,7 +82,7 @@ class HousekeepingService:
         from scholarr.db.models import ManagedFile
 
         result = await self.session.execute(select(ManagedFile))
-        all_files = result.scalars().all()
+        all_files = list(result.scalars().all())
 
         orphaned_count = 0
 
@@ -114,4 +114,4 @@ class HousekeepingService:
                 "success": True,
             }
         except Exception as e:
-            raise MaintenanceError(f"Housekeeping failed: {e}")
+            raise MaintenanceError(f"Housekeeping failed: {e}") from e

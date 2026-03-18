@@ -1,7 +1,7 @@
 """Mass editor service for bulk operations on courses and academic items."""
 
 import logging
-from typing import List
+from typing import Any
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,7 +30,7 @@ class MassEditorService:
         Updates courses based on provided IDs and only the fields that are not None.
         """
         try:
-            errors: List[dict] = []
+            errors: list[dict] = []
 
             # Build the values dict from non-None fields
             values = {}
@@ -61,7 +61,7 @@ class MassEditorService:
                     .execution_options(synchronize_session=False)
                 )
                 result = await self.db.execute(stmt)
-                updated_count = result.rowcount  # type: ignore[assignment]
+                updated_count = result.rowcount  # type: ignore[union-attr]
 
             elif existing_ids and not values and request.tags is None:
                 # Nothing to update but IDs exist — count them as updated (no-op)
@@ -122,7 +122,7 @@ class MassEditorService:
         Updates items based on provided IDs and only the fields that are not None.
         """
         try:
-            errors: List[dict] = []
+            errors: list[dict] = []
 
             # Validate enum values if provided
             if request.status is not None:
@@ -172,7 +172,7 @@ class MassEditorService:
                     }
 
             # Build the values dict from non-None fields
-            values = {}
+            values: dict[str, Any] = {}
             if request.status is not None:
                 values["status"] = AcademicItemStatusEnum(request.status)
             if request.type is not None:
@@ -204,7 +204,7 @@ class MassEditorService:
                     .execution_options(synchronize_session=False)
                 )
                 result = await self.db.execute(stmt)
-                updated_count = result.rowcount  # type: ignore[assignment]
+                updated_count = result.rowcount  # type: ignore[union-attr]
             elif existing_ids and not values:
                 # Nothing to update but IDs exist — count them as updated (no-op)
                 updated_count = len(existing_ids)

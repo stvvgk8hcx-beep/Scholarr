@@ -18,11 +18,11 @@ Canvas is typically simpler to integrate than Blackboard since it uses
 simpler bearer token auth instead of OAuth2.
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 import logging
+from datetime import datetime
+from typing import Any
 
-from scholarr.core.integrations import BaseIntegrationProvider, IntegrationType, IntegrationStatus
+from scholarr.core.integrations import BaseIntegrationProvider, IntegrationStatus, IntegrationType
 
 logger = logging.getLogger(__name__)
 
@@ -36,10 +36,10 @@ class CanvasProvider(BaseIntegrationProvider):
     def __init__(self):
         """Initialize Canvas provider."""
         super().__init__("canvas", IntegrationType.LMS)
-        self._api_token: Optional[str] = None
-        self._user_id: Optional[int] = None
+        self._api_token: str | None = None
+        self._user_id: int | None = None
 
-    async def connect(self, config: Dict[str, Any]) -> bool:
+    async def connect(self, config: dict[str, Any]) -> bool:
         """Connect to Canvas instance.
 
         Config should contain:
@@ -107,7 +107,7 @@ class CanvasProvider(BaseIntegrationProvider):
         logger.debug("Canvas test_connection: stub implementation")
         return True
 
-    async def get_courses(self) -> List[Dict[str, Any]]:
+    async def get_courses(self) -> list[dict[str, Any]]:
         """Fetch list of courses for authenticated user.
 
         Calls GET /courses with enrollment status 'active'
@@ -118,7 +118,7 @@ class CanvasProvider(BaseIntegrationProvider):
         logger.debug("Canvas get_courses: stub implementation")
         return []
 
-    async def get_assignments(self, course_id: int) -> List[Dict[str, Any]]:
+    async def get_assignments(self, course_id: int) -> list[dict[str, Any]]:
         """Fetch assignments for a course.
 
         Calls GET /courses/{courseId}/assignments
@@ -136,7 +136,7 @@ class CanvasProvider(BaseIntegrationProvider):
         self,
         course_id: int,
         assignment_id: int
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Fetch submissions for an assignment.
 
         Calls GET /courses/{courseId}/assignments/{assignmentId}/submissions
@@ -151,7 +151,7 @@ class CanvasProvider(BaseIntegrationProvider):
         logger.debug(f"Canvas get_submissions for assignment {assignment_id}: stub")
         return []
 
-    async def get_calendar_events(self) -> List[Dict[str, Any]]:
+    async def get_calendar_events(self) -> list[dict[str, Any]]:
         """Fetch calendar events (due dates, events, deadlines).
 
         Calls GET /calendar_events with filters
@@ -167,7 +167,7 @@ class CanvasProvider(BaseIntegrationProvider):
         course_id: int,
         assignment_id: int,
         submission_type: str,
-        content: Dict[str, Any]
+        content: dict[str, Any]
     ) -> bool:
         """Submit an assignment.
 
@@ -185,7 +185,7 @@ class CanvasProvider(BaseIntegrationProvider):
         logger.debug(f"Canvas submit_assignment {assignment_id}: stub")
         return False
 
-    async def sync(self) -> Dict[str, Any]:
+    async def sync(self) -> dict[str, Any]:
         """Sync all data from Canvas.
 
         Fetches courses, assignments, submissions, and calendar events.

@@ -1,12 +1,12 @@
 """Security utilities for Scholarr."""
 
-from fastapi import HTTPException, Header, status
-from typing import Optional
+
+from fastapi import Header, HTTPException, status
 
 from scholarr.core.config import settings
 
 
-async def verify_api_key(x_api_key: Optional[str] = Header(None)) -> str:
+async def verify_api_key(x_api_key: str | None = Header(None)) -> str:
     """Verify API key from request header."""
     if not x_api_key:
         raise HTTPException(

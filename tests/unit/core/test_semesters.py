@@ -5,7 +5,7 @@ from datetime import datetime
 import pytest
 import pytest_asyncio
 
-from scholarr.db.models import Semester, TermEnum, Course
+from scholarr.db.models import Semester, TermEnum
 from scholarr.schemas.semester import SemesterCreate, SemesterUpdate
 from scholarr.services.semester_service import SemesterService
 

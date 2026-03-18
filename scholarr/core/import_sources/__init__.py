@@ -4,16 +4,14 @@ import asyncio
 import csv
 import hashlib
 import logging
-import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from scholarr.core.exceptions import FileOperationError, ImportOperationError, ValidationException
+from scholarr.core.exceptions import FileOperationError
 from scholarr.core.import_sources.decision_engine import DecisionEngine, ImportAction
 from scholarr.core.parser import FileNameParser, ItemType
 from scholarr.db.models import AcademicItemStatusEnum, HistoryEventTypeEnum
@@ -26,14 +24,9 @@ class ImportResult:
     """Result of a file import operation."""
 
     success: bool
-    managed_file_id: Optional[int] = None
+    managed_file_id: int | None = None
     message: str = ""
-    warnings: list[str] = None
-
-    def __post_init__(self):
-        """Initialize warnings list if not provided."""
-        if self.warnings is None:
-            self.warnings = []
+    warnings: list[str] = field(default_factory=list)
 
 
 class ImportService:
@@ -49,7 +42,7 @@ class ImportService:
         self.parser = FileNameParser()
         self.decision_engine = DecisionEngine(session)
 
-    async def import_file(self, file_path: str, source_type: str = "Manual") -> ImportResult:
+    async def import_file(self, file_path: str | Path, source_type: str = "Manual") -> ImportResult:
         """Import a file through the complete 6-step pipeline.
 
         Steps:
@@ -189,7 +182,7 @@ class ImportService:
         """
         return self.parser.parse(filename)
 
-    async def _step_identify(self, course_code: Optional[str]) -> dict:
+    async def _step_identify(self, course_code: str | None) -> dict:
         """Step 3: Identify course using fuzzy matching.
 
         Args:
@@ -247,8 +240,7 @@ class ImportService:
         Returns:
             ImportResult: Final import result.
         """
-        from scholarr.core.organizer import FileNameBuilder, NamingContext
-        from scholarr.db.models import AcademicItem, ManagedFile
+        from scholarr.db.models import ManagedFile
 
         try:
             # Find or create academic item
@@ -366,6 +358,7 @@ class ImportService:
         target_dir.mkdir(parents=True, exist_ok=True)
 
         # Build new filename
+        from scholarr.core.organizer import FileNameBuilder
         builder = FileNameBuilder()
         new_filename = builder.clean_filename(file_path.name)
 
@@ -383,12 +376,11 @@ class ImportService:
 
         # Copy file to new location
         try:
-            with open(file_path, "rb") as src:
-                with open(new_file_path, "wb") as dst:
-                    dst.write(src.read())
+            with open(file_path, "rb") as src, open(new_file_path, "wb") as dst:
+                dst.write(src.read())
             logger.info(f"Organized file: {file_path} -> {new_file_path}")
         except OSError as e:
-            raise FileOperationError(f"Could not move file: {e}")
+            raise FileOperationError(f"Could not move file: {e}") from e
 
         return new_file_path
 
@@ -534,7 +526,6 @@ class FileWatcherProvider:
         """
         try:
             from watchdog.observers import Observer
-            from watchdog.events import FileSystemEventHandler
 
             path_obj = Path(path)
             if not path_obj.exists():
@@ -590,13 +581,19 @@ class FileWatcherProvider:
 
                 pending[file_path] = asyncio.create_task(import_after_delay(file_path))
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
             except Exception as e:
                 logger.error(f"Error processing watched file: {e}")
 
 
-class FileWatcherEventHandler:
+try:
+    from watchdog.events import FileSystemEventHandler as _BaseHandler
+except ImportError:
+    _BaseHandler = object  # type: ignore[assignment,misc]
+
+
+class FileWatcherEventHandler(_BaseHandler):  # type: ignore[misc]
     """Event handler for file system events."""
 
     def __init__(self, queue: asyncio.Queue):
@@ -605,11 +602,7 @@ class FileWatcherEventHandler:
         Args:
             queue: Queue to put file paths.
         """
-        try:
-            from watchdog.events import FileSystemEventHandler
-        except ImportError:
-            FileSystemEventHandler = object
-
+        super().__init__()
         self.queue = queue
 
     def on_created(self, event):
@@ -638,7 +631,7 @@ class CsvImportProvider:
         self.session = session
         self.import_service = ImportService(session)
 
-    async def import_from_csv(self, csv_path: str) -> list[ImportResult]:
+    async def import_from_csv(self, csv_path: str | Path) -> list[ImportResult]:
         """Import academic items and files from CSV.
 
         Expected columns: course_code, item_type, item_number, topic, due_date, file_path
@@ -657,7 +650,7 @@ class CsvImportProvider:
             return [ImportResult(success=False, message=f"CSV file not found: {csv_path}")]
 
         try:
-            with open(csv_path, "r", encoding="utf-8") as f:
+            with open(csv_path, encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for row_num, row in enumerate(reader, start=2):
                     try:
@@ -708,12 +701,12 @@ class ManualEntryProvider:
 
     async def import_manual(
         self,
-        file_path: str,
+        file_path: str | Path,
         course_id: int,
         item_type: str,
-        item_number: Optional[str] = None,
-        topic: Optional[str] = None,
-        due_date: Optional[datetime] = None,
+        item_number: str | None = None,
+        topic: str | None = None,
+        due_date: datetime | None = None,
     ) -> ImportResult:
         """Import a file with manually specified metadata.
 

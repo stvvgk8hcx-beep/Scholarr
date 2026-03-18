@@ -45,6 +45,8 @@ class CalendarService:
         # Group items by date
         days: dict[date, list[CalendarItemInfo]] = defaultdict(list)
         for item in items:
+            if not item.due_date:
+                continue
             due_day = item.due_date.date()
             days[due_day].append(
                 CalendarItemInfo(

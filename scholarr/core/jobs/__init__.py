@@ -1,15 +1,15 @@
 """Job queue and command processing service for Scholarr."""
 
 import asyncio
-import json
 import logging
+from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from sqlalchemy import and_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.exceptions import JobError, NotFoundError
@@ -54,7 +54,7 @@ class CommandService:
         Returns:
             Command: The queued command.
         """
-        from scholarr.db.models import Command
+        from scholarr.db.models import CommandModel as Command
 
         command = Command(
             name=name,
@@ -82,7 +82,7 @@ class CommandService:
         Raises:
             NotFoundError: If command not found.
         """
-        from scholarr.db.models import Command
+        from scholarr.db.models import CommandModel as Command
 
         result = await self.session.execute(select(Command).where(Command.id == command_id))
         command = result.scalar_one_or_none()
@@ -94,7 +94,7 @@ class CommandService:
 
     async def get_all_commands(
         self,
-        status: Optional[str] = None,
+        status: str | None = None,
         limit: int = 100,
     ) -> list:
         """Get all commands with optional filtering.
@@ -106,7 +106,7 @@ class CommandService:
         Returns:
             list: List of command records.
         """
-        from scholarr.db.models import Command
+        from scholarr.db.models import CommandModel as Command
 
         query = select(Command)
 
@@ -119,14 +119,14 @@ class CommandService:
         ).limit(limit)
 
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def update_command_status(
         self,
         command_id: int,
         status: str,
-        result: Optional[dict] = None,
-        error: Optional[str] = None,
+        result: dict | None = None,
+        error: str | None = None,
     ):
         """Update command status.
 
@@ -155,7 +155,7 @@ class CommandService:
         Returns:
             int: Number of commands processed.
         """
-        from scholarr.db.models import Command
+        from scholarr.db.models import CommandModel as Command
 
         result = await self.session.execute(
             select(Command)

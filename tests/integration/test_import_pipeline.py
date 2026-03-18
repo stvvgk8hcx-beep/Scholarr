@@ -1,9 +1,6 @@
 """Integration tests for file import pipeline."""
 
-import tempfile
 from pathlib import Path
-
-import pytest
 
 
 class TestFullImportFlow:

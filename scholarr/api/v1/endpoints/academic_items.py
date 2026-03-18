@@ -1,6 +1,7 @@
 """Academic Items endpoint."""
 
-from typing import Annotated, Optional
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,9 +9,9 @@ from scholarr.core.security import verify_api_key
 from scholarr.db.session import get_db_session
 from scholarr.schemas.academic_item import (
     AcademicItemCreate,
-    AcademicItemUpdate,
-    AcademicItemResponse,
     AcademicItemListResponse,
+    AcademicItemResponse,
+    AcademicItemUpdate,
 )
 from scholarr.services.academic_item_service import AcademicItemService
 
@@ -19,16 +20,16 @@ router = APIRouter()
 
 @router.get("", response_model=list[AcademicItemResponse])
 async def list_academic_items(
-    course_id: Optional[int] = Query(None),
-    status: Optional[str] = Query(None),
-    type: Optional[str] = Query(None),
-    item_type: Optional[str] = Query(None),
-    overdue: Optional[bool] = Query(None),
-    search: Optional[str] = Query(None, description="Search by name/topic/notes"),
-    due_after: Optional[str] = Query(None, description="ISO date: only items due after this"),
-    due_before: Optional[str] = Query(None, description="ISO date: only items due before this"),
-    page: Optional[int] = Query(None, ge=1),
-    page_size: Optional[int] = Query(None, ge=1, le=500),
+    course_id: int | None = Query(None),
+    status: str | None = Query(None),
+    type: str | None = Query(None),
+    item_type: str | None = Query(None),
+    overdue: bool | None = Query(None),
+    search: str | None = Query(None, description="Search by name/topic/notes"),
+    due_after: str | None = Query(None, description="ISO date: only items due after this"),
+    due_before: str | None = Query(None, description="ISO date: only items due before this"),
+    page: int | None = Query(None, ge=1),
+    page_size: int | None = Query(None, ge=1, le=500),
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):
@@ -115,7 +116,7 @@ async def update_academic_item(
     try:
         updated = await service.update_academic_item(id, item_update)
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422, detail=str(e)) from None
     if not updated:
         raise HTTPException(status_code=404, detail="Academic item not found")
     return updated

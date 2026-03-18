@@ -3,7 +3,7 @@
 import json
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 from sqlalchemy import select
@@ -103,7 +103,7 @@ class NotificationService:
         from scholarr.db.models import NotificationDefinition
 
         result = await self.session.execute(select(NotificationDefinition))
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def get_by_id(self, notification_id: int):
         """Get notification definition by ID.

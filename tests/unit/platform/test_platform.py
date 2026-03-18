@@ -1,16 +1,14 @@
 """Unit tests for platform abstraction layer."""
 
 import os
-import platform
 import tempfile
 from pathlib import Path
 
 import pytest
 
 from scholarr.core.platform import (
-    DiskProvider,
-    get_disk_provider,
     PlatformDetector,
+    get_disk_provider,
 )
 
 

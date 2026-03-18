@@ -1,12 +1,13 @@
 """Courses endpoint."""
 
-from typing import Annotated, Optional
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.security import verify_api_key
 from scholarr.db.session import get_db_session
-from scholarr.schemas.course import CourseCreate, CourseUpdate, CourseResponse, CourseListResponse
+from scholarr.schemas.course import CourseCreate, CourseListResponse, CourseResponse, CourseUpdate
 from scholarr.services.course_service import CourseService
 
 router = APIRouter()
@@ -14,9 +15,9 @@ router = APIRouter()
 
 @router.get("", response_model=list[CourseResponse])
 async def list_courses(
-    semester_id: Optional[int] = Query(None),
-    monitored: Optional[bool] = Query(None),
-    search: Optional[str] = Query(None),
+    semester_id: int | None = Query(None),
+    monitored: bool | None = Query(None),
+    search: str | None = Query(None),
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):
@@ -33,9 +34,9 @@ async def list_courses_paginated(
     page_size: int = Query(20, ge=1, le=200),
     sort_key: str = Query("name"),
     sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
-    semester_id: Optional[int] = Query(None),
-    monitored: Optional[bool] = Query(None),
-    search: Optional[str] = Query(None),
+    semester_id: int | None = Query(None),
+    monitored: bool | None = Query(None),
+    search: str | None = Query(None),
     db: AsyncSession = Depends(get_db_session),
     api_key: str = Depends(verify_api_key),
 ):
@@ -77,7 +78,7 @@ async def create_course(
     try:
         return await service.create_course(course)
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=422, detail=str(e)) from None
 
 
 @router.put("/{id}", response_model=CourseResponse)

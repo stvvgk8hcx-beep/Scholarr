@@ -1,7 +1,7 @@
 """Code execution endpoint for note editor code blocks."""
 
-from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel, Field
 
 from scholarr.core.security import verify_api_key
 from scholarr.services.code_runner_service import run_code

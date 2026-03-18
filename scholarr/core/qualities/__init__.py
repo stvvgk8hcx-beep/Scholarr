@@ -26,7 +26,7 @@ class FileProfileService:
         from scholarr.db.models import FileProfile
 
         result = await self.session.execute(select(FileProfile))
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def get_by_id(self, profile_id: int):
         """Get file profile by ID.

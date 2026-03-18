@@ -1,6 +1,6 @@
 """Import result schemas."""
 
-from typing import Optional, List
+
 from pydantic import BaseModel
 
 
@@ -11,5 +11,5 @@ class ImportResultResponse(BaseModel):
     message: str
     imported_count: int = 0
     failed_count: int = 0
-    errors: List[str] = []
-    file_id: Optional[int] = None
+    errors: list[str] = []
+    file_id: int | None = None

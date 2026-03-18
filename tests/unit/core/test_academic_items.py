@@ -2,10 +2,9 @@
 
 from datetime import datetime, timedelta
 
-import pytest
 import pytest_asyncio
 
-from scholarr.db.models import AcademicItem, AcademicItemTypeEnum, AcademicItemStatusEnum
+from scholarr.db.models import AcademicItem, AcademicItemStatusEnum, AcademicItemTypeEnum
 from scholarr.schemas.academic_item import AcademicItemCreate, AcademicItemUpdate
 from scholarr.services.academic_item_service import AcademicItemService
 

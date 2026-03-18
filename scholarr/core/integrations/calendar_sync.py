@@ -5,13 +5,12 @@ Supports iCalendar (ICS) format for universal calendar compatibility.
 Stub implementations for Google Calendar and Outlook Calendar sync.
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 import logging
-import re
 import uuid
+from datetime import datetime
+from typing import Any
 
-from scholarr.core.integrations import BaseIntegrationProvider, IntegrationType, IntegrationStatus
+from scholarr.core.integrations import BaseIntegrationProvider, IntegrationStatus, IntegrationType
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +25,7 @@ class CalendarSyncProvider(BaseIntegrationProvider):
         """Initialize calendar sync provider."""
         super().__init__("calendar_sync", IntegrationType.CALENDAR)
 
-    async def connect(self, config: Dict[str, Any]) -> bool:
+    async def connect(self, config: dict[str, Any]) -> bool:
         """Connect to calendar service (optional).
 
         Config can contain calendar service credentials.
@@ -50,7 +49,7 @@ class CalendarSyncProvider(BaseIntegrationProvider):
         self._is_connected = False
         return True
 
-    async def sync(self) -> Dict[str, Any]:
+    async def sync(self) -> dict[str, Any]:
         """Not applicable for calendar export.
 
         Returns:
@@ -66,7 +65,7 @@ class CalendarSyncProvider(BaseIntegrationProvider):
         """
         return True
 
-    def generate_ics(self, academic_items: List[Dict[str, Any]]) -> str:
+    def generate_ics(self, academic_items: list[dict[str, Any]]) -> str:
         """Generate iCalendar format (.ics) from academic items.
 
         Creates VEVENT entries for each item with a due date.
@@ -196,9 +195,9 @@ class CalendarSyncProvider(BaseIntegrationProvider):
 
     async def sync_to_google_calendar(
         self,
-        academic_items: List[Dict[str, Any]],
-        google_service: Optional[Any] = None
-    ) -> Dict[str, Any]:
+        academic_items: list[dict[str, Any]],
+        google_service: Any | None = None
+    ) -> dict[str, Any]:
         """Sync academic items to Google Calendar.
 
         Requires Google Calendar API service object.
@@ -215,9 +214,9 @@ class CalendarSyncProvider(BaseIntegrationProvider):
 
     async def sync_to_outlook_calendar(
         self,
-        academic_items: List[Dict[str, Any]],
-        outlook_service: Optional[Any] = None
-    ) -> Dict[str, Any]:
+        academic_items: list[dict[str, Any]],
+        outlook_service: Any | None = None
+    ) -> dict[str, Any]:
         """Sync academic items to Outlook/Microsoft 365 Calendar.
 
         Requires Microsoft Graph API service or client.

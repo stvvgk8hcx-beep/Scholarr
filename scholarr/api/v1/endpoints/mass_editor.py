@@ -1,9 +1,9 @@
 """Mass Editor endpoint for bulk operations."""
 
-from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, Body
-from sqlalchemy.ext.asyncio import AsyncSession
+
+from fastapi import APIRouter, Body, Depends
 from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.security import verify_api_key
 from scholarr.db.session import get_db_session
@@ -15,11 +15,11 @@ router = APIRouter()
 class BulkCourseUpdate(BaseModel):
     """Schema for bulk course updates."""
 
-    course_ids: List[int] = Field(..., min_length=1)
-    semester_id: Optional[int] = None
-    root_folder_id: Optional[int] = None
-    monitored: Optional[bool] = None
-    tags: Optional[List[int]] = None
+    course_ids: list[int] = Field(..., min_length=1)
+    semester_id: int | None = None
+    root_folder_id: int | None = None
+    monitored: bool | None = None
+    tags: list[int] | None = None
 
 
 class BulkCourseUpdateResponse(BaseModel):
@@ -27,16 +27,16 @@ class BulkCourseUpdateResponse(BaseModel):
 
     updated_count: int
     failed_count: int
-    errors: Optional[List[dict]] = None
+    errors: list[dict] | None = None
 
 
 class BulkAcademicItemUpdate(BaseModel):
     """Schema for bulk academic item updates."""
 
-    item_ids: List[int] = Field(..., min_length=1)
-    status: Optional[str] = None
-    type: Optional[str] = None
-    course_id: Optional[int] = None
+    item_ids: list[int] = Field(..., min_length=1)
+    status: str | None = None
+    type: str | None = None
+    course_id: int | None = None
 
 
 class BulkAcademicItemUpdateResponse(BaseModel):
@@ -44,7 +44,7 @@ class BulkAcademicItemUpdateResponse(BaseModel):
 
     updated_count: int
     failed_count: int
-    errors: Optional[List[dict]] = None
+    errors: list[dict] | None = None
 
 
 @router.post("/courses", response_model=BulkCourseUpdateResponse, status_code=200)

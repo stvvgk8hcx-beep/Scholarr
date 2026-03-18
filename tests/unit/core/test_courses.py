@@ -1,12 +1,12 @@
 """Unit tests for course management."""
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pytest
 import pytest_asyncio
 from sqlalchemy import select
 
-from scholarr.db.models import Course, Semester, TermEnum, AcademicItem, AcademicItemTypeEnum
+from scholarr.db.models import AcademicItem, Course, Semester, TermEnum
 from scholarr.schemas.course import CourseCreate, CourseUpdate
 from scholarr.services.course_service import CourseService
 

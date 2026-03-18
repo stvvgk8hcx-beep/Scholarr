@@ -2,13 +2,13 @@
 
 import pytest
 
-from scholarr.core.validation import (
-    validate_path,
-    validate_course_code,
-    validate_grade,
-    validate_file_extension,
-)
 from scholarr.core.exceptions import ValidationError
+from scholarr.core.validation import (
+    validate_course_code,
+    validate_file_extension,
+    validate_grade,
+    validate_path,
+)
 
 
 class TestValidatePath:

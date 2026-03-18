@@ -1,6 +1,7 @@
 """Health check schemas."""
 
-from typing import Optional, Any
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -9,8 +10,8 @@ class HealthCheckComponent(BaseModel):
 
     name: str
     status: str  # healthy, warning, critical
-    message: Optional[str] = None
-    details: Optional[dict[str, Any]] = None
+    message: str | None = None
+    details: dict[str, Any] | None = None
 
 
 class HealthCheckResponse(BaseModel):
@@ -24,10 +25,10 @@ class HealthCheckResponse(BaseModel):
 class DiskSpaceInfo(BaseModel):
     """Schema for disk space information."""
 
-    total_gb: Optional[float] = None
-    used_gb: Optional[float] = None
-    available_gb: Optional[float] = None
-    percent_used: Optional[float] = None
+    total_gb: float | None = None
+    used_gb: float | None = None
+    available_gb: float | None = None
+    percent_used: float | None = None
 
 
 class DatabaseInfo(BaseModel):

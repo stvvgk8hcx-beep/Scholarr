@@ -1,11 +1,7 @@
 """Integration tests for course API endpoints."""
 
-from datetime import datetime
 
-import pytest
-from httpx import AsyncClient
 
-from scholarr.db.models import TermEnum
 
 
 class TestCreateCourseAPI:
@@ -191,7 +187,7 @@ class TestFilterCoursesAPI:
         )
 
         assert response.status_code == 200
-        data = response.json()
+        response.json()
         # Should find the course with "Data" in name
 
 

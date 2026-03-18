@@ -2,7 +2,6 @@
 
 import re
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -33,8 +32,8 @@ def _derive_term_from_name_or_date(name: str, start_date: datetime) -> TermEnum:
 
 class SemesterCreate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
-    year: Optional[int] = Field(default=None, ge=1900, le=2100)
-    term: Optional[TermEnum] = None
+    year: int | None = Field(default=None, ge=1900, le=2100)
+    term: TermEnum | None = None
     start_date: datetime
     end_date: datetime
     active: bool = False
@@ -54,12 +53,12 @@ class SemesterCreate(BaseModel):
 
 
 class SemesterUpdate(BaseModel):
-    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
-    year: Optional[int] = Field(default=None, ge=1900, le=2100)
-    term: Optional[TermEnum] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    active: Optional[bool] = None
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    year: int | None = Field(default=None, ge=1900, le=2100)
+    term: TermEnum | None = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    active: bool | None = None
 
 
 class SemesterResponse(BaseModel):

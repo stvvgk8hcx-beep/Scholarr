@@ -1,13 +1,10 @@
 """Unit tests for health check service."""
 
-import os
 import tempfile
-from pathlib import Path
 
-import pytest
 import pytest_asyncio
 
-from scholarr.core.health_check import HealthCheckService, HealthCheckResult
+from scholarr.core.health_check import HealthCheckResult, HealthCheckService
 
 
 @pytest_asyncio.fixture
@@ -58,7 +55,7 @@ class TestCheckRootFolders:
 
     async def test_root_folder_check_writable(self, health_service):
         """Test checking if root folder is writable."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory():
             results = await health_service.check_root_folders()
 
             # Verify structure of results

@@ -1,11 +1,8 @@
 """Log service for reading and filtering application logs."""
 
 import logging
-from typing import Optional
-from pathlib import Path
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from scholarr.core.config import settings
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +17,8 @@ class LogService:
         self,
         page: int,
         page_size: int,
-        level: Optional[str] = None,
-        search: Optional[str] = None,
+        level: str | None = None,
+        search: str | None = None,
     ) -> dict:
         """Get application logs with pagination and filtering by level/search."""
         try:
@@ -55,7 +52,7 @@ class LogService:
                 "total_pages": 0,
             }
 
-    async def get_log_file_path(self) -> Optional[str]:
+    async def get_log_file_path(self) -> str | None:
         """Get path to the current log file for download."""
         try:
             # TODO: implement log file path lookup

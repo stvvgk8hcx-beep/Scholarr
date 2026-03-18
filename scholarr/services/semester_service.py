@@ -1,16 +1,17 @@
 """Semester service."""
 
 import logging
-from sqlalchemy import select, func, update
+
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.db.models import Course, Semester
 from scholarr.schemas.semester import (
     SemesterCreate,
-    SemesterUpdate,
-    SemesterResponse,
     SemesterListResponse,
+    SemesterResponse,
+    SemesterUpdate,
 )
 
 logger = logging.getLogger(__name__)
@@ -117,9 +118,10 @@ class SemesterService:
             await self.db.commit()
         except IntegrityError:
             await self.db.rollback()
+            term_str = semester.term.value if semester.term else "Unknown"
             raise ValueError(
-                f"A semester for {semester.year} {semester.term.value} already exists"
-            )
+                f"A semester for {semester.year} {term_str} already exists"
+            ) from None
         await self.db.refresh(obj)
         logger.info(f"Created semester id={obj.id} name={obj.name!r}")
         return self._to_response(obj, 0)

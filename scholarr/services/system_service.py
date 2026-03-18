@@ -1,7 +1,8 @@
 """System service for business logic."""
 
 import logging
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)

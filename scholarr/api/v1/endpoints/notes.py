@@ -1,12 +1,13 @@
 """Notes endpoint."""
 
-from typing import Annotated, Optional
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.security import verify_api_key
 from scholarr.db.session import get_db_session
-from scholarr.schemas.note import NoteCreate, NoteUpdate, NoteResponse, NoteListResponse
+from scholarr.schemas.note import NoteCreate, NoteListResponse, NoteResponse, NoteUpdate
 from scholarr.services.note_service import NoteService
 
 router = APIRouter()
@@ -14,8 +15,8 @@ router = APIRouter()
 
 @router.get("", response_model=NoteListResponse)
 async def list_notes(
-    course_id: Optional[int] = Query(None),
-    search: Optional[str] = Query(None),
+    course_id: int | None = Query(None),
+    search: str | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     db: AsyncSession = Depends(get_db_session),

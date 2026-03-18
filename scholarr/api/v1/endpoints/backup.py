@@ -1,11 +1,11 @@
 """Backup and restore endpoints."""
 
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Path
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.security import verify_api_key
 from scholarr.db.session import get_db_session
-from scholarr.schemas.backup import BackupResponse, BackupRestoreResponse, BackupListResponse
+from scholarr.schemas.backup import BackupListResponse, BackupResponse, BackupRestoreResponse
 from scholarr.services.backup_service import BackupService
 
 router = APIRouter()

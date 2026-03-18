@@ -1,7 +1,6 @@
 """History tracking service for Scholarr."""
 
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,10 +26,10 @@ class HistoryService:
         Returns:
             list: List of history records.
         """
-        from scholarr.db.models import History
+        from scholarr.db.models import HistoryEntry as History
 
         result = await self.session.execute(select(History))
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def get_by_id(self, history_id: int):
         """Get history record by ID.
@@ -44,7 +43,7 @@ class HistoryService:
         Raises:
             NotFoundError: If record not found.
         """
-        from scholarr.db.models import History
+        from scholarr.db.models import HistoryEntry as History
 
         result = await self.session.execute(select(History).where(History.id == history_id))
         record = result.scalar_one_or_none()
@@ -58,9 +57,9 @@ class HistoryService:
         self,
         page: int = 1,
         page_size: int = 20,
-        event_type: Optional[str] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        event_type: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
     ) -> PaginatedResult:
         """Get paginated history records with filtering.
 
@@ -74,7 +73,7 @@ class HistoryService:
         Returns:
             PaginatedResult: Paginated history results.
         """
-        from scholarr.db.models import History
+        from scholarr.db.models import HistoryEntry as History
 
         if page < 1:
             page = 1
@@ -107,7 +106,7 @@ class HistoryService:
         query = query.offset(offset).limit(page_size)
 
         result = await self.session.execute(query)
-        items = result.scalars().all()
+        items = list(result.scalars().all())
 
         return PaginatedResult(items, page, page_size, total)
 
@@ -123,7 +122,7 @@ class HistoryService:
         Raises:
             ValidationError: If data is invalid.
         """
-        from scholarr.db.models import History
+        from scholarr.db.models import HistoryEntry as History
 
         required_fields = ["event_type", "description"]
         for field in required_fields:
@@ -159,13 +158,13 @@ class HistoryService:
         Returns:
             int: Number of records deleted.
         """
-        from scholarr.db.models import History
+        from scholarr.db.models import HistoryEntry as History
 
         cutoff_date = datetime.utcnow().timestamp() - (days * 86400)
         result = await self.session.execute(
             select(History).where(History.timestamp.timestamp() < cutoff_date)
         )
-        records = result.scalars().all()
+        records = list(result.scalars().all())
         count = len(records)
 
         for record in records:

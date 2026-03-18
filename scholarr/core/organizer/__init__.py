@@ -5,7 +5,6 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -24,42 +23,42 @@ class NamingContext:
     """Context containing all available tokens for filename/path building."""
 
     # Semester tokens
-    semester: Optional[str] = None
-    term: Optional[str] = None
-    year: Optional[int] = None
+    semester: str | None = None
+    term: str | None = None
+    year: int | None = None
 
     # Course tokens
-    course_code: Optional[str] = None
-    course_name: Optional[str] = None
-    course_section: Optional[str] = None
-    professor: Optional[str] = None
-    credits: Optional[float] = None
+    course_code: str | None = None
+    course_name: str | None = None
+    course_section: str | None = None
+    professor: str | None = None
+    credits: float | None = None
 
     # Item tokens
-    item_type: Optional[str] = None
-    item_number: Optional[str] = None
-    item_topic: Optional[str] = None
-    item_name: Optional[str] = None
+    item_type: str | None = None
+    item_number: str | None = None
+    item_topic: str | None = None
+    item_name: str | None = None
 
     # Date tokens
-    due_date: Optional[datetime] = None
-    date_received: Optional[datetime] = None
+    due_date: datetime | None = None
+    date_received: datetime | None = None
     date_format: str = "%Y-%m-%d"
 
     # Grade/Status tokens
-    grade: Optional[float] = None
-    status: Optional[str] = None
-    weight: Optional[float] = None
+    grade: float | None = None
+    status: str | None = None
+    weight: float | None = None
 
     # File tokens
-    file_type: Optional[str] = None
-    file_format: Optional[str] = None
-    original_filename: Optional[str] = None
-    extension: Optional[str] = None
+    file_type: str | None = None
+    file_format: str | None = None
+    original_filename: str | None = None
+    extension: str | None = None
 
     # File quality/version tokens
-    file_quality: Optional[str] = None
-    file_version: Optional[int] = None
+    file_quality: str | None = None
+    file_version: int | None = None
 
     # Custom tokens
     custom_tokens: dict = field(default_factory=dict)
@@ -287,7 +286,7 @@ class FileNameBuilder:
 
         return str(value)
 
-    def clean_filename(self, filename: str, colon_replacement: Optional[ColonReplacementFormat] = None) -> str:
+    def clean_filename(self, filename: str, colon_replacement: ColonReplacementFormat | None = None) -> str:
         """Clean illegal characters from a filename.
 
         Args:
@@ -353,7 +352,7 @@ class FileNameBuilder:
 
             if not is_valid:
                 # Check against known tokens
-                for key in self.TOKENS.keys():
+                for key in self.TOKENS:
                     if key.lower() == token.lower() or token.lower() == key.lower().replace(" ", ""):
                         is_valid = True
                         break

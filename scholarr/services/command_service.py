@@ -1,11 +1,12 @@
 """Command service."""
 
 import logging
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.db.models import CommandModel, CommandStatusEnum
-from scholarr.schemas.command import CommandCreate, CommandResponse, CommandListResponse
+from scholarr.schemas.command import CommandCreate, CommandResponse
 
 logger = logging.getLogger(__name__)
 

@@ -2,12 +2,12 @@
 
 import json
 import logging
-from typing import Optional
-from sqlalchemy import select, func
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from scholarr.db.models import Note, NoteBackup, Course
-from scholarr.schemas.note import NoteCreate, NoteUpdate, NoteResponse, NoteListResponse
+from scholarr.db.models import Course, Note, NoteBackup
+from scholarr.schemas.note import NoteCreate, NoteListResponse, NoteResponse, NoteUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +37,8 @@ class NoteService:
 
     async def list_notes(
         self,
-        course_id: Optional[int] = None,
-        search: Optional[str] = None,
+        course_id: int | None = None,
+        search: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> NoteListResponse:
@@ -67,7 +67,7 @@ class NoteService:
             total_pages=(total + page_size - 1) // page_size,
         )
 
-    async def get_note(self, id: int) -> Optional[NoteResponse]:
+    async def get_note(self, id: int) -> NoteResponse | None:
         obj = await self.db.get(Note, id)
         if not obj:
             return None
@@ -86,7 +86,7 @@ class NoteService:
         items = await _enrich_notes([NoteResponse.model_validate(obj)], self.db)
         return items[0]
 
-    async def update_note(self, id: int, data: NoteUpdate) -> Optional[NoteResponse]:
+    async def update_note(self, id: int, data: NoteUpdate) -> NoteResponse | None:
         obj = await self.db.get(Note, id)
         if not obj:
             return None
@@ -143,7 +143,7 @@ class NoteService:
             for r in rows
         ]
 
-    async def restore_backup(self, note_id: int, backup_id: int) -> Optional[NoteResponse]:
+    async def restore_backup(self, note_id: int, backup_id: int) -> NoteResponse | None:
         """Restore a note's content from a backup snapshot."""
         backup = await self.db.get(NoteBackup, backup_id)
         if not backup or backup.note_id != note_id:

@@ -3,7 +3,7 @@
 import json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -12,11 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.config import settings
 from scholarr.db.models import (
-    Semester,
-    Course,
     AcademicItem,
-    ManagedFile,
+    Course,
     HistoryEntry,
+    ManagedFile,
+    Semester,
     Tag,
     course_tags,
 )
@@ -96,7 +96,7 @@ class BackupService:
                 created_at = self._created_at_from_filename(backup_id)
                 if created_at is None:
                     created_at = datetime.fromtimestamp(
-                        stat.st_mtime, tz=timezone.utc
+                        stat.st_mtime, tz=UTC
                     )
 
                 backups.append(
@@ -127,7 +127,7 @@ class BackupService:
 
         Returns a dict matching ``BackupResponse``.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         backup_id = "backup_" + now.strftime("%Y%m%d_%H%M%S")
         filename = f"{backup_id}.json"
         filepath = self.backup_dir / filename
@@ -219,7 +219,7 @@ class BackupService:
 
             # Delete existing data in reverse dependency order so FK
             # constraints are satisfied.
-            for key, model in reversed(_TABLE_MODELS):
+            for _key, model in reversed(_TABLE_MODELS):
                 await self.db.execute(
                     text(f"DELETE FROM {model.__tablename__}")
                 )
@@ -258,7 +258,7 @@ class BackupService:
                 "message": "Backup restored successfully",
                 "details": {
                     "backup_id": backup_id,
-                    "restored_at": datetime.now(timezone.utc).isoformat(),
+                    "restored_at": datetime.now(UTC).isoformat(),
                     "record_counts": counts,
                 },
             }
@@ -308,7 +308,7 @@ class BackupService:
         ts_part = backup_id[len(prefix):]
         try:
             return datetime.strptime(ts_part, "%Y%m%d_%H%M%S").replace(
-                tzinfo=timezone.utc
+                tzinfo=UTC
             )
         except ValueError:
             return None

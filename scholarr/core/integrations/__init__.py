@@ -6,11 +6,10 @@ Each provider implements a common interface so adding new integrations is straig
 """
 
 from abc import ABC, abstractmethod
-from enum import Enum
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
-import json
+from enum import Enum
+from typing import Any
 
 
 class IntegrationType(Enum):
@@ -28,10 +27,10 @@ class IntegrationStatus:
     provider_name: str
     provider_type: IntegrationType
     is_connected: bool
-    last_sync: Optional[datetime] = None
-    last_error: Optional[str] = None
+    last_sync: datetime | None = None
+    last_error: str | None = None
     configuration_valid: bool = False
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class BaseIntegrationProvider(ABC):
@@ -46,12 +45,12 @@ class BaseIntegrationProvider(ABC):
         self.provider_name = provider_name
         self.provider_type = provider_type
         self._is_connected = False
-        self._last_sync: Optional[datetime] = None
-        self._last_error: Optional[str] = None
-        self._config: Dict[str, Any] = {}
+        self._last_sync: datetime | None = None
+        self._last_error: str | None = None
+        self._config: dict[str, Any] = {}
 
     @abstractmethod
-    async def connect(self, config: Dict[str, Any]) -> bool:
+    async def connect(self, config: dict[str, Any]) -> bool:
         """Connect to external service using provided configuration.
 
         Args:
@@ -72,7 +71,7 @@ class BaseIntegrationProvider(ABC):
         pass
 
     @abstractmethod
-    async def sync(self) -> Dict[str, Any]:
+    async def sync(self) -> dict[str, Any]:
         """Sync data from external service.
 
         Returns:
@@ -107,8 +106,8 @@ class IntegrationRegistry:
 
     def __init__(self):
         """Initialize the registry."""
-        self._providers: Dict[str, BaseIntegrationProvider] = {}
-        self._available_providers: Dict[str, type] = {}
+        self._providers: dict[str, BaseIntegrationProvider] = {}
+        self._available_providers: dict[str, type] = {}
 
     def register_available(self, provider_name: str, provider_class: type) -> None:
         """Register a provider class as available.
@@ -128,7 +127,7 @@ class IntegrationRegistry:
         """
         self._providers[provider_name] = provider
 
-    def get_provider(self, provider_name: str) -> Optional[BaseIntegrationProvider]:
+    def get_provider(self, provider_name: str) -> BaseIntegrationProvider | None:
         """Get an active provider by name.
 
         Args:
@@ -139,7 +138,7 @@ class IntegrationRegistry:
         """
         return self._providers.get(provider_name)
 
-    def get_available_provider_class(self, provider_name: str) -> Optional[type]:
+    def get_available_provider_class(self, provider_name: str) -> type | None:
         """Get an available provider class by name.
 
         Args:
@@ -150,7 +149,7 @@ class IntegrationRegistry:
         """
         return self._available_providers.get(provider_name)
 
-    def list_active_providers(self) -> List[str]:
+    def list_active_providers(self) -> list[str]:
         """Get list of all active provider names.
 
         Returns:
@@ -158,7 +157,7 @@ class IntegrationRegistry:
         """
         return list(self._providers.keys())
 
-    def list_available_providers(self) -> List[str]:
+    def list_available_providers(self) -> list[str]:
         """Get list of all available provider names.
 
         Returns:
@@ -166,7 +165,7 @@ class IntegrationRegistry:
         """
         return list(self._available_providers.keys())
 
-    async def get_all_statuses(self) -> Dict[str, IntegrationStatus]:
+    async def get_all_statuses(self) -> dict[str, IntegrationStatus]:
         """Get status for all active providers.
 
         Returns:
@@ -186,7 +185,7 @@ class IntegrationRegistry:
                 )
         return statuses
 
-    async def disconnect_all(self) -> Dict[str, bool]:
+    async def disconnect_all(self) -> dict[str, bool]:
         """Disconnect all active providers.
 
         Returns:
@@ -199,13 +198,13 @@ class IntegrationRegistry:
                 results[name] = success
                 if success:
                     del self._providers[name]
-            except Exception as e:
+            except Exception:
                 results[name] = False
         return results
 
 
 # Global registry instance
-_global_registry: Optional[IntegrationRegistry] = None
+_global_registry: IntegrationRegistry | None = None
 
 
 def get_registry() -> IntegrationRegistry:

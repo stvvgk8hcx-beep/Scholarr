@@ -1,7 +1,6 @@
 """Academic items management service for Scholarr."""
 
 from datetime import datetime, timedelta
-from typing import Optional
 
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,10 +22,10 @@ class AcademicItemService:
 
     async def get_all(
         self,
-        course_id: Optional[int] = None,
-        status: Optional[str] = None,
-        item_type: Optional[str] = None,
-        overdue: Optional[bool] = None,
+        course_id: int | None = None,
+        status: str | None = None,
+        item_type: str | None = None,
+        overdue: bool | None = None,
     ) -> list:
         """Get all academic items with optional filtering.
 
@@ -74,7 +73,7 @@ class AcademicItemService:
             query = query.where(and_(*filters))
 
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def get_paged(
         self,
@@ -82,7 +81,7 @@ class AcademicItemService:
         page_size: int = 20,
         sort_key: str = "due_date",
         sort_dir: str = "asc",
-        filters: Optional[dict] = None,
+        filters: dict | None = None,
     ) -> PaginatedResult:
         """Get paginated academic items.
 
@@ -138,7 +137,7 @@ class AcademicItemService:
         query = query.offset(offset).limit(page_size)
 
         result = await self.session.execute(query)
-        items = result.scalars().all()
+        items = list(result.scalars().all())
 
         return PaginatedResult(items, page, page_size, total)
 
@@ -189,7 +188,7 @@ class AcademicItemService:
                 )
             )
         )
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def create(self, data: dict):
         """Create a new academic item.

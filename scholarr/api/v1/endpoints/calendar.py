@@ -1,6 +1,7 @@
 """Calendar endpoint."""
 
 from datetime import date
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 

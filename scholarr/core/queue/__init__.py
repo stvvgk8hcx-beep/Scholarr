@@ -1,11 +1,10 @@
 """Queue management service for Scholarr."""
 
-from typing import Optional
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.exceptions import NotFoundError, ValidationError
+from scholarr.db.models import QueueItemStatusEnum
 
 
 class QueueService:
@@ -29,13 +28,13 @@ class QueueService:
 
         result = await self.session.execute(
             select(QueueItem)
-            .where(QueueItem.status.in_(["pending", "processing"]))
+            .where(QueueItem.status.in_([QueueItemStatusEnum.PENDING, QueueItemStatusEnum.PROCESSING]))
             .order_by(
                 QueueItem.priority.desc(),
                 QueueItem.created_at.asc(),
             )
         )
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def add_to_queue(self, data: dict):
         """Add item to queue.
@@ -85,7 +84,7 @@ class QueueService:
         await self.session.delete(item)
         await self.session.commit()
 
-    async def get_progress(self, queue_item_id: int) -> Optional[dict]:
+    async def get_progress(self, queue_item_id: int) -> dict | None:
         """Get progress of a queue item.
 
         Args:
@@ -114,15 +113,15 @@ class QueueService:
     async def update_progress(
         self,
         queue_item_id: int,
-        status: str,
-        progress: Optional[int] = None,
-        message: Optional[str] = None,
+        status: str | QueueItemStatusEnum,
+        progress: int | None = None,
+        message: str | None = None,
     ):
         """Update queue item progress.
 
         Args:
             queue_item_id: Queue item ID.
-            status: New status.
+            status: New status (string or QueueItemStatusEnum).
             progress: Progress percentage (0-100).
             message: Status message.
 
@@ -139,7 +138,7 @@ class QueueService:
         if not item:
             raise NotFoundError(f"Queue item {queue_item_id} not found")
 
-        item.status = status
+        item.status = QueueItemStatusEnum(status) if isinstance(status, str) else status
         if progress is not None:
             item.progress = max(0, min(100, progress))
         if message is not None:
@@ -157,9 +156,9 @@ class QueueService:
         from scholarr.db.models import QueueItem
 
         result = await self.session.execute(
-            select(QueueItem).where(QueueItem.status == "completed")
+            select(QueueItem).where(QueueItem.status == QueueItemStatusEnum.COMPLETED)
         )
-        items = result.scalars().all()
+        items = list(result.scalars().all())
         count = len(items)
 
         for item in items:

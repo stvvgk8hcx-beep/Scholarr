@@ -26,7 +26,7 @@ class SemesterService:
         from scholarr.db.models import Semester
 
         result = await self.session.execute(select(Semester))
-        return result.scalars().all()
+        return list(result.scalars().all())
 
     async def get_by_id(self, semester_id: int):
         """Get semester by ID.
@@ -59,7 +59,7 @@ class SemesterService:
         from scholarr.db.models import Semester
 
         result = await self.session.execute(
-            select(Semester).where(Semester.is_active == True)
+            select(Semester).where(Semester.is_active)
         )
         return result.scalar_one_or_none()
 

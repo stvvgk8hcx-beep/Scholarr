@@ -1,10 +1,11 @@
 """Host Configuration service — reads/writes application settings."""
 
 import logging
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.config import settings
-from scholarr.schemas.host_config import HostConfigUpdate, HostConfigResponse
+from scholarr.schemas.host_config import HostConfigResponse, HostConfigUpdate
 
 logger = logging.getLogger(__name__)
 

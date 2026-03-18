@@ -16,12 +16,11 @@ Requires:
   - Student OAuth token (from user login flow)
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
-import asyncio
 import logging
+from datetime import datetime
+from typing import Any
 
-from scholarr.core.integrations import BaseIntegrationProvider, IntegrationType, IntegrationStatus
+from scholarr.core.integrations import BaseIntegrationProvider, IntegrationStatus, IntegrationType
 
 logger = logging.getLogger(__name__)
 
@@ -36,11 +35,11 @@ class BlackboardProvider(BaseIntegrationProvider):
     def __init__(self):
         """Initialize Blackboard provider."""
         super().__init__("blackboard", IntegrationType.LMS)
-        self._access_token: Optional[str] = None
-        self._refresh_token: Optional[str] = None
-        self._user_id: Optional[str] = None
+        self._access_token: str | None = None
+        self._refresh_token: str | None = None
+        self._user_id: str | None = None
 
-    async def connect(self, config: Dict[str, Any]) -> bool:
+    async def connect(self, config: dict[str, Any]) -> bool:
         """Connect to Blackboard Learn instance.
 
         Config should contain:
@@ -116,7 +115,7 @@ class BlackboardProvider(BaseIntegrationProvider):
         logger.debug("Blackboard test_connection: stub implementation")
         return True
 
-    async def get_courses(self) -> List[Dict[str, Any]]:
+    async def get_courses(self) -> list[dict[str, Any]]:
         """Fetch list of courses for authenticated user.
 
         Calls GET /courses and returns course data.
@@ -127,7 +126,7 @@ class BlackboardProvider(BaseIntegrationProvider):
         logger.debug("Blackboard get_courses: stub implementation")
         return []
 
-    async def get_assignments(self, course_id: str) -> List[Dict[str, Any]]:
+    async def get_assignments(self, course_id: str) -> list[dict[str, Any]]:
         """Fetch assignments for a specific course.
 
         Calls GET /courses/{courseId}/assignments
@@ -141,7 +140,7 @@ class BlackboardProvider(BaseIntegrationProvider):
         logger.debug(f"Blackboard get_assignments for {course_id}: stub")
         return []
 
-    async def get_grades(self, course_id: str) -> List[Dict[str, Any]]:
+    async def get_grades(self, course_id: str) -> list[dict[str, Any]]:
         """Fetch grades for a course.
 
         Calls GET /courses/{courseId}/grades for authenticated user
@@ -155,7 +154,7 @@ class BlackboardProvider(BaseIntegrationProvider):
         logger.debug(f"Blackboard get_grades for {course_id}: stub")
         return []
 
-    async def sync_grades(self) -> Dict[str, Any]:
+    async def sync_grades(self) -> dict[str, Any]:
         """Sync grades from all enrolled courses.
 
         Iterates through courses and fetches grades from each.
@@ -163,10 +162,10 @@ class BlackboardProvider(BaseIntegrationProvider):
         Returns:
             Dictionary with counts: courses_synced, grades_synced, errors
         """
-        results = {
+        results: dict[str, Any] = {
             "courses_synced": 0,
             "grades_synced": 0,
-            "errors": []
+            "errors": [],
         }
 
         try:
@@ -188,7 +187,7 @@ class BlackboardProvider(BaseIntegrationProvider):
             results["errors"].append(str(e))
             return results
 
-    async def get_announcements(self) -> List[Dict[str, Any]]:
+    async def get_announcements(self) -> list[dict[str, Any]]:
         """Fetch announcements from all courses.
 
         Calls GET /announcements or iterates /courses/{id}/announcements
@@ -222,7 +221,7 @@ class BlackboardProvider(BaseIntegrationProvider):
         logger.debug(f"Blackboard submit_assignment {assignment_id} in {course_id}: stub")
         return False
 
-    async def sync(self) -> Dict[str, Any]:
+    async def sync(self) -> dict[str, Any]:
         """Sync all data from Blackboard.
 
         Calls get_courses(), get_assignments(), sync_grades(), and get_announcements().
@@ -234,12 +233,12 @@ class BlackboardProvider(BaseIntegrationProvider):
             return {"error": "Not connected to Blackboard"}
 
         try:
-            results = {
+            results: dict[str, Any] = {
                 "courses": [],
                 "assignments": [],
                 "grades_synced": 0,
                 "announcements": [],
-                "errors": []
+                "errors": [],
             }
 
             # Sync courses

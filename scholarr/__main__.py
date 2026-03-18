@@ -1,9 +1,10 @@
 """Entry point for running Scholarr as a module."""
 
-import typer
-import uvicorn
 import logging
 from pathlib import Path
+
+import typer
+import uvicorn
 
 from scholarr.core.config import settings
 

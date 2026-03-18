@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pytest
 
-from scholarr.core.organizer import FileNameBuilder, NamingContext, ColonReplacementFormat
+from scholarr.core.organizer import ColonReplacementFormat, FileNameBuilder, NamingContext
 
 
 @pytest.fixture
@@ -248,7 +248,7 @@ class TestEmptyOptionalTokens:
         assert "BCS310" in filename
         assert "Assignment" in filename
         # Missing professor should not break the filename
-        assert "_None" not in filename and "_" != filename[-1]
+        assert "_None" not in filename and filename[-1] != "_"
 
     def test_skip_missing_tokens(self, builder):
         """Test skipping entirely missing tokens."""

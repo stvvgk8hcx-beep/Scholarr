@@ -7,8 +7,8 @@ from scholarr.core.security import verify_api_key
 from scholarr.db.session import get_db_session
 from scholarr.schemas.custom_format import (
     CustomFormatCreate,
-    CustomFormatUpdate,
     CustomFormatResponse,
+    CustomFormatUpdate,
 )
 from scholarr.services.custom_format_service import CustomFormatService
 

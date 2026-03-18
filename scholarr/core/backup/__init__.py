@@ -5,7 +5,6 @@ import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from scholarr.core.config import get_settings
 from scholarr.core.exceptions import BackupError
@@ -51,7 +50,7 @@ class BackupService:
                 shutil.copy2(db_path, backup_path)
                 return str(backup_path)
             except Exception as e:
-                raise BackupError(f"Failed to backup SQLite database: {e}")
+                raise BackupError(f"Failed to backup SQLite database: {e}") from e
 
         elif "postgresql" in settings.database_url:
             backup_path = backup_dir / f"scholarr_{timestamp}.sql"
@@ -80,9 +79,9 @@ class BackupService:
                 return str(backup_path)
 
             except subprocess.CalledProcessError as e:
-                raise BackupError(f"Failed to backup PostgreSQL database: {e}")
+                raise BackupError(f"Failed to backup PostgreSQL database: {e}") from e
             except Exception as e:
-                raise BackupError(f"Backup failed: {e}")
+                raise BackupError(f"Backup failed: {e}") from e
 
         else:
             raise BackupError(f"Unsupported database: {settings.database_url}")
@@ -108,7 +107,7 @@ class BackupService:
             try:
                 shutil.copy2(backup_path, db_path)
             except Exception as e:
-                raise BackupError(f"Failed to restore SQLite database: {e}")
+                raise BackupError(f"Failed to restore SQLite database: {e}") from e
 
         elif "postgresql" in settings.database_url:
             try:
@@ -127,14 +126,14 @@ class BackupService:
                 if password:
                     env["PGPASSWORD"] = password
 
-                with open(backup_path, "r") as f:
+                with open(backup_path) as f:
                     cmd = ["psql", "-h", host, "-U", user, "-d", db_name]
                     subprocess.run(cmd, stdin=f, env=env, check=True)
 
             except subprocess.CalledProcessError as e:
-                raise BackupError(f"Failed to restore PostgreSQL database: {e}")
+                raise BackupError(f"Failed to restore PostgreSQL database: {e}") from e
             except Exception as e:
-                raise BackupError(f"Restore failed: {e}")
+                raise BackupError(f"Restore failed: {e}") from e
 
         else:
             raise BackupError(f"Unsupported database: {settings.database_url}")
@@ -179,4 +178,4 @@ class BackupService:
             if os.path.exists(backup_path):
                 os.remove(backup_path)
         except Exception as e:
-            raise BackupError(f"Failed to delete backup: {e}")
+            raise BackupError(f"Failed to delete backup: {e}") from e

@@ -1,16 +1,17 @@
 """Academic Item service."""
 
 import logging
-from datetime import datetime, timezone
-from sqlalchemy import select, func, or_
+from datetime import UTC, datetime
+
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.db.models import AcademicItem, AcademicItemStatusEnum, Course, HistoryEntry, HistoryEventTypeEnum
 from scholarr.schemas.academic_item import (
     AcademicItemCreate,
-    AcademicItemUpdate,
-    AcademicItemResponse,
     AcademicItemListResponse,
+    AcademicItemResponse,
+    AcademicItemUpdate,
 )
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ class AcademicItemService:
         if type is not None:
             query = query.where(AcademicItem.type == type)
         if overdue:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             query = query.where(
                 AcademicItem.due_date < now,
                 AcademicItem.status.not_in([
@@ -129,7 +130,7 @@ class AcademicItemService:
         self, days: int = 7, course_id: int | None = None
     ) -> list[AcademicItemResponse]:
         from datetime import timedelta
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         cutoff = now + timedelta(days=days)
         query = (
             select(AcademicItem)
@@ -225,7 +226,7 @@ class AcademicItemService:
         self, course_id: int | None = None
     ) -> list[AcademicItemResponse]:
         """List overdue items (past due date, not completed)."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         query = select(AcademicItem).where(
             AcademicItem.due_date < now,
             AcademicItem.status.not_in([

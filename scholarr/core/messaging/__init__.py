@@ -1,8 +1,9 @@
 """Event bus and messaging service for Scholarr."""
 
 import asyncio
-from typing import Any, Callable
+from collections.abc import Callable
 from enum import Enum
+from typing import Any
 
 
 class EventType(str, Enum):

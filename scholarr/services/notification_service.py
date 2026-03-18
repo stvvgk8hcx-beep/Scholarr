@@ -1,15 +1,16 @@
 """Notification service."""
 
 import logging
-from sqlalchemy import select, func
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.db.models import NotificationDefinition
 from scholarr.schemas.notification import (
     NotificationCreate,
-    NotificationUpdate,
-    NotificationResponse,
     NotificationListResponse,
+    NotificationResponse,
+    NotificationUpdate,
 )
 
 logger = logging.getLogger(__name__)

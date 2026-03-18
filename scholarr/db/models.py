@@ -2,14 +2,13 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
 from sqlalchemy import (
-    Column,
     JSON,
     Boolean,
+    Column,
     DateTime,
-    Enum as SQLEnum,
     Float,
     ForeignKey,
     Index,
@@ -19,6 +18,9 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+)
+from sqlalchemy import (
+    Enum as SQLEnum,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -146,7 +148,7 @@ class Semester(Base):
         nullable=False,
     )
 
-    courses: Mapped[List["Course"]] = relationship(
+    courses: Mapped[list["Course"]] = relationship(
         "Course",
         back_populates="semester",
         cascade="all, delete-orphan",
@@ -164,7 +166,7 @@ class Tag(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     label: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
-    color: Mapped[Optional[str]] = mapped_column(String(7))
+    color: Mapped[str | None] = mapped_column(String(7))
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         server_default=func.now(),
@@ -177,7 +179,7 @@ class Tag(Base):
         nullable=False,
     )
 
-    courses: Mapped[List["Course"]] = relationship(
+    courses: Mapped[list["Course"]] = relationship(
         "Course",
         secondary=course_tags,
         back_populates="tags",
@@ -191,22 +193,22 @@ class Course(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     code: Mapped[str] = mapped_column(String(50), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    professor: Mapped[Optional[str]] = mapped_column(String(255))
+    professor: Mapped[str | None] = mapped_column(String(255))
     semester_id: Mapped[int] = mapped_column(
         ForeignKey("semester.id", ondelete="CASCADE"),
         nullable=False,
     )
-    section: Mapped[Optional[str]] = mapped_column(String(50))
-    credits: Mapped[Optional[float]] = mapped_column(Float)
-    color: Mapped[Optional[str]] = mapped_column(String(7))
-    root_folder_path: Mapped[Optional[str]] = mapped_column(String(1024))
+    section: Mapped[str | None] = mapped_column(String(50))
+    credits: Mapped[float | None] = mapped_column(Float)
+    color: Mapped[str | None] = mapped_column(String(7))
+    root_folder_path: Mapped[str | None] = mapped_column(String(1024))
     monitored: Mapped[bool] = mapped_column(Boolean, default=False)
-    sort_name: Mapped[Optional[str]] = mapped_column(String(255))
-    clean_name: Mapped[Optional[str]] = mapped_column(String(255))
-    location: Mapped[Optional[str]] = mapped_column(String(255))
-    schedule: Mapped[Optional[str]] = mapped_column(Text)  # JSON: [{day, start, end}]
-    notes: Mapped[Optional[str]] = mapped_column(Text)
-    grade_weights: Mapped[Optional[str]] = mapped_column(Text)  # JSON: {type: weight%}
+    sort_name: Mapped[str | None] = mapped_column(String(255))
+    clean_name: Mapped[str | None] = mapped_column(String(255))
+    location: Mapped[str | None] = mapped_column(String(255))
+    schedule: Mapped[str | None] = mapped_column(Text)  # JSON: [{day, start, end}]
+    notes: Mapped[str | None] = mapped_column(Text)
+    grade_weights: Mapped[str | None] = mapped_column(Text)  # JSON: {type: weight%}
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         server_default=func.now(),
@@ -223,17 +225,17 @@ class Course(Base):
         "Semester",
         back_populates="courses",
     )
-    academic_items: Mapped[List["AcademicItem"]] = relationship(
+    academic_items: Mapped[list["AcademicItem"]] = relationship(
         "AcademicItem",
         back_populates="course",
         cascade="all, delete-orphan",
     )
-    tags: Mapped[List["Tag"]] = relationship(
+    tags: Mapped[list["Tag"]] = relationship(
         "Tag",
         secondary=course_tags,
         back_populates="courses",
     )
-    history_entries: Mapped[List["HistoryEntry"]] = relationship(
+    history_entries: Mapped[list["HistoryEntry"]] = relationship(
         "HistoryEntry",
         back_populates="course",
         cascade="all, delete-orphan",
@@ -260,20 +262,20 @@ class AcademicItem(Base):
         nullable=False,
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    number: Mapped[Optional[str]] = mapped_column(String(50))
-    topic: Mapped[Optional[str]] = mapped_column(String(255))
-    due_date: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    date_received: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    number: Mapped[str | None] = mapped_column(String(50))
+    topic: Mapped[str | None] = mapped_column(String(255))
+    due_date: Mapped[datetime | None] = mapped_column(DateTime)
+    date_received: Mapped[datetime | None] = mapped_column(DateTime)
     status: Mapped[AcademicItemStatusEnum] = mapped_column(
         SQLEnum(AcademicItemStatusEnum),
         default=AcademicItemStatusEnum.NOT_STARTED,
         nullable=False,
     )
-    grade: Mapped[Optional[float]] = mapped_column(Float)
-    weight: Mapped[Optional[float]] = mapped_column(Float)
-    notes: Mapped[Optional[str]] = mapped_column(Text)
+    grade: Mapped[float | None] = mapped_column(Float)
+    weight: Mapped[float | None] = mapped_column(Float)
+    notes: Mapped[str | None] = mapped_column(Text)
     monitored: Mapped[bool] = mapped_column(Boolean, default=True)
-    clean_name: Mapped[Optional[str]] = mapped_column(String(255))
+    clean_name: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         server_default=func.now(),
@@ -290,12 +292,12 @@ class AcademicItem(Base):
         "Course",
         back_populates="academic_items",
     )
-    files: Mapped[List["ManagedFile"]] = relationship(
+    files: Mapped[list["ManagedFile"]] = relationship(
         "ManagedFile",
         back_populates="academic_item",
         cascade="all, delete-orphan",
     )
-    history_entries: Mapped[List["HistoryEntry"]] = relationship(
+    history_entries: Mapped[list["HistoryEntry"]] = relationship(
         "HistoryEntry",
         back_populates="academic_item",
         cascade="all, delete-orphan",
@@ -318,18 +320,18 @@ class ManagedFile(Base):
         nullable=False,
     )
     path: Mapped[str] = mapped_column(String(1024), nullable=False)
-    original_path: Mapped[Optional[str]] = mapped_column(String(1024))
-    size: Mapped[Optional[int]] = mapped_column(Integer)
-    format: Mapped[Optional[str]] = mapped_column(String(50))
-    quality: Mapped[Optional[str]] = mapped_column(String(50))
+    original_path: Mapped[str | None] = mapped_column(String(1024))
+    size: Mapped[int | None] = mapped_column(Integer)
+    format: Mapped[str | None] = mapped_column(String(50))
+    quality: Mapped[str | None] = mapped_column(String(50))
     version: Mapped[int] = mapped_column(Integer, default=1)
     date_imported: Mapped[datetime] = mapped_column(
         DateTime,
         server_default=func.now(),
         nullable=False,
     )
-    hash: Mapped[Optional[str]] = mapped_column(String(64), unique=True)
-    original_filename: Mapped[Optional[str]] = mapped_column(String(255))
+    hash: Mapped[str | None] = mapped_column(String(64), unique=True)
+    original_filename: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         server_default=func.now(),
@@ -346,7 +348,7 @@ class ManagedFile(Base):
         "AcademicItem",
         back_populates="files",
     )
-    history_entries: Mapped[List["HistoryEntry"]] = relationship(
+    history_entries: Mapped[list["HistoryEntry"]] = relationship(
         "HistoryEntry",
         back_populates="managed_file",
         cascade="all, delete-orphan",
@@ -364,7 +366,7 @@ class FileProfile(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
-    cutoff_format_id: Mapped[Optional[int]] = mapped_column(
+    cutoff_format_id: Mapped[int | None] = mapped_column(
         ForeignKey("custom_format.id", ondelete="SET NULL")
     )
     upgrade_allowed: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -380,12 +382,12 @@ class FileProfile(Base):
         nullable=False,
     )
 
-    allowed_formats: Mapped[List["CustomFormat"]] = relationship(
+    allowed_formats: Mapped[list["CustomFormat"]] = relationship(
         "CustomFormat",
         back_populates="allowed_in_profiles",
         foreign_keys="CustomFormat.profile_id",
     )
-    preferred_formats: Mapped[List["CustomFormat"]] = relationship(
+    preferred_formats: Mapped[list["CustomFormat"]] = relationship(
         "CustomFormat",
         back_populates="preferred_in_profiles",
         foreign_keys="CustomFormat.preferred_profile_id",
@@ -400,10 +402,10 @@ class CustomFormat(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     include_when_renaming: Mapped[bool] = mapped_column(Boolean, default=True)
     specifications: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
-    profile_id: Mapped[Optional[int]] = mapped_column(
+    profile_id: Mapped[int | None] = mapped_column(
         ForeignKey("file_profile.id", ondelete="SET NULL")
     )
-    preferred_profile_id: Mapped[Optional[int]] = mapped_column(
+    preferred_profile_id: Mapped[int | None] = mapped_column(
         ForeignKey("file_profile.id", ondelete="SET NULL")
     )
     created_at: Mapped[datetime] = mapped_column(
@@ -418,12 +420,12 @@ class CustomFormat(Base):
         nullable=False,
     )
 
-    allowed_in_profiles: Mapped[List["FileProfile"]] = relationship(
+    allowed_in_profiles: Mapped[list["FileProfile"]] = relationship(
         "FileProfile",
         back_populates="allowed_formats",
         foreign_keys="CustomFormat.profile_id",
     )
-    preferred_in_profiles: Mapped[List["FileProfile"]] = relationship(
+    preferred_in_profiles: Mapped[list["FileProfile"]] = relationship(
         "FileProfile",
         back_populates="preferred_formats",
         foreign_keys="CustomFormat.preferred_profile_id",
@@ -437,7 +439,7 @@ class RootFolder(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     path: Mapped[str] = mapped_column(String(1024), nullable=False, unique=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    default_file_profile_id: Mapped[Optional[int]] = mapped_column(
+    default_file_profile_id: Mapped[int | None] = mapped_column(
         ForeignKey("file_profile.id", ondelete="SET NULL")
     )
     default_monitored: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -459,17 +461,17 @@ class HistoryEntry(Base):
     __tablename__ = "history_entry"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    course_id: Mapped[Optional[int]] = mapped_column(
+    course_id: Mapped[int | None] = mapped_column(
         ForeignKey("course.id", ondelete="CASCADE")
     )
-    academic_item_id: Mapped[Optional[int]] = mapped_column(
+    academic_item_id: Mapped[int | None] = mapped_column(
         ForeignKey("academic_item.id", ondelete="CASCADE")
     )
-    managed_file_id: Mapped[Optional[int]] = mapped_column(
+    managed_file_id: Mapped[int | None] = mapped_column(
         ForeignKey("managed_file.id", ondelete="CASCADE")
     )
-    source_path: Mapped[Optional[str]] = mapped_column(String(1024))
-    destination_path: Mapped[Optional[str]] = mapped_column(String(1024))
+    source_path: Mapped[str | None] = mapped_column(String(1024))
+    destination_path: Mapped[str | None] = mapped_column(String(1024))
     date: Mapped[datetime] = mapped_column(
         DateTime,
         server_default=func.now(),
@@ -479,7 +481,7 @@ class HistoryEntry(Base):
         SQLEnum(HistoryEventTypeEnum),
         nullable=False,
     )
-    data: Mapped[Optional[dict]] = mapped_column(JSON)
+    data: Mapped[dict | None] = mapped_column(JSON)
 
     course: Mapped[Optional["Course"]] = relationship(
         "Course",
@@ -508,11 +510,11 @@ class NamingConfig(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     renaming_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     replace_illegal_characters: Mapped[bool] = mapped_column(Boolean, default=True)
-    standard_file_format: Mapped[Optional[str]] = mapped_column(String(255))
-    folder_format: Mapped[Optional[str]] = mapped_column(String(255))
-    course_folder_format: Mapped[Optional[str]] = mapped_column(String(255))
-    semester_folder_format: Mapped[Optional[str]] = mapped_column(String(255))
-    colon_replacement_format: Mapped[Optional[str]] = mapped_column(String(10))
+    standard_file_format: Mapped[str | None] = mapped_column(String(255))
+    folder_format: Mapped[str | None] = mapped_column(String(255))
+    course_folder_format: Mapped[str | None] = mapped_column(String(255))
+    semester_folder_format: Mapped[str | None] = mapped_column(String(255))
+    colon_replacement_format: Mapped[str | None] = mapped_column(String(10))
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         server_default=func.now(),
@@ -536,9 +538,9 @@ class ImportSource(Base):
         SQLEnum(ImportSourceTypeEnum),
         nullable=False,
     )
-    watch_path: Mapped[Optional[str]] = mapped_column(String(1024))
+    watch_path: Mapped[str | None] = mapped_column(String(1024))
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
-    default_course_id: Mapped[Optional[int]] = mapped_column(
+    default_course_id: Mapped[int | None] = mapped_column(
         ForeignKey("course.id", ondelete="SET NULL")
     )
     settings: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
@@ -563,7 +565,7 @@ class NotificationDefinition(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     implementation: Mapped[str] = mapped_column(String(255), nullable=False)
-    config_contract: Mapped[Optional[str]] = mapped_column(String(255))
+    config_contract: Mapped[str | None] = mapped_column(String(255))
     fields: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
@@ -596,9 +598,9 @@ class CommandModel(Base):
         server_default=func.now(),
         nullable=False,
     )
-    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    ended_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    trigger: Mapped[Optional[str]] = mapped_column(String(255))
+    started_at: Mapped[datetime | None] = mapped_column(DateTime)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime)
+    trigger: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         server_default=func.now(),
@@ -622,10 +624,10 @@ class QueueItem(Base):
     __tablename__ = "queue_item"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    course_id: Mapped[Optional[int]] = mapped_column(
+    course_id: Mapped[int | None] = mapped_column(
         ForeignKey("course.id", ondelete="CASCADE")
     )
-    academic_item_id: Mapped[Optional[int]] = mapped_column(
+    academic_item_id: Mapped[int | None] = mapped_column(
         ForeignKey("academic_item.id", ondelete="CASCADE")
     )
     source_path: Mapped[str] = mapped_column(String(1024), nullable=False)
@@ -665,7 +667,7 @@ class ScheduledTask(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     task_name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     interval_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
-    last_execution: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    last_execution: Mapped[datetime | None] = mapped_column(DateTime)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
@@ -685,15 +687,15 @@ class Note(Base):
     __tablename__ = "note"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    course_id: Mapped[Optional[int]] = mapped_column(
+    course_id: Mapped[int | None] = mapped_column(
         ForeignKey("course.id", ondelete="SET NULL"),
         nullable=True,
     )
     title: Mapped[str] = mapped_column(String(500), nullable=False)
-    content: Mapped[Optional[str]] = mapped_column(Text)
+    content: Mapped[str | None] = mapped_column(Text)
     word_count: Mapped[int] = mapped_column(Integer, default=0)
     duration_seconds: Mapped[int] = mapped_column(Integer, default=0)
-    preferences: Mapped[Optional[str]] = mapped_column(Text)  # JSON: bg, font, sounds
+    preferences: Mapped[str | None] = mapped_column(Text)  # JSON: bg, font, sounds
     pinned: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
@@ -708,7 +710,7 @@ class Note(Base):
     )
 
     course: Mapped[Optional["Course"]] = relationship("Course")
-    backups: Mapped[List["NoteBackup"]] = relationship(
+    backups: Mapped[list["NoteBackup"]] = relationship(
         "NoteBackup", back_populates="note", cascade="all, delete-orphan",
     )
 
@@ -725,7 +727,7 @@ class NoteBackup(Base):
     note_id: Mapped[int] = mapped_column(
         ForeignKey("note.id", ondelete="CASCADE"), nullable=False,
     )
-    content: Mapped[Optional[str]] = mapped_column(Text)
+    content: Mapped[str | None] = mapped_column(Text)
     word_count: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False,

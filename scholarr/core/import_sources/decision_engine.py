@@ -4,7 +4,6 @@ import logging
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,7 +38,7 @@ class DecisionResult:
 
     action: ImportAction
     reason: str
-    existing_file_id: Optional[int] = None
+    existing_file_id: int | None = None
     quality_score: float = 0.0
 
 
@@ -71,7 +70,7 @@ class DecisionEngine:
         self.session = session
 
     async def evaluate(
-        self, file_path: str, parse_result: ParseResult, course_id: int
+        self, file_path: str | Path, parse_result: ParseResult, course_id: int
     ) -> DecisionResult:
         """Evaluate a file and make an import decision.
 
@@ -291,7 +290,7 @@ class DecisionEngine:
             logger.warning(f"Error checking upgrade eligibility: {e}")
             return False
 
-    def get_quality_ranking(self, file_ext: str) -> Optional[QualityRank]:
+    def get_quality_ranking(self, file_ext: str) -> QualityRank | None:
         """Get quality rank for a file extension.
 
         Args:

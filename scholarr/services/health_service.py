@@ -3,10 +3,11 @@
 import logging
 import platform
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.core.config import settings
 
@@ -40,7 +41,7 @@ class HealthService:
 
         return {
             "status": overall_status,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "components": components,
         }
 
@@ -51,7 +52,7 @@ class HealthService:
 
         return {
             "status": "healthy" if db_healthy else "unhealthy",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "database": {
                 "connected": db_healthy,
                 "url": settings.database_url.split("@")[0] + "@***" if "@" in settings.database_url else "***",

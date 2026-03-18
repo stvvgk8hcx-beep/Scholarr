@@ -1,14 +1,13 @@
 """Academic Item schemas."""
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from scholarr.db.models import AcademicItemTypeEnum, AcademicItemStatusEnum
+from scholarr.db.models import AcademicItemStatusEnum, AcademicItemTypeEnum
 
 
-def _coerce_type(v: Optional[str]) -> Optional[AcademicItemTypeEnum]:
+def _coerce_type(v: str | None) -> AcademicItemTypeEnum | None:
     """Accept lowercase/alias type strings from the front-end."""
     if v is None:
         return None
@@ -35,23 +34,23 @@ def _coerce_type(v: Optional[str]) -> Optional[AcademicItemTypeEnum]:
 
 class AcademicItemCreate(BaseModel):
     # Accept both 'name' and 'title' from front-end
-    name: Optional[str] = Field(default=None, max_length=255)
-    title: Optional[str] = Field(default=None, max_length=255)
+    name: str | None = Field(default=None, max_length=255)
+    title: str | None = Field(default=None, max_length=255)
     # Accept both 'type' and 'item_type' (lowercase ok)
-    type: Optional[AcademicItemTypeEnum] = None
-    item_type: Optional[str] = None
+    type: AcademicItemTypeEnum | None = None
+    item_type: str | None = None
     # course_id optional — front-end may omit if no course selected
-    course_id: Optional[int] = None
-    number: Optional[str] = Field(default=None, max_length=50)
-    topic: Optional[str] = Field(default=None, max_length=255)
-    due_date: Optional[datetime] = None
-    date_received: Optional[datetime] = None
+    course_id: int | None = None
+    number: str | None = Field(default=None, max_length=50)
+    topic: str | None = Field(default=None, max_length=255)
+    due_date: datetime | None = None
+    date_received: datetime | None = None
     status: AcademicItemStatusEnum = AcademicItemStatusEnum.NOT_STARTED
-    grade: Optional[float] = Field(default=None, ge=0)   # No upper cap — allow bonus grades >100
-    weight: Optional[float] = Field(default=None, ge=0, le=100)
-    notes: Optional[str] = None
+    grade: float | None = Field(default=None, ge=0)   # No upper cap — allow bonus grades >100
+    weight: float | None = Field(default=None, ge=0, le=100)
+    notes: str | None = None
     monitored: bool = True
-    clean_name: Optional[str] = Field(default=None, max_length=255)
+    clean_name: str | None = Field(default=None, max_length=255)
 
     @model_validator(mode="after")
     def resolve_aliases(self) -> "AcademicItemCreate":
@@ -72,21 +71,21 @@ class AcademicItemCreate(BaseModel):
 
 
 class AcademicItemUpdate(BaseModel):
-    course_id: Optional[int] = None
-    type: Optional[AcademicItemTypeEnum] = None
-    item_type: Optional[str] = None
-    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
-    title: Optional[str] = Field(default=None, max_length=255)
-    number: Optional[str] = Field(default=None, max_length=50)
-    topic: Optional[str] = Field(default=None, max_length=255)
-    due_date: Optional[datetime] = None
-    date_received: Optional[datetime] = None
-    status: Optional[AcademicItemStatusEnum] = None
-    grade: Optional[float] = Field(default=None, ge=0)  # Allow >100 for bonus grades
-    weight: Optional[float] = Field(default=None, ge=0, le=100)
-    notes: Optional[str] = None
-    monitored: Optional[bool] = None
-    clean_name: Optional[str] = Field(default=None, max_length=255)
+    course_id: int | None = None
+    type: AcademicItemTypeEnum | None = None
+    item_type: str | None = None
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    title: str | None = Field(default=None, max_length=255)
+    number: str | None = Field(default=None, max_length=50)
+    topic: str | None = Field(default=None, max_length=255)
+    due_date: datetime | None = None
+    date_received: datetime | None = None
+    status: AcademicItemStatusEnum | None = None
+    grade: float | None = Field(default=None, ge=0)  # Allow >100 for bonus grades
+    weight: float | None = Field(default=None, ge=0, le=100)
+    notes: str | None = None
+    monitored: bool | None = None
+    clean_name: str | None = Field(default=None, max_length=255)
 
     @model_validator(mode="after")
     def resolve_aliases(self) -> "AcademicItemUpdate":
@@ -102,19 +101,19 @@ class AcademicItemResponse(BaseModel):
 
     id: int
     course_id: int
-    course_code: Optional[str] = None  # populated by service via join
+    course_code: str | None = None  # populated by service via join
     type: AcademicItemTypeEnum
     name: str
-    number: Optional[str]
-    topic: Optional[str]
-    due_date: Optional[datetime]
-    date_received: Optional[datetime]
+    number: str | None
+    topic: str | None
+    due_date: datetime | None
+    date_received: datetime | None
     status: AcademicItemStatusEnum
-    grade: Optional[float]
-    weight: Optional[float]
-    notes: Optional[str]
+    grade: float | None
+    weight: float | None
+    notes: str | None
     monitored: bool
-    clean_name: Optional[str]
+    clean_name: str | None
     created_at: datetime
     updated_at: datetime
 

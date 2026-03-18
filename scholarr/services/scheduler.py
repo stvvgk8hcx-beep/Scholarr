@@ -1,6 +1,7 @@
 """Background scheduler for Scholarr."""
 
 import logging
+
 from apscheduler.schedulers.background import BackgroundScheduler
 
 logger = logging.getLogger(__name__)

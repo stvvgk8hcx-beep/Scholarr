@@ -2,7 +2,6 @@
 
 import os
 from dataclasses import dataclass
-from typing import Optional
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,7 +15,7 @@ class HealthCheckResult:
     check_type: str
     message: str
     status: str  # "ok", "warning", "error"
-    wiki_url: Optional[str] = None
+    wiki_url: str | None = None
 
 
 class HealthCheckService:
@@ -59,8 +58,9 @@ class HealthCheckService:
         Returns:
             list[HealthCheckResult]: List of health check results.
         """
-        from scholarr.db.models import RootFolder
         from sqlalchemy import select
+
+        from scholarr.db.models import RootFolder
 
         result = await self.session.execute(select(RootFolder))
         folders = result.scalars().all()
@@ -111,8 +111,9 @@ class HealthCheckService:
         Returns:
             list[HealthCheckResult]: List of health check results.
         """
-        from scholarr.db.models import Course
         from sqlalchemy import select
+
+        from scholarr.db.models import Course
 
         result = await self.session.execute(select(Course))
         courses = result.scalars().all()
