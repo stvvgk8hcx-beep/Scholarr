@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scholarr"
-version = "0.1.0"
+version = "0.2.1"
 description = "Self-hosted academic file management system"
 readme = "README.md"
 license = {text = "GPL-3.0"}

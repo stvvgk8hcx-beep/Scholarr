@@ -1,7 +1,7 @@
 """System service for business logic."""
 
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
@@ -22,5 +22,5 @@ class SystemService:
             "database_size": 0,
             "file_count": 0,
             "total_files_size": 0,
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(UTC),
         }

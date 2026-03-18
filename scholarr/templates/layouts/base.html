@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Self-hosted academic management system">
+    <meta name="theme-color" content="#2ecfa1">
+    <meta name="color-scheme" content="dark">
     <title>{% block title %}Scholarr{% endblock %} - Academic File Management</title>
     <link rel="icon" type="image/svg+xml" href="/static/img/favicon.svg">
 
@@ -198,6 +201,15 @@
             if (current < pages) html += `<button class="btn btn-secondary btn-small" onclick="${onPageFnName}(${current+1})">Next</button>`;
             el.innerHTML = html;
         };
+
+        // ── Close dropdowns on click outside ────────────────────────
+        document.addEventListener('click', function(e) {
+            document.querySelectorAll('.dropdown-menu.active').forEach(function(menu) {
+                if (!menu.parentElement.contains(e.target)) {
+                    menu.classList.remove('active');
+                }
+            });
+        });
 
         // ── Global keyboard helpers ────────────────────────────────
         document.addEventListener('keydown', function(e) {

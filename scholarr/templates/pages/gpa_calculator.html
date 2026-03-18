@@ -240,7 +240,7 @@ function renderCourses(courses, items) {
                 <div class="item-type">${esc(i.type || '')}</div>
                 <div>${hasGrade ? iLetter : '<span style="color:var(--text-muted);">—</span>'}</div>
                 <div>
-                    <input type="number" value="${hasGrade ? i.grade : ''}" min="0" max="150" step="0.1"
+                    <input type="number" value="${hasGrade ? i.grade : ''}" min="0" max="100" step="0.1"
                         placeholder="%" class="whatif-grade" data-original="${hasGrade ? i.grade : ''}"
                         oninput="recalcGPA()" ${document.getElementById('whatifMode')?.checked ? '' : 'disabled'}>
                 </div>
@@ -283,6 +283,7 @@ function toggleCourse(id) {
 }
 
 function pctToLetter(pct) {
+    if (typeof pct !== 'number' || isNaN(pct) || pct < 0) return 'F';
     if (pct >= 93) return 'A';
     if (pct >= 90) return 'A-';
     if (pct >= 87) return 'B+';
@@ -408,7 +409,7 @@ function addWhatIfRow() {
                 <option value="">—</option>${GRADE_OPTS}
             </select>
         </div>
-        <div><input type="number" id="${id}-grade" min="0" max="150" step="0.1" placeholder="%" oninput="recalcGPA()" style="width:60px;"></div>
+        <div><input type="number" id="${id}-grade" min="0" max="100" step="0.1" placeholder="%" oninput="recalcGPA()" style="width:60px;"></div>
         <div><input type="number" id="${id}-cr" min="0" max="6" value="3" step="0.5" oninput="recalcGPA()" style="width:50px;"></div>
         <div><button class="btn btn-small" style="background:var(--danger);border:none;padding:2px 8px;" onclick="removeWhatIf('${id}')">x</button></div>
     `;

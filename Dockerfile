@@ -1,10 +1,10 @@
 # Scholarr — Self-hosted academic file management
 # Single-stage Python build (no Node.js needed, pure Python frontend)
-FROM python:3.11-slim
+FROM python:3.13-slim
 
 LABEL maintainer="Calvin Pawluck"
 LABEL description="Self-hosted academic file management system"
-LABEL version="0.1.0"
+LABEL version="0.2.0"
 
 WORKDIR /app
 
@@ -19,7 +19,7 @@ COPY pyproject.toml pyproject.toml
 COPY scholarr scholarr
 COPY alembic.ini alembic.ini
 
-RUN pip install --no-cache-dir --upgrade pip && \
+RUN pip install --no-cache-dir --upgrade pip setuptools && \
     pip install --no-cache-dir -e ".[mysql]"
 
 # Create data directories

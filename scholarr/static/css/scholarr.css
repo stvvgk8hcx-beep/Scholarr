@@ -351,6 +351,7 @@ td {
   max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ── Forms ──────────────────────────────────────────────────── */
@@ -452,6 +453,15 @@ button:hover,
 }
 
 button:active, .btn:active { transform: translateY(0); }
+
+button:focus-visible,
+.btn:focus-visible,
+.nav-item:focus-visible,
+.dropdown-item:focus-visible,
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
 .btn-secondary {
   background: var(--bg-hover);
@@ -925,18 +935,7 @@ button:disabled {
   text-align: center;
 }
 
-/* ── Alert Boxes ────────────────────────────────────────────── */
-/* Future: .alert-info, .alert-warning, .alert-danger for inline messages */
-.alert {
-  padding: 12px 16px;
-  border-radius: var(--radius);
-  font-size: 0.88em;
-  margin-bottom: 16px;
-}
-.alert-info { background: rgba(91,184,216,0.1); border: 1px solid rgba(91,184,216,0.2); color: var(--info); }
-.alert-warning { background: rgba(232,168,64,0.1); border: 1px solid rgba(232,168,64,0.2); color: var(--warning); }
-.alert-danger { background: rgba(208,72,72,0.1); border: 1px solid rgba(208,72,72,0.2); color: var(--danger); }
-.alert-success { background: rgba(46,207,161,0.1); border: 1px solid rgba(46,207,161,0.2); color: var(--success); }
+/* Alerts defined above at line 759 */
 
 /* ── Danger Zone ────────────────────────────────────────────── */
 /* Future: standardize danger-zone styling across all settings pages */

@@ -421,7 +421,6 @@ function toggleTimer() {
 }
 
 function startTimer() {
-    if (getCfg().notify && Notification.permission === 'default') Notification.requestPermission();
     isRunning = true;
     document.getElementById('start-btn').textContent = 'Pause';
     document.getElementById('timer-display').classList.remove('paused');
@@ -540,7 +539,7 @@ function logSession() {
         courseCode:  course ? course.code : null,
         courseColor: course ? course.color: '#888',
         date:        new Date().toISOString(),
-        duration:    getCfg().focus,
+        duration:    Math.round(totalSeconds / 60),
         task:        task || 'Study Session',
     };
     allSessions.unshift(entry);

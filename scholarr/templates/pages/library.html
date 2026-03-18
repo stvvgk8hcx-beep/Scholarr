@@ -296,7 +296,7 @@ function renderFiles() {
     }
 
     tbody.innerHTML = page.map(f => {
-        const name = f.original_filename || f.path.split('/').pop() || '—';
+        const name = f.original_filename || (f.path && f.path.split('/').pop()) || '—';
         const ext = (f.format || name.split('.').pop() || '?').toUpperCase();
         const selected = f.id === selectedFileId ? ' selected' : '';
         return `

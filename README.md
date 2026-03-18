@@ -34,6 +34,7 @@ Scholarr is a local-first app that keeps your courses, deadlines, files, and gra
 | **Weighted GPA** | Optional rule: Tests + Quizzes combined must exceed a threshold; shows both actual and weighted GPA |
 | **Grade Weight Policy** | Per-course weight presets by item type (e.g., Exams 40%, Assignments 30%, Quizzes 15%, Projects 15%) |
 | **Study Tracker** | Course-aware Pomodoro timer with focus/break phases, session history, per-course time stats |
+| **Note Writer** | Distraction-free OmmWriter-inspired note editor with ambient sounds, backgrounds, typing sounds, auto-save, and backup history |
 | **Academic Calendar** | Monthly calendar view showing all items with due dates |
 
 ### Import / Export
@@ -141,6 +142,8 @@ See `.env.example` for a complete template.
 | `/library` | File library with metadata panel, upload, rename, move |
 | `/gpa` | GPA calculator with weighted mode |
 | `/study-timer` | Course-aware Pomodoro study timer |
+| `/notes` | Notes list with search, course filter, pinning |
+| `/notes/{id}` | Distraction-free note editor with toolbar |
 | `/settings` | App settings, backup/restore, cloud export |
 | `/system` | System info and health |
 | `/docs` | Interactive API documentation (Swagger UI) |
@@ -188,7 +191,7 @@ SCHOLARR_API_KEY=test-key-12345 uvicorn scholarr.app:create_app --factory --port
 python seed_data.py
 ```
 
-This creates 4 semesters, 12 courses, and 35+ academic items with realistic grades and due dates.
+This creates 4 semesters, 12 courses, 35+ academic items with realistic grades and due dates, and 13 notes with course associations.
 
 ### Code quality
 
@@ -235,7 +238,7 @@ X-API-Key: <your-api-key>
 
 | Layer | Technology |
 |-------|-----------|
-| **Backend** | Python 3.11+, FastAPI, SQLAlchemy 2.0 (async), Pydantic V2 |
+| **Backend** | Python 3.11+ (Docker uses 3.13), FastAPI, SQLAlchemy 2.0 (async), Pydantic V2 |
 | **Frontend** | Jinja2 templates, Vanilla JS (`window.API` fetch helper), inline SVG icons |
 | **Database** | SQLite + aiosqlite (dev) / MySQL 8 / PostgreSQL (prod) |
 | **Auth** | API key (`X-API-Key` header), injected server-side into all templates |

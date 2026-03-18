@@ -196,6 +196,74 @@ async def main():
             updated = await get(session, f"/courses/{cs201_id}")
             print(f"\n  CS 201 detail: semester_name={updated.get('semester_name')} item_count={updated.get('item_count')}")
 
+        # ── Notes ─────────────────────────────────────────────
+        print("\n── Creating Notes ──────────────────────────────────")
+        notes_data = [
+            # CS 201 notes
+            {"title": "Linked List Traversal Patterns", "course_id": course_ids["CS 201"],
+             "content": "Singly vs doubly linked lists.\n\nTraversal: use a current pointer, advance until null.\nInsertion at head: O(1), at tail: O(n) without tail pointer.\n\nKey insight: always check for empty list edge case before traversing.",
+             "word_count": 32, "duration_seconds": 1200},
+            {"title": "Stack & Queue Implementations", "course_id": course_ids["CS 201"],
+             "content": "Stack: LIFO — push/pop from top. Array-backed or linked list.\nQueue: FIFO — enqueue at back, dequeue from front.\n\nUsed stacks for expression evaluation in lab. Parentheses matching is a classic interview question.",
+             "word_count": 35, "duration_seconds": 900},
+            {"title": "Binary Tree Basics", "course_id": course_ids["CS 201"],
+             "content": "Binary tree: each node has at most 2 children.\nBST property: left < root < right.\n\nTraversals:\n- Inorder (L, Root, R) gives sorted output for BST\n- Preorder (Root, L, R) for serialization\n- Postorder (L, R, Root) for deletion\n- Level-order uses a queue",
+             "word_count": 42, "duration_seconds": 1500},
+            {"title": "Midterm Review — Data Structures", "course_id": course_ids["CS 201"],
+             "content": "Topics covered:\n1. Arrays and dynamic arrays (amortized O(1) append)\n2. Linked lists (singly, doubly, circular)\n3. Stacks and queues\n4. Hash tables — collision resolution: chaining vs open addressing\n5. Binary search trees\n\nFocus on time complexity analysis for each operation.",
+             "word_count": 40, "duration_seconds": 2400},
+            # MATH 201 notes
+            {"title": "Integration by Parts", "course_id": course_ids["MATH 201"],
+             "content": "Formula: integral(u dv) = uv - integral(v du)\n\nLIATE rule for choosing u:\nL - Logarithmic\nI - Inverse trig\nA - Algebraic\nT - Trigonometric\nE - Exponential\n\nPractice: integral(x * e^x dx) => u=x, dv=e^x dx",
+             "word_count": 38, "duration_seconds": 1800},
+            {"title": "Taylor Series Expansions", "course_id": course_ids["MATH 201"],
+             "content": "Common series:\ne^x = 1 + x + x^2/2! + x^3/3! + ...\nsin(x) = x - x^3/3! + x^5/5! - ...\ncos(x) = 1 - x^2/2! + x^4/4! - ...\n1/(1-x) = 1 + x + x^2 + x^3 + ... (|x|<1)\n\nRadius of convergence: use ratio test.",
+             "word_count": 45, "duration_seconds": 2100},
+            {"title": "Sequences and Convergence Tests", "course_id": course_ids["MATH 201"],
+             "content": "Tests for convergence:\n- Ratio test: lim |a_{n+1}/a_n| < 1 converges\n- Root test: lim |a_n|^(1/n) < 1 converges\n- Comparison test: compare with known series\n- Integral test: if f(x) is positive decreasing\n- Alternating series test: decreasing terms -> 0",
+             "word_count": 44, "duration_seconds": 1600},
+            # CS 205 notes
+            {"title": "Propositional Logic Rules", "course_id": course_ids["CS 205"],
+             "content": "De Morgan's Laws:\n- NOT(A AND B) = (NOT A) OR (NOT B)\n- NOT(A OR B) = (NOT A) AND (NOT B)\n\nImplication: P -> Q is equivalent to (NOT P) OR Q\nContrapositive: P -> Q is equivalent to NOT Q -> NOT P\n\nTruth tables are brute force but always work.",
+             "word_count": 46, "duration_seconds": 1100},
+            {"title": "Graph Theory Fundamentals", "course_id": course_ids["CS 205"],
+             "content": "Graph G = (V, E). Directed vs undirected.\nDegree of a vertex: number of edges incident to it.\nHandshaking lemma: sum of degrees = 2 * |E|\n\nSpecial graphs: complete (K_n), bipartite, planar.\nEuler's formula for planar graphs: V - E + F = 2",
+             "word_count": 41, "duration_seconds": 1400},
+            # CS 101 notes (from past semester)
+            {"title": "Python Basics — Variables & Types", "course_id": course_ids["CS 101"],
+             "content": "Python is dynamically typed.\nint, float, str, bool, list, dict, tuple, set.\n\nf-strings for formatting: f'Hello {name}'\nList comprehensions: [x**2 for x in range(10)]\n\nMutable vs immutable: lists are mutable, strings are not.",
+             "word_count": 35, "duration_seconds": 900},
+            {"title": "Functions and Scope", "course_id": course_ids["CS 101"],
+             "content": "def function_name(params):\n    return value\n\nLocal vs global scope. Use 'global' keyword to modify global vars (avoid this).\nDefault parameters: def greet(name='World')\n*args for variable positional, **kwargs for variable keyword arguments.",
+             "word_count": 33, "duration_seconds": 800},
+            # General notes (no course)
+            {"title": "Study Schedule — Spring 2025", "course_id": None,
+             "content": "Monday: CS 201 lecture + lab\nTuesday: MATH 201 problem sets\nWednesday: CS 205 lecture\nThursday: CS 201 assignment work\nFriday: Review and catch up\n\nWeekend: long study session for whatever is due next.",
+             "word_count": 36, "duration_seconds": 600},
+            {"title": "Exam Prep Strategy", "course_id": None,
+             "content": "1. Review all lecture notes 1 week before\n2. Do practice problems (not just reading)\n3. Teach concepts to someone else\n4. Sleep well the night before\n5. Arrive early, bring water\n\nFor math: drill the formulas until automatic.\nFor CS: trace through algorithms by hand.",
+             "word_count": 48, "duration_seconds": 500},
+        ]
+        note_count = 0
+        for n in notes_data:
+            r = await post(session, "/notes", n)
+            if r:
+                note_count += 1
+        print(f"  Created {note_count} notes")
+
+        # Pin a couple of notes
+        notes_list = await get(session, "/notes")
+        items_list = notes_list.get("items", []) if isinstance(notes_list, dict) else notes_list
+        if len(items_list) >= 2:
+            await put(session, f"/notes/{items_list[0]['id']}", {"pinned": True})
+            await put(session, f"/notes/{items_list[1]['id']}", {"pinned": True})
+            print("  Pinned 2 most recent notes")
+
+        # Verify notes
+        notes_resp = await get(session, "/notes")
+        total_notes = notes_resp.get("total", 0) if isinstance(notes_resp, dict) else len(notes_resp)
+        print(f"  Total notes: {total_notes}")
+
         print("\n✓ Seed complete")
 
 asyncio.run(main())

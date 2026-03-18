@@ -201,6 +201,18 @@ body {
 }
 .tool-row:hover .tool-opts { opacity: 1; pointer-events: auto; }
 
+/* Invisible bridge from options to button — prevents hover gap */
+.tool-opts::after,
+.vol-wrap::after,
+.color-picker-pop::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -14px;
+    width: 14px;
+    height: 100%;
+}
+
 .opt-pill {
     min-width: 26px; height: 26px;
     border-radius: 13px;

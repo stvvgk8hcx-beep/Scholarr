@@ -78,10 +78,11 @@
             <input type="text" id="new-note-title" placeholder="Lecture notes, study session...">
         </div>
         <div class="form-group">
-            <label>Course (optional)</label>
+            <label>Save to</label>
             <select id="new-note-course" style="width:100%;">
-                <option value="">No course</option>
+                <option value="">General Notes</option>
             </select>
+            <small style="color:var(--text-muted);font-size:0.78em;margin-top:4px;display:block;">Choose a course or keep in General Notes</small>
         </div>
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
             <button class="btn btn-secondary" onclick="document.getElementById('newNoteModal').style.display='none'">Cancel</button>
@@ -113,7 +114,7 @@ async function loadCourseFilters() {
             `<option value="${c.id}">${esc(c.code)} - ${esc(c.name)}</option>`
         ).join('');
         document.getElementById('note-course-filter').innerHTML = '<option value="">All Courses</option>' + opts;
-        document.getElementById('new-note-course').innerHTML = '<option value="">No course</option>' + opts;
+        document.getElementById('new-note-course').innerHTML = '<option value="">General Notes</option>' + opts;
     } catch(e) { console.error(e); }
 }
 
@@ -151,7 +152,7 @@ async function loadNotes() {
                         <button style="background:transparent;border:none;cursor:pointer;color:var(--text-muted);font-size:0.85em;padding:2px 4px;" onclick="deleteNote(${n.id})" title="Delete">Del</button>
                     </div>
                     <div class="note-title">${esc(n.title)}</div>
-                    ${n.course_code ? `<span class="note-course-badge">${esc(n.course_code)}</span>` : ''}
+                    <span class="note-course-badge">${n.course_code ? esc(n.course_code) : 'General'}</span>
                     <div class="note-preview">${esc(preview || 'Empty note')}</div>
                     <div class="note-meta">
                         <span>${words} words${mins > 0 ? ' · ' + mins + 'm' : ''}</span>

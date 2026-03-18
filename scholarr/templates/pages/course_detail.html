@@ -407,7 +407,7 @@ function fmtMins(mins) {
 function loadStudyTime() {
     try {
         const sessions = JSON.parse(localStorage.getItem('scholarr_study_sessions') || '[]');
-        const forCourse = sessions.filter(s => s.courseId === courseId);
+        const forCourse = sessions.filter(s => parseInt(s.courseId) === courseId);
 
         const today  = new Date().toDateString();
         const weekMs = 7 * 86400000;

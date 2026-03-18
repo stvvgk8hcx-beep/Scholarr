@@ -1,5 +1,67 @@
 # Changelog
 
+## [0.2.1] - 2026-03-18
+
+Bug fix and quality pass: systematic audit of every page, 19 fixes across 11 files.
+
+### Fixed
+
+#### Note Editor
+- **Toolbar hover gap**: right-side option pills (font, size, background, ambient, etc.) disappeared when moving mouse from button to options — added invisible bridge pseudo-elements to maintain hover state
+- **Note creation UX**: "Course (optional)" dropdown relabeled to "Save to" with "General Notes" as default, plus helper text — makes courseless notes feel intentional instead of broken
+- Notes without a course now show a "General" badge in the notes grid
+
+#### Docker Security
+- **High vulnerability fix**: upgraded base image from `python:3.11-slim` to `python:3.13-slim`
+- Explicit `setuptools` upgrade during build to eliminate bundled CVEs
+- Updated version label to 0.2.0
+
+#### Courses Page
+- Fixed undefined CSS variable `--accent-blue` (2 occurrences) — course codes and empty-state link now use `--accent`
+
+#### Course Detail
+- Fixed string/number type mismatch in study session filter — `localStorage` returns strings but `courseId` is a number, causing `===` to always fail
+
+#### Academic Items
+- Fixed hardcoded `badge-notstarted` class on all item type badges — types now use a neutral style instead of always appearing as "not started"
+
+#### Library
+- Fixed `TypeError` crash when `f.path` is undefined — added null guard before `.split('/')`
+
+#### GPA Calculator
+- Changed max grade input from 150% to 100% (both existing items and what-if rows)
+- Added NaN/negative guard to `pctToLetter()` function
+
+#### Study Timer
+- Session duration now logs actual elapsed time (`totalSeconds / 60`) instead of the config preset value
+- Removed duplicate `Notification.requestPermission()` call (was in both init and startTimer)
+
+#### Settings
+- Consolidated 3 identical calendar export buttons (Apple/Google/Outlook all exported the same `.ics`) into a single "Download Calendar (.ics)" button
+
+#### CSS (scholarr.css)
+- Removed duplicate alert style block (lines 929-940 duplicated lines 759-774)
+- Added `white-space: nowrap` to table cells for proper text-overflow ellipsis
+- Added `:focus-visible` states for buttons, nav items, dropdown items, and tabs (keyboard accessibility)
+
+#### Base Template
+- Added `description`, `theme-color`, and `color-scheme` meta tags
+- Added click-outside handler to close open dropdown menus
+
+#### Backend
+- Fixed `datetime.utcnow()` deprecation warning in system_service.py — replaced with `datetime.now(UTC)`
+
+### Changed
+- Seed data script now creates 13 notes with realistic course-linked content and writing times
+- Updated README with Notes feature documentation and Docker Python version
+
+### Technical Details
+
+**Tests**: 281 passed, 0 warnings
+**Docker**: Python 3.13-slim, 0 high vulnerabilities
+
+---
+
 ## [0.2.0] - 2026-03-17
 
 Major feature release: file management overhaul, study tracker, grade weights, history logging, and comprehensive bug fixes.
