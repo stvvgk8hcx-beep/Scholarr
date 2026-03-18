@@ -44,7 +44,10 @@ async def create_tag(
 ):
     """Create a new tag."""
     service = TagService(db)
-    new_tag = await service.create_tag(tag)
+    try:
+        new_tag = await service.create_tag(tag)
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from None
     return new_tag
 
 

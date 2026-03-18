@@ -3,6 +3,7 @@
 import logging
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from scholarr.db.models import Tag
@@ -31,7 +32,11 @@ class TagService:
         """Create a new tag."""
         obj = Tag(**tag.model_dump())
         self.db.add(obj)
-        await self.db.commit()
+        try:
+            await self.db.commit()
+        except IntegrityError:
+            await self.db.rollback()
+            raise ValueError(f"A tag with label {tag.label!r} already exists") from None
         await self.db.refresh(obj)
         logger.info(f"Created tag id={obj.id} label={obj.label!r}")
         return TagResponse.model_validate(obj)

@@ -100,7 +100,10 @@ async def create_academic_item(
 ):
     """Create a new academic item."""
     service = AcademicItemService(db)
-    new_item = await service.create_academic_item(item)
+    try:
+        new_item = await service.create_academic_item(item)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from None
     return new_item
 
 
