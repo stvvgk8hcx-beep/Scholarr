@@ -5,25 +5,11 @@ operations, cascade integrity, pagination limits, search/filter combos,
 special characters, and bulk operations.
 """
 
-import string
 from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from scholarr.db.models import (
-    AcademicItem,
-    AcademicItemStatusEnum,
-    AcademicItemTypeEnum,
-    Course,
-    ManagedFile,
-    Note,
-    Semester,
-    Tag,
-    TermEnum,
-)
 
 pytestmark = [pytest.mark.asyncio]
 
